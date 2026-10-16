@@ -33,6 +33,14 @@ Applications ──► [Speaker Sim] (sortie virtuelle, devient la sortie par d�
 - **États** : démarrage/arrêt, auto-démarrage à la connexion, bascule
   automatique de la sortie par défaut et **restauration de la sortie précédente**
   à l'arrêt (même si le service est arrêté hors de l'application).
+- **Changements sans coupure** : « Appliquer » démarre une seconde instance (A/B),
+  en fait la sortie par défaut, attend que les flux l'aient rejointe puis arrête
+  l'ancienne ; la sortie virtuelle ne disparaît jamais, les lecteurs ne se mettent
+  pas en pause.
+- **Import de vos mesures de casque** : EQ AutoEq / Equalizer APO (ParametricEQ,
+  GraphicEQ) appliqué tel quel, ou mesure brute « fréquence, dB » (REW, Squiglink,
+  CSV AutoEq) corrigée vers une cible AutoEq au choix (Harman over-ear 2018,
+  Harman in-ear 2019, champ diffus ISO 11904-1 ou GRAS KEMAR).
 - **Interface** Qt 6 sombre, courbes de réponse, et une **ligne de commande** complète.
 
 ## Installation
@@ -105,6 +113,7 @@ python3 main.py --status
 python3 main.py --stop
 python3 main.py --autostart on      # ou off
 python3 main.py --build             # générer les filtres sans démarrer
+python3 main.py --import-headphone ma-mesure.txt --name "Mon casque" --target "Harman in-ear 2019"
 ```
 
 ### Exemple d'API (rendu hors ligne)
@@ -124,8 +133,9 @@ Tout s'exécute en tant qu'utilisateur. L'application n'écrit **que** dans :
 |---|---|
 | `~/.local/state/devfrp-speaker-sim/config.json` | paramètres |
 | `~/.local/state/devfrp-speaker-sim/runtime.json` | sortie précédente, état |
-| `~/.local/state/devfrp-speaker-sim/filters/` | `ir_LL/LR/RL/RR.wav`, `filter-chain.conf` |
-| `~/.local/state/devfrp-speaker-sim/devfrp-speaker-sim-py.service` | unité (auto-démarrage) |
+| `~/.local/state/devfrp-speaker-sim/filters/{a,b}/` | `ir_LL/LR/RL/RR.wav`, `filter-chain.conf` par instance |
+| `~/.local/state/devfrp-speaker-sim/imports/` | mesures/EQ de casques importés + `index.json` |
+| `~/.local/state/devfrp-speaker-sim/devfrp-speaker-sim-py-a.service` | unité (auto-démarrage) |
 | `~/.local/state/devfrp-speaker-sim/speaker-sim.log` | journal |
 | `~/.cache/devfrp-speaker-sim/autoeq/<commit>/` | index et corrections AutoEq |
 | `~/.cache/devfrp-speaker-sim/spinorama/<commit>/` | mesures CEA-2034 |
@@ -147,8 +157,8 @@ de connaître une unité au démarrage) ; décocher l'option (`disable`) les sup
 
 ### Coexistence avec le greffon Omarchy `devfrp.speaker-sim`
 
-Noms distincts (unité `devfrp-speaker-sim-py.service`, nœud
-`devfrp_speaker_sim_py`, fichiers `config.json`/`runtime.json`/`filters/`) : rien
+Noms distincts (unités `devfrp-speaker-sim-py-{a,b}.service`, nœuds
+`devfrp_speaker_sim_py_{a,b}`, fichiers `config.json`/`runtime.json`/`filters/`) : rien
 n'écrase les fichiers du greffon (`settings.json`, `headphones/`). Le cache AutoEq
 a la même disposition et le même commit, il est donc partagé. Les nœuds des deux
 simulateurs ne sont jamais proposés comme « casque ». Évitez de les faire
@@ -181,7 +191,7 @@ Les tests n'utilisent ni le réseau, ni PipeWire, ni systemd (simulés).
 
 - **« libmysofa introuvable »** : installez `libmysofa` (le fichier
   `/usr/share/libmysofa/MIT_KEMAR_normal_pinna.sofa` est utilisé s'il existe).
-- **Le service s'arrête aussitôt** : `journalctl --user -u devfrp-speaker-sim-py -n 50`.
+- **Le service s'arrête aussitôt** : `journalctl --user -u 'devfrp-speaker-sim-py*' -n 50`.
 - **Pas de son** : vérifiez avec `wpctl status` que « Speaker Sim » est la sortie par
   défaut et que `devfrp_speaker_sim_py.output` est relié au casque.
 - **Volume faible** : la normalisation laisse de la marge pour le pire cas ;
