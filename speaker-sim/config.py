@@ -164,6 +164,10 @@ class Settings:
     bass_db: float = 0.0                 # tonalité : plateau grave 105 Hz
     treble_db: float = 0.0               # tonalité : plateau aigu 10 kHz
     tone_enabled: bool = True            # tonalité et balance actives
+    treatment_enabled: bool = True       # traitement acoustique actif (sinon parois nues)
+    late_enabled: bool = True            # réverbération tardive active
+    placement_custom: bool = True        # placement réglé (sinon triangle stéréo standard)
+    advanced_enabled: bool = True        # réglages avancés (sinon valeurs par défaut)
     language: str = ""                   # "fr", "en" ; "" = langue du système
     room_amount: float = 1.0             # 0 = anéchoïque, 1 = niveau physique
     reflection_order: int = 2

@@ -893,6 +893,7 @@ class RenderParams:
     balance_db: float = 0.0       # + = enceinte droite plus forte
     bass_db: float = 0.0          # plateau grave (105 Hz)
     treble_db: float = 0.0        # plateau aigu (10 kHz)
+    late_enabled: bool = True     # réverbération tardive
     seed: int = 20240601
 
 
@@ -993,6 +994,8 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
         # Sous la fréquence de Schroeder (≈ 2000·√(T/V)), le champ diffus statistique
         # surestime l'énergie (régime modal) : excès borné à +6 dB par rapport aux médiums.
         late_energy = np.minimum(late_energy, 4.0 * float(np.mean(late_energy[2:4])))
+        if not params.late_enabled:
+            late_energy = np.zeros(len(OCTAVES))
         t_start = max(2e-3 * math.sqrt(room.volume), 0.012)
         notes.append(f"RT60 {room.rt60:.2f} s (500 Hz–1 kHz), distance critique "
                      f"{room.critical_distance():.2f} m, "

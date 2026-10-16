@@ -9,6 +9,7 @@ exécute dans un thread de travail.
 from __future__ import annotations
 
 import hashlib
+import math
 import json
 import logging
 import logging.handlers
@@ -182,8 +183,9 @@ class SpeakerSimApp:
 
     # -- rendu ----------------------------------------------------------
     def sample_rate(self) -> int:
-        if self.settings.sample_rate:
-            return self.settings.sample_rate
+        rate = self.effective().sample_rate
+        if rate:
+            return rate
         if not self.supports_live:
             return 48000
         try:
@@ -191,8 +193,29 @@ class SpeakerSimApp:
         except SystemError_:
             return 48000
 
-    def room_spec(self, settings: Settings | None = None) -> ae.RoomSpec:
+    def effective(self, settings: Settings | None = None) -> Settings:
+        """Réglages réellement utilisés : les onglets désactivés reprennent leurs valeurs
+        neutres, sans effacer celles de l'utilisateur."""
         s = settings or self.settings
+        changes: dict = {}
+        if not s.treatment_enabled:
+            changes.update(room_treatment=0.0, room_bass_traps=0.0, treatment_per_wall=False,
+                           room_ceiling="plaster")
+        if not s.placement_custom:
+            d = Settings()
+            a = math.radians(d.speaker_angle)
+            fit = min(d.speaker_distance,
+                      (s.room_length - d.front_gap - 0.5) / math.cos(a),
+                      (s.room_width - 1.0) / (2 * math.sin(a)))
+            changes.update(speaker_angle=d.speaker_angle, speaker_distance=max(0.5, fit),
+                           front_gap=d.front_gap, listener_offset=0.0,
+                           ear_height=d.ear_height, speaker_height=0.0)
+        if not s.advanced_enabled:
+            changes.update(diffuse_field_eq=True, sample_rate=0)
+        return replace(s, **changes) if changes else s
+
+    def room_spec(self, settings: Settings | None = None) -> ae.RoomSpec:
+        s = self.effective(settings)
         return ae.RoomSpec(
             width=s.room_width, length=s.room_length, height=s.room_height,
             order=s.reflection_order, walls=s.room_walls, treatment=s.room_treatment,
@@ -206,9 +229,9 @@ class SpeakerSimApp:
 
     def layout(self) -> ae.Layout | None:
         """Positions auditeur / enceintes (vue en plan de l'interface)."""
+        e = self.effective()
         try:
-            return ae.stereo_layout(self.room_spec(), self.settings.speaker_angle,
-                                    self.settings.speaker_distance)
+            return ae.stereo_layout(self.room_spec(), e.speaker_angle, e.speaker_distance)
         except ae.AudioEngineError:
             return None
 
@@ -218,7 +241,7 @@ class SpeakerSimApp:
         return self.update_settings(**preset_settings(key))
 
     def render_params(self, fs: int) -> ae.RenderParams:
-        s = self.settings
+        s = self.effective()
         return ae.RenderParams(
             fs=fs, angle_deg=s.speaker_angle, distance=s.speaker_distance,
             room=self.room_spec(),
@@ -227,7 +250,8 @@ class SpeakerSimApp:
             preamp_db=s.preamp_db,
             balance_db=s.balance_db if s.tone_enabled else 0.0,
             bass_db=s.bass_db if s.tone_enabled else 0.0,
-            treble_db=s.treble_db if s.tone_enabled else 0.0)
+            treble_db=s.treble_db if s.tone_enabled else 0.0,
+            late_enabled=s.late_enabled)
 
     def build_filters(self, progress: Progress | None = None) -> ae.RenderResult:
         """Télécharge ce qui manque, calcule et écrit les IR + la config filter-chain."""
