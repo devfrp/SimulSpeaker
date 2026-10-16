@@ -32,7 +32,7 @@ Applications ──► [Speaker Sim] (sortie virtuelle, devient la sortie par d�
 
 Le script Linux n'a pas besoin de root. Il installe dans `~/.local/share/devfrp-speaker-sim`
 et ajoute la commande `speaker-sim` ainsi qu'une entrée de menu. Options (après `bash -s --`) :
-`--uninstall`, `--purge`, `--ref v1.2.0`, `--no-desktop`. Relancez la même commande pour
+`--uninstall`, `--purge`, `--ref v1.0.0`, `--no-desktop`. Relancez la même commande pour
 mettre à jour. Les binaires Windows et macOS ne sont pas signés. Sous Windows : SmartScreen
 → *Informations* → *Exécuter quand même*. Sous macOS : clic droit → *Ouvrir* la première fois.
 
@@ -85,13 +85,15 @@ PySide6 fonctionne à la place de PyQt6 (repli automatique, voir `qt_compat.py`)
   latéral), réflexions jusqu'à l'ordre 4, pièces jusqu'à 30 × 20 × 8 m, distance d'écoute
   jusqu'à 10 m, angle jusqu'à 80°, RT60 imposé jusqu'à 4 s.
 - **Écoute** : plateaux grave et aigu (105 Hz / 10 kHz), balance gauche/droite, préampli.
-- **Interrupteurs** : chaque section de réglages a un interrupteur. Couper *Salle*
-  désactive la simulation de la pièce et masque ses réglages. *Réflexions précoces* et
-  *Écoute* (tonalité et balance) fonctionnent de la même façon, et *Avancé* affiche ou
-  masque les réglages experts. Les réglages forment **une ligne de cartes** sous le plan, répartie en trois onglets
-  (salle · placement et réflexions · écoute et avancé). Il n'y a aucun défilement : les
-  cartes se partagent la largeur de la fenêtre, et tout tient dans une fenêtre de
-  1200 × 730. Le bouton **Réglages** de la barre du haut masque toute la bande.
+- **Onglets à interrupteur** : les réglages sont rangés sous le plan en neuf onglets
+  (*Salle*, *Traitement*, *Réflexions*, *Réverbération*, *Placement*, *Casque*, *Écoute*,
+  *Avancé*, *Sortie*), chacun avec son **interrupteur**. Un onglet coupé retire ses
+  réglages et indique ce qui s'applique à la place (pièce coupée → champ libre, placement
+  coupé → triangle stéréo standard, etc.) ; les valeurs sont gardées pour la prochaine
+  activation. Couper *Salle* est la seule façon de retirer la pièce (la *quantité de
+  pièce* descend à 5 % au minimum). La barre d'onglets reste toujours visible : le bouton
+  **Réglages** de la barre du haut ne fait que replier le contenu, et un clic sur un
+  onglet le déplie. Aucun défilement : tout tient dans une fenêtre de 1200 × 730.
 - **Changements sans coupure** : « Appliquer » démarre une seconde instance (A/B), en fait
   la sortie par défaut, attend que les flux l'aient rejointe, puis arrête l'ancienne. La
   sortie ne disparaît jamais, donc les lecteurs ne se mettent jamais en pause. En mode
@@ -118,7 +120,7 @@ IR[s][e] = HP⁻¹ · ( DF⁻¹ · ( LW · Direct[s][e] + ER · Réflexions[s][e
    premières réflexions, la *Sound Power* la réverbération tardive.
 2. **Salle** : coefficients d'absorption par bande d'octave (125 Hz–8 kHz) pour chaque
    surface. Le RT60 est calculé par bande (Eyring, avec l'absorption de l'air), ou imposé
-   à la main. Un modèle de sources-images (ordre 0–3) calcule les réflexions, chacune
+   à la main. Un modèle de sources-images (ordre 0–4) calcule les réflexions, chacune
    filtrée par les matériaux de chaque paroi touchée. La réverbération tardive est un bruit
    par octave, décorrélé, avec le RT60 de chaque bande. Son niveau suit la distance
    critique, borné sous la fréquence de Schroeder, où le modèle statistique ne tient plus.
@@ -144,7 +146,9 @@ speaker-sim            # ou : python3 speaker-sim/main.py
    LFX et l'origine de la mesure.
 3. **Plan** : faites glisser votre tête (sarcelle) pour vous rapprocher ou reculer, ou une
    enceinte pour changer l'angle et la distance au mur avant.
-4. **03 Salle** : choisissez un préréglage, ou réglez traitement, matériaux et dimensions.
+4. **Onglets de réglages** (sous le plan) : dans *Salle*, choisissez un préréglage ou
+   réglez dimensions et matériaux ; *Traitement*, *Réflexions*, *Réverbération*,
+   *Placement* et *Écoute* affinent le reste, et chaque interrupteur coupe sa partie.
    Les vu-mètres RT60 se mettent à jour en direct ; la zone sarcelle (0,2–0,4 s) est la
    cible habituelle de l'écoute critique.
 5. Appuyez sur le **bouton d'alimentation**. Avec **Auto** activé, les changements suivants

@@ -34,7 +34,7 @@ Applications ──► [Speaker Sim] (virtual output, becomes the default output
 
 The Linux script needs no root. It installs into `~/.local/share/devfrp-speaker-sim`
 and adds the `speaker-sim` command plus a menu entry. Options (after `bash -s --`):
-`--uninstall`, `--purge`, `--ref v1.2.0`, `--no-desktop`. Re-run the same command to update.
+`--uninstall`, `--purge`, `--ref v1.0.0`, `--no-desktop`. Re-run the same command to update.
 The Windows and macOS binaries are unsigned. On Windows: SmartScreen → *More info* →
 *Run anyway*. On macOS: right-click → *Open* the first time.
 
@@ -85,13 +85,15 @@ PySide6 works in place of PyQt6 (automatic fallback, see `qt_compat.py`).
   an **off-centre seat** (lateral offset), up to 4th-order reflections, rooms up to
   30 × 20 × 8 m, listening distance up to 10 m, angle up to 80°, manual RT60 up to 4 s.
 - **Listening**: bass and treble shelves (105 Hz / 10 kHz), left/right balance, preamp.
-- **On/off switches**: every settings section has a switch. Turning off *Salle* (room)
-  disables the room simulation and hides its settings. *Réflexions précoces* (early
-  reflections) and *Écoute* (tone and balance) work the same way, and *Avancé* (advanced)
-  shows or hides the expert settings. The settings sit in **one line of cards** under the room plan, split into three tabs
-  (room · placement and reflections · listening and advanced). There is no scrolling: the
-  cards share the window width, and the layout fits a 1200 × 730 window. The **Réglages**
-  button in the top bar hides the whole band.
+- **Tabs with switches**: the settings sit under the room plan in nine tabs (*Room*,
+  *Treatment*, *Reflections*, *Reverberation*, *Placement*, *Headphones*, *Listening*,
+  *Advanced*, *Output*), each with its own **on/off switch**. A tab that is switched off
+  removes its settings and says what applies instead (room off → free field, placement
+  off → standard stereo triangle, and so on); the values are kept for next time. The
+  *Room* switch is the only way to remove the room (the *room amount* goes down to 5 %).
+  The tab bar is always visible: the **Settings** button in the top bar only collapses
+  the content, and clicking a tab expands it again. No scrolling: everything fits a
+  1200 × 730 window.
 - **Seamless changes**: *Apply* starts a second instance (A/B), makes it the default
   output, waits for the streams to move over, then stops the old one. The output never
   disappears, so players never pause. In **Auto** mode every change is applied this way
@@ -116,7 +118,7 @@ IR[s][e] = HP⁻¹ · ( DF⁻¹ · ( LW · Direct[s][e] + ER · Reflections[s][e
    first reflections, *Sound Power* the late reverberation.
 2. **Room**: absorption coefficients per octave band (125 Hz–8 kHz) for every surface.
    The RT60 is computed per band (Eyring, with air absorption), or imposed manually.
-   A shoebox image-source model (order 0–3) computes the reflections, each one filtered
+   A shoebox image-source model (order 0–4) computes the reflections, each one filtered
    by the materials of every wall it hits. The late reverberation is decorrelated
    octave-band noise with the RT60 of each band. Its level follows the critical distance,
    capped below the Schroeder frequency where the statistical model breaks down.
@@ -142,7 +144,9 @@ speaker-sim            # or: python3 speaker-sim/main.py
    Olive score, the LFX and the measurement origin.
 3. **Plan**: drag yourself (the teal head) to move closer or further, or drag a speaker
    to change the angle and the distance from the front wall.
-4. **03 Salle** (room): pick a preset, or set the treatment, materials and dimensions.
+4. **Settings tabs** (under the plan): in *Room*, pick a preset or set the dimensions and
+   materials; *Treatment*, *Reflections*, *Reverberation*, *Placement* and *Listening* refine the
+   rest, and each switch turns its part off.
    The RT60 meters update live; the teal zone (0.2–0.4 s) is the usual target for
    critical listening.
 5. Press the **power button**. With **Auto** on, later changes apply by themselves,
