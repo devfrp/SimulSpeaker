@@ -88,8 +88,10 @@ PySide6 fonctionne à la place de PyQt6 (repli automatique, voir `qt_compat.py`)
 - **Interrupteurs** : chaque section de réglages a un interrupteur. Couper *Salle*
   désactive la simulation de la pièce et masque ses réglages. *Réflexions précoces* et
   *Écoute* (tonalité et balance) fonctionnent de la même façon, et *Avancé* affiche ou
-  masque les réglages experts. Les réglages forment **une rangée de cartes** sous le plan (défilement à la
-  molette), et le bouton **Réglages** de la barre du haut masque toute la rangée.
+  masque les réglages experts. Les réglages forment **une ligne de cartes** sous le plan, répartie en trois onglets
+  (salle · placement et réflexions · écoute et avancé). Il n'y a aucun défilement : les
+  cartes se partagent la largeur de la fenêtre, et tout tient dans une fenêtre de
+  1200 × 730. Le bouton **Réglages** de la barre du haut masque toute la bande.
 - **Changements sans coupure** : « Appliquer » démarre une seconde instance (A/B), en fait
   la sortie par défaut, attend que les flux l'aient rejointe, puis arrête l'ancienne. La
   sortie ne disparaît jamais, donc les lecteurs ne se mettent jamais en pause. En mode

@@ -234,7 +234,7 @@ ROOM_PRESETS: dict[str, dict[str, Any]] = {
                "room_height": 2.7, "room_walls": "masonry", "room_treatment": 0.25,
                "room_bass_traps": 1.0, "room_floor": "rug", "room_ceiling": "plaster",
                "room_furniture": "furnished", "room_diffusion": 0.6, "front_gap": 0.6},
-    "regie": {"label": "Régie très mate", "room_width": 3.8, "room_length": 4.6,
+    "regie": {"label": "Régie mate", "room_width": 3.8, "room_length": 4.6,
               "room_height": 2.6, "room_walls": "drywall", "room_treatment": 0.35,
               "room_bass_traps": 1.0, "room_floor": "rug", "room_ceiling": "cloud",
               "room_furniture": "furnished", "room_diffusion": 0.3, "front_gap": 0.5},
