@@ -16,6 +16,7 @@ fonctions ``(octets_reçus, octets_totaux_ou_None) -> None``.
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 import time
 import urllib.parse
@@ -94,14 +95,24 @@ def parse_autoeq_index(text: str) -> list[HeadphoneEntry]:
     return entries
 
 
+def query_patterns(query: str) -> list["re.Pattern[str]"]:
+    """Un motif par mot, ancré en début de mot : « 990 » ne trouve pas « 1990 »,
+    mais « hd 65 » trouve « HD 650 »."""
+    return [re.compile(r"(?<![0-9a-z])" + re.escape(w)) for w in query.lower().split()]
+
+
+def matches(patterns: list["re.Pattern[str]"], haystack: str) -> bool:
+    hay = haystack.lower()
+    return all(p.search(hay) for p in patterns)
+
+
 def search_headphones(entries: Iterable[HeadphoneEntry], query: str,
                       limit: int | None = None) -> list[HeadphoneEntry]:
-    """Recherche insensible à la casse : tous les mots doivent apparaître."""
-    words = query.lower().split()
+    """Recherche insensible à la casse : chaque mot doit commencer un mot de l'entrée."""
+    patterns = query_patterns(query)
     out = []
     for e in entries:
-        hay = f"{e.name} {e.source} {e.rig}".lower()
-        if all(w in hay for w in words):
+        if matches(patterns, f"{e.name} {e.source} {e.rig}"):
             out.append(e)
             if limit is not None and len(out) >= limit:
                 break

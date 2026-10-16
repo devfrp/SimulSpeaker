@@ -66,6 +66,14 @@ class IndexTests(unittest.TestCase):
         self.assertEqual(len(download.search_headphones(entries, "")), 3)
         self.assertEqual(len(download.search_headphones(entries, "", limit=1)), 1)
 
+    def test_search_word_start(self):
+        e = [HeadphoneEntry("Beyerdynamic DT 990 (600 Ohm)", "oratory1990", "over-ear", "a"),
+             HeadphoneEntry("Beyerdynamic DT 1990 Pro", "oratory1990", "over-ear", "b"),
+             HeadphoneEntry("Sennheiser HD 650", "crinacle", "over-ear", "c")]
+        self.assertEqual([x.path for x in download.search_headphones(e, "dt 990")], ["a"])
+        self.assertEqual([x.path for x in download.search_headphones(e, "hd 65")], ["c"])
+        self.assertEqual([x.path for x in download.search_headphones(e, "(600")], ["a"])
+
     def test_entry_roundtrip(self):
         e = HeadphoneEntry("A", "B", "C", "B/C/A")
         self.assertEqual(HeadphoneEntry.from_dict(e.to_dict()), e)

@@ -13,7 +13,7 @@ from typing import Callable
 
 from app import AppError, SpeakerSimApp, setup_logging
 from config import APP_DIR, APP_NAME
-from download import HeadphoneEntry
+from download import HeadphoneEntry, matches, query_patterns
 from qt_compat import QtCore, QtGui, QtWidgets, Signal
 
 Qt = QtCore.Qt
@@ -50,7 +50,14 @@ QSlider::handle:horizontal { background: #e6e8ec; width: 14px; margin: -6px 0; b
 QProgressBar { background: #23262d; border: none; border-radius: 4px; height: 8px; color: transparent; }
 QProgressBar::chunk { background: #4c7dff; border-radius: 4px; }
 QLabel#pill { border-radius: 11px; padding: 3px 12px; font-weight: 600; }
-QScrollArea { border: none; background: transparent; }
+QScrollArea#bodyScroll, QWidget#body { border: none; background: #131519; }
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #3a3f4b; border-radius: 4px; min-height: 40px; }
+QScrollBar::handle:vertical:hover { background: #4a5060; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #3a3f4b; border-radius: 4px; min-width: 40px; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
 QToolTip { background: #23262d; color: #e6e8ec; border: 1px solid #343944; }
 """
 
@@ -117,18 +124,17 @@ class WordFilterProxy(QtCore.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._words: list[str] = []
+        self._patterns = []
 
     def set_query(self, text: str) -> None:
-        self._words = text.lower().split()
+        self._patterns = query_patterns(text)
         self.invalidateFilter()
 
     def filterAcceptsRow(self, row, parent):
-        if not self._words:
+        if not self._patterns:
             return True
         idx = self.sourceModel().index(row, 0, parent)
-        hay = (self.sourceModel().data(idx, Qt.ItemDataRole.UserRole + 1) or "")
-        return all(w in hay for w in self._words)
+        return matches(self._patterns, self.sourceModel().data(idx, Qt.ItemDataRole.UserRole + 1) or "")
 
 
 class ResponsePlot(QtWidgets.QWidget):
@@ -313,10 +319,10 @@ class SpeakerPanel(QtWidgets.QFrame):
         self.list.currentItemChanged.connect(self._changed)
 
     def _filter(self, text: str):
-        words = text.lower().split()
+        patterns = query_patterns(text)
         for i in range(self.list.count()):
             item = self.list.item(i)
-            item.setHidden(not all(w in item.text().lower() for w in words))
+            item.setHidden(not matches(patterns, item.text()))
 
     def _changed(self, current, _previous):
         if current is not None:
@@ -522,6 +528,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Corps
         body = QtWidgets.QHBoxLayout()
         body.setSpacing(14)
+        body.setContentsMargins(0, 0, 14, 0)  # place pour la barre de défilement
         left = QtWidgets.QVBoxLayout()
         left.setSpacing(14)
         self.hp_panel = HeadphonePanel()
@@ -545,7 +552,18 @@ class MainWindow(QtWidgets.QMainWindow):
         rw.setLayout(right)
         body.addWidget(lw, 5)
         body.addWidget(rw, 6)
-        main.addLayout(body, 1)
+        # Zone défilante : dans une fenêtre plus petite que le minimum (tuilage
+        # Hyprland, petit écran), le contenu défile au lieu de se chevaucher.
+        body_widget = QtWidgets.QWidget()
+        body_widget.setObjectName("body")
+        body_widget.setLayout(body)
+        scroll = QtWidgets.QScrollArea()
+        scroll.setObjectName("bodyScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setWidget(body_widget)
+        main.addWidget(scroll, 1)
 
         # Pied
         footer = QtWidgets.QHBoxLayout()
