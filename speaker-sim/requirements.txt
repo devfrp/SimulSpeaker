@@ -1,0 +1,12 @@
+# Interface graphique : PyQt6 (recommandé). PySide6 est accepté en repli
+# (voir qt_compat.py) si PyQt6 n'est pas disponible pour votre Python.
+PyQt6>=6.5
+numpy>=1.24
+scipy>=1.10
+requests>=2.28
+# Lecture SOFA sans libmysofa (Windows, macOS) :
+h5py>=3.8
+
+# Dépendances système (paquets de la distribution, pas pip) :
+#   libmysofa  (HRTF KEMAR, chargé via ctypes)
+#   pipewire, wireplumber (wpctl), systemd (systemctl --user, systemd-run)

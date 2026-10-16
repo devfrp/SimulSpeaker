@@ -1,0 +1,21 @@
+{
+  "headphone": null,
+  "speaker_id": "KEF R3",
+  "output_sink": "",
+  "sample_rate": 0,
+  "speaker_angle": 30.0,
+  "speaker_distance": 2.0,
+  "room_enabled": true,
+  "room_width": 4.5,
+  "room_length": 6.0,
+  "room_height": 2.6,
+  "rt60": 0.35,
+  "room_amount": 1.0,
+  "reflection_order": 2,
+  "diffuse_field_eq": true,
+  "headphone_eq_enabled": true,
+  "preamp_db": 0.0,
+  "ir_length_ms": 400,
+  "sofa_file": "",
+  "autostart": false
+}

@@ -1,0 +1,91 @@
+name: Release
+
+# Tag « vX.Y.Z » : construit SpeakerSim.exe (Windows) et Speaker Sim.app (macOS),
+# vérifie que chaque binaire génère réellement des filtres, puis publie la release.
+# Lancement manuel : mêmes binaires, en artefacts du workflow (sans release).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset: SpeakerSim-Windows-x64.exe
+          - os: macos-latest
+            asset: SpeakerSim-macOS-AppleSilicon.dmg
+          - os: macos-15-intel
+            asset: SpeakerSim-macOS-Intel.dmg
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: speaker-sim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dépendances
+        run: pip install pyinstaller PyQt6 numpy scipy requests h5py
+      - name: Version depuis le tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          sed -i.bak "s/^APP_VERSION = .*/APP_VERSION = \"$v\"/" config.py
+          sed -i.bak "s/\"CFBundleShortVersionString\": \"[^\"]*\"/\"CFBundleShortVersionString\": \"$v\"/" packaging/speaker-sim.spec
+      - name: PyInstaller
+        run: pyinstaller --noconfirm packaging/speaker-sim.spec
+
+      - name: Test de fumée (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "export"
+          $p = Start-Process -FilePath dist\SpeakerSim.exe -ArgumentList "--export", "`"$out`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "code de sortie $($p.ExitCode)" }
+          foreach ($f in "ir_LL.wav", "speaker-sim.txt", "speaker-sim-true-stereo.wav") {
+            if (-not (Test-Path (Join-Path $out $f))) { throw "$f manquant" }
+          }
+          Move-Item dist\SpeakerSim.exe "dist\${{ matrix.asset }}"
+
+      - name: Test de fumée + DMG (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          "dist/Speaker Sim.app/Contents/MacOS/Speaker Sim" --export "$RUNNER_TEMP/export"
+          for f in ir_LL.wav speaker-sim.txt speaker-sim-true-stereo.wav; do test -f "$RUNNER_TEMP/export/$f"; done
+          codesign --force --deep --sign - "dist/Speaker Sim.app"
+          mkdir dmg && cp -R "dist/Speaker Sim.app" dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname "Speaker Sim" -srcfolder dmg -ov -format UDZO "dist/${{ matrix.asset }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: speaker-sim/dist/${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Publier la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp install.sh assets/
+          (cd assets && sha256sum * > SHA256SUMS.txt)
+          gh release create "$GITHUB_REF_NAME" assets/* \
+            --title "Speaker Sim $GITHUB_REF_NAME" --generate-notes

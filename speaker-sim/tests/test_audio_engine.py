@@ -1,0 +1,176 @@
+import unittest
+
+import numpy as np
+from scipy import signal
+from scipy.io import wavfile
+
+from tests.helpers import FakeHrtf, make_cea_text, temp_paths
+
+import audio_engine as ae
+
+PARAMETRIC = """Preamp: -6.1 dB
+Filter 1: ON LSC Fc 105 Hz Gain 6.4 dB Q 0.70
+Filter 2: ON PK Fc 8800 Hz Gain 5.1 dB Q 1.42
+Filter 3: ON HSC Fc 10000 Hz Gain -2.1 dB Q 0.70
+Filter 4: OFF PK Fc 1000 Hz Gain 9 dB Q 1
+"""
+
+
+class ParametricEqTests(unittest.TestCase):
+    def test_parse(self):
+        eq = ae.parse_parametric_eq(PARAMETRIC)
+        self.assertAlmostEqual(eq.preamp_db, -6.1)
+        self.assertEqual([f.kind for f in eq.filters], ["LSC", "PK", "HSC"])  # OFF ignoré
+        self.assertAlmostEqual(eq.filters[1].fc, 8800)
+        self.assertAlmostEqual(eq.filters[1].q, 1.42)
+
+    def test_peaking_gain_at_center(self):
+        for gain in (6.0, -4.5):
+            bq = ae.Biquad("PK", 1000, gain, 1.0)
+            b, a = ae.biquad_coefficients(bq, 48000)
+            _, h = signal.freqz(b, a, worN=[2 * np.pi * 1000 / 48000])
+            self.assertAlmostEqual(20 * np.log10(abs(h[0])), gain, places=3)
+
+    def test_shelves_asymptotes(self):
+        fs = 48000
+        low = ae.biquad_coefficients(ae.Biquad("LSC", 200, 6, 0.707), fs)
+        high = ae.biquad_coefficients(ae.Biquad("HSC", 2000, -6, 0.707), fs)
+        w = 2 * np.pi * np.array([10, 20000]) / fs
+        _, hl = signal.freqz(*low, worN=w)
+        _, hh = signal.freqz(*high, worN=w)
+        self.assertAlmostEqual(20 * np.log10(abs(hl[0])), 6, delta=0.1)
+        self.assertAlmostEqual(20 * np.log10(abs(hl[1])), 0, delta=0.1)
+        self.assertAlmostEqual(20 * np.log10(abs(hh[1])), -6, delta=0.2)
+
+    def test_filter_above_nyquist_skipped(self):
+        self.assertIsNone(ae.biquad_coefficients(ae.Biquad("PK", 30000, 3, 1), 48000))
+
+    def test_fir_matches_response(self):
+        fs = 48000
+        eq = ae.parse_parametric_eq(PARAMETRIC)
+        h = ae.headphone_eq_fir(eq, fs)
+        freqs = np.array([50, 105, 1000, 8800, 15000])
+        expected = ae.eq_response_db(eq, freqs, fs)
+        _, hf = signal.freqz(h, worN=2 * np.pi * freqs / fs)
+        np.testing.assert_allclose(20 * np.log10(np.abs(hf)), expected, atol=0.2)
+
+    def test_graphic_eq(self):
+        eq = ae.parse_graphic_eq("GraphicEQ: 20 -3; 1000 0; 20000 4")
+        self.assertIsNotNone(eq.graphic)
+        h = ae.headphone_eq_fir(eq, 48000)
+        _, hf = signal.freqz(h, worN=[2 * np.pi * 1000 / 48000])
+        self.assertAlmostEqual(20 * np.log10(abs(hf[0])), 0.0, delta=0.3)
+
+
+class MinimumPhaseTests(unittest.TestCase):
+    def test_magnitude_and_energy_front_loaded(self):
+        fs = 48000
+        f = np.array([20, 100, 1000, 5000, 20000])
+        db = np.array([-10, -3, 0, 3, -6])
+        h = ae.minimum_phase_fir(f, db, fs, 4096)
+        probe = np.array([100, 1000, 5000])
+        _, hf = signal.freqz(h, worN=2 * np.pi * probe / fs)
+        np.testing.assert_allclose(20 * np.log10(np.abs(hf)), [-3, 0, 3], atol=0.5)
+        energy = np.cumsum(h ** 2) / np.sum(h ** 2)
+        self.assertGreater(energy[256], 0.95)  # phase minimale : énergie au début
+
+    def test_octave_smoothing_flat(self):
+        freqs = np.linspace(0, 24000, 1025)
+        out = ae.smooth_octave(freqs, np.ones(1025), 3)
+        np.testing.assert_allclose(out, 1.0)
+
+
+class CeaTests(unittest.TestCase):
+    def test_parse_with_thousands_and_normalisation(self):
+        curves = ae.parse_cea2034(make_cea_text())
+        self.assertIn("Sound Power", curves)
+        f, _ = curves["Listening Window"]
+        self.assertAlmostEqual(f[-1], 20000, delta=1)  # « 20,000.00 » bien lu
+        spk = ae.SpeakerResponse.from_curves(curves)
+        self.assertAlmostEqual(float(np.mean(spk.listening_window)), 0.0, places=6)
+        self.assertAlmostEqual(spk.directivity_index(), 6.0, places=6)
+
+    def test_missing_listening_window(self):
+        bad = '"CEA2034"\n"On Axis"\n"f"\t"spl"\n100\t80\n200\t81\n'
+        with self.assertRaises(ae.AudioEngineError):
+            ae.parse_cea2034(bad)
+
+
+class RoomTests(unittest.TestCase):
+    def test_image_source_counts(self):
+        room = ae.RoomSpec(4, 5, 2.5)
+        src = np.array([1.0, 1.5, 1.2])
+        counts = [len(ae.image_sources(src, room, k, 0.8)) for k in (0, 1, 2)]
+        self.assertEqual(counts, [1, 7, 25])
+
+    def test_first_order_floor_image(self):
+        room = ae.RoomSpec(4, 5, 2.5)
+        src = np.array([1.0, 1.5, 1.2])
+        imgs = ae.image_sources(src, room, 1, 0.8)
+        z = sorted(round(float(i.position[2]), 6) for i in imgs if i.reflections == 1)
+        self.assertIn(-1.2, z)          # sol
+        self.assertIn(2 * 2.5 - 1.2, z)  # plafond
+
+    def test_reflection_coefficient_bounds(self):
+        self.assertTrue(0 < ae.RoomSpec(rt60=0.1).reflection_coefficient() < 1)
+        self.assertGreater(ae.RoomSpec(rt60=1.0).reflection_coefficient(),
+                           ae.RoomSpec(rt60=0.2).reflection_coefficient())
+
+    def test_layout_symmetry_and_errors(self):
+        layout = ae.stereo_layout(ae.RoomSpec(4.5, 6, 2.6), 30, 2.0)
+        left, right = layout.speakers["L"], layout.speakers["R"]
+        self.assertAlmostEqual(np.linalg.norm(left - layout.listener), 2.0)
+        self.assertGreater(left[1], right[1])  # y vers la gauche
+        with self.assertRaises(ae.AudioEngineError):
+            ae.stereo_layout(ae.RoomSpec(2.0, 6, 2.6), 60, 3.0)
+
+
+class RenderTests(unittest.TestCase):
+    def setUp(self):
+        self.speaker = ae.SpeakerResponse.from_curves(ae.parse_cea2034(make_cea_text()))
+
+    def _render(self, **kw):
+        params = ae.RenderParams(fs=48000, ir_length_ms=200, room=ae.RoomSpec(rt60=0.2), **kw)
+        return ae.render(self.speaker, None, FakeHrtf(fs=48000), params)
+
+    def test_render_shapes_and_headroom(self):
+        res = self._render()
+        self.assertEqual(set(res.irs), set(ae.PAIRS))
+        lengths = {len(v) for v in res.irs.values()}
+        self.assertEqual(len(lengths), 1)
+        for ear in "LR":
+            mono = res.irs["L" + ear].astype(float) + res.irs["R" + ear].astype(float)
+            spec = np.abs(np.fft.rfft(mono, 1 << 16))
+            self.assertLess(20 * np.log10(spec.max()), 3.0)
+
+    def test_ipsilateral_louder_and_symmetric(self):
+        res = self._render(room_enabled=False)
+        e = {k: float(np.sum(v.astype(float) ** 2)) for k, v in res.irs.items()}
+        self.assertGreater(e["LL"], e["LR"])
+        self.assertGreater(e["RR"], e["RL"])
+        self.assertAlmostEqual(e["LL"], e["RR"], delta=e["LL"] * 0.02)
+
+    def test_room_adds_tail(self):
+        dry = self._render(room_enabled=False)
+        wet = self._render(room_enabled=True)
+        tail = slice(int(0.05 * 48000), None)
+        self.assertGreater(np.sum(wet.irs["LL"][tail].astype(float) ** 2),
+                           10 * np.sum(dry.irs["LL"][tail].astype(float) ** 2) + 1e-12)
+
+    def test_rate_mismatch(self):
+        with self.assertRaises(ae.AudioEngineError):
+            ae.render(self.speaker, None, FakeHrtf(fs=44100), ae.RenderParams(fs=48000))
+
+    def test_write_irs(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            res = self._render(room_enabled=False)
+            out = ae.write_irs(res, paths.filters_dir)
+            self.assertEqual(sorted(out), sorted(ae.PAIRS))
+            fs, data = wavfile.read(out["LL"])
+            self.assertEqual(fs, 48000)
+            self.assertEqual(data.dtype, np.float32)
+
+
+if __name__ == "__main__":
+    unittest.main()
