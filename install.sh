@@ -190,7 +190,9 @@ Categories=AudioVideo;Audio;Settings;
 Keywords=headphones;speakers;hrtf;autoeq;pipewire;casque;enceintes;
 StartupWMClass=devfrp-speaker-sim
 EOF
-  command -v update-desktop-database >/dev/null && update-desktop-database -q "$(dirname "$DESKTOP_FILE")" || true
+  if command -v update-desktop-database >/dev/null; then
+    update-desktop-database -q "$(dirname "$DESKTOP_FILE")" || true
+  fi
 fi
 
 "$LAUNCHER" --version >/dev/null || die "L'application ne démarre pas ; voir $LAUNCHER"
