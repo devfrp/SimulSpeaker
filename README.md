@@ -86,8 +86,8 @@ PySide6 works in place of PyQt6 (automatic fallback, see `qt_compat.py`).
 - **On/off switches**: every settings section has a switch. Turning off *Salle* (room)
   disables the room simulation and hides its settings. *Réflexions précoces* (early
   reflections) and *Écoute* (tone and balance) work the same way, and *Avancé* (advanced)
-  shows or hides the expert settings. The **Réglages** button in the top bar hides the
-  whole settings column.
+  shows or hides the expert settings. The settings sit in **a horizontal row of cards** under the room plan (scroll it
+  with the mouse wheel), and the **Réglages** button in the top bar hides the whole row.
 - **Seamless changes**: *Apply* starts a second instance (A/B), makes it the default
   output, waits for the streams to move over, then stops the old one. The output never
   disappears, so players never pause. In **Auto** mode every change is applied this way

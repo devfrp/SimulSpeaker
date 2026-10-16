@@ -184,7 +184,8 @@ def section(tag: str, title: str, subtitle: str = "") -> tuple[QtWidgets.QFrame,
     lay.setSpacing(10)
     head = QtWidgets.QHBoxLayout()
     head.setSpacing(10)
-    head.addWidget(label(tag, name="tag"))
+    if tag:
+        head.addWidget(label(tag, name="tag"))
     head.addWidget(label(title, name="sectionTitle"), 1)
     lay.addLayout(head)
     if subtitle:
@@ -1078,8 +1079,24 @@ class SpeakerPanel(QtWidgets.QWidget):
                 return
 
 
+class HScrollArea(QtWidgets.QScrollArea):
+    """Zone défilant horizontalement ; la molette (verticale) fait défiler la rangée."""
+
+    def wheelEvent(self, e):
+        d = e.angleDelta()
+        if abs(d.y()) > abs(d.x()):
+            bar = self.horizontalScrollBar()
+            bar.setValue(bar.value() - d.y())
+            e.accept()
+        else:
+            super().wheelEvent(e)
+
+
 class RoomPanel(QtWidgets.QWidget):
-    """03 Salle, 04 Écoute, 05 Avancé — chaque section a son interrupteur."""
+    """Réglages en rangée de cartes : 03 Salle · Traitement · Matériaux · Dimensions ·
+    Réflexions · Placement · 04 Écoute · 05 Avancé (+ 06 Sortie ajoutée par la fenêtre).
+
+    L'interrupteur de *Salle* retire les cartes qui dépendent de la pièce."""
 
     changed = Signal(dict)          # réglages validés
     preview = Signal(dict)          # aperçu pendant un glissement
@@ -1088,9 +1105,9 @@ class RoomPanel(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        outer = QtWidgets.QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(14)
+        self.row = QtWidgets.QHBoxLayout(self)
+        self.row.setContentsMargins(0, 0, 0, 0)
+        self.row.setSpacing(12)
         self.sliders: dict[str, ValueSlider] = {}
         self.segs: dict[str, Segmented] = {}
         pct = lambda v: f"{v * 100:.0f} %"
@@ -1098,12 +1115,12 @@ class RoomPanel(QtWidgets.QWidget):
         meters2 = lambda v: f"{fr_num(v, 2)} m"
         db = lambda v: f"{v:+.1f} dB"
 
-        def add_slider(layout, key, text, lo, hi, step, fmt, accent=""):
+        def add_slider(layout, key, text, lo, hi, step, fmt, accent="", pos=None):
             w = ValueSlider(text, lo, hi, step, fmt, accent)
             w.committed.connect(lambda v, k=key: self.changed.emit({k: v}))
             w.changed.connect(lambda v, k=key: self.preview.emit({k: v}))
             self.sliders[key] = w
-            layout.addWidget(w)
+            layout.addWidget(w, *pos) if pos else layout.addWidget(w)
             return w
 
         def add_seg(layout, key, text, options):
@@ -1115,13 +1132,27 @@ class RoomPanel(QtWidgets.QWidget):
             layout.addWidget(seg)
             return seg
 
-        # ---- 03 Salle (interrupteur = simulation de la pièce)
-        self.room = Collapsible("03", "Salle", "Pièce désactivée : écoute en champ libre, sans "
-                                               "réflexions ni réverbération.")
-        self.room.toggled.connect(lambda on: self.changed.emit({"room_enabled": on}))
-        outer.addWidget(self.room)
-        lay = self.room.lay
-        lay.addWidget(caption("préréglages"))
+        def card(tag, title, width):
+            frame, lay = section(tag, title)
+            frame.setFixedWidth(width)
+            lay.addStretch(0)
+            self.row.addWidget(frame, 0, Qt.AlignmentFlag.AlignTop)
+            return frame, lay
+
+        def grid2(lay):
+            g = QtWidgets.QGridLayout()
+            g.setHorizontalSpacing(18)
+            g.setVerticalSpacing(10)
+            lay.addLayout(g)
+            return g
+
+        # 03 Salle : interrupteur + préréglages
+        self.room = Collapsible("03", "Salle", "Pièce désactivée : écoute en champ libre, "
+                                               "sans réflexions ni réverbération.")
+        self.room.setFixedWidth(300)
+        self.room.toggled.connect(self._room_toggled)
+        self.row.addWidget(self.room, 0, Qt.AlignmentFlag.AlignTop)
+        self.room.lay.addWidget(caption("préréglages"))
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(6)
         self.preset_group = QtWidgets.QButtonGroup(self)
@@ -1135,101 +1166,135 @@ class RoomPanel(QtWidgets.QWidget):
             self.preset_group.addButton(btn, i)
             grid.addWidget(btn, i // 2, i % 2)
         self.preset_group.idClicked.connect(lambda i: self.preset_chosen.emit(self.preset_keys[i]))
-        lay.addLayout(grid)
+        self.room.lay.addLayout(grid)
         self.custom = caption("")
-        lay.addWidget(self.custom)
+        self.room.lay.addWidget(self.custom)
 
-        # Traitement acoustique
-        lay.addWidget(caption("traitement acoustique"))
-        add_seg(lay, "room_absorber", "Absorbeurs", list(ae.ABSORBERS.items()))
-        self.per_wall = QtWidgets.QCheckBox("Réglage paroi par paroi")
+        # Traitement
+        treat, lay = card("", "Traitement", 470)
+        g = grid2(lay)
+        col1 = QtWidgets.QVBoxLayout()
+        col1.setSpacing(10)
+        add_seg(col1, "room_absorber", "Absorbeurs", list(ae.ABSORBERS.items()))
+        self.per_wall = QtWidgets.QCheckBox("Paroi par paroi")
         self.per_wall.clicked.connect(lambda v: (self._per_wall_visible(v),
                                                  self.changed.emit({"treatment_per_wall": v})))
-        lay.addWidget(self.per_wall)
+        col1.addWidget(self.per_wall)
+        add_seg(col1, "room_bass_traps", "Pièges à basses (angles)",
+                [(0.0, "Aucun"), (0.5, "Quelques"), (1.0, "Complet")])
+        col1.addStretch(1)
+        g.addLayout(col1, 0, 0)
+        col2 = QtWidgets.QVBoxLayout()
+        col2.setSpacing(10)
         self.global_box = QtWidgets.QWidget()
         gl = QtWidgets.QVBoxLayout(self.global_box)
         gl.setContentsMargins(0, 0, 0, 0)
         gl.setSpacing(10)
         add_slider(gl, "room_treatment", "Murs couverts de panneaux", 0, 1, 0.05, pct, accent="teal")
         add_seg(gl, "room_ceiling", "Plafond", list(ae.CEILINGS.items()))
-        lay.addWidget(self.global_box)
+        col2.addWidget(self.global_box)
         self.wall_box = QtWidgets.QWidget()
         wl = QtWidgets.QVBoxLayout(self.wall_box)
         wl.setContentsMargins(0, 0, 0, 0)
-        wl.setSpacing(10)
-        for key, text in (("treatment_front", "Mur avant (derrière les enceintes)"),
-                          ("treatment_sides", "Murs latéraux"),
-                          ("treatment_rear", "Mur arrière"),
-                          ("treatment_ceiling", "Plafond")):
+        wl.setSpacing(6)
+        for key, text in (("treatment_front", "Mur avant"), ("treatment_sides", "Murs latéraux"),
+                          ("treatment_rear", "Mur arrière"), ("treatment_ceiling", "Plafond")):
             add_slider(wl, key, text, 0, 1, 0.05, pct, accent="teal")
-        lay.addWidget(self.wall_box)
-        add_seg(lay, "room_bass_traps", "Pièges à basses (angles)",
-                [(0.0, "Aucun"), (0.5, "Quelques-uns"), (1.0, "Complet")])
+        col2.addWidget(self.wall_box)
+        col2.addStretch(1)
+        g.addLayout(col2, 0, 1)
+        g.setColumnStretch(1, 1)
 
-        lay.addWidget(caption("matériaux"))
+        # Matériaux
+        mats, lay = card("", "Matériaux", 330)
         add_seg(lay, "room_walls", "Murs", [("masonry", "Maçonnerie"), ("drywall", "Placo")])
         add_seg(lay, "room_floor", "Sol", [("tile", "Carrelage"), ("wood", "Parquet"),
                                            ("rug", "Tapis"), ("carpet", "Moquette")])
         add_seg(lay, "room_furniture", "Mobilier", list(ae.FURNITURE.items()))
 
-        lay.addWidget(caption("dimensions"))
+        # Dimensions
+        dims, lay = card("", "Dimensions", 260)
         add_slider(lay, "room_length", "Longueur", 2, 30, 0.1, meters)
         add_slider(lay, "room_width", "Largeur", 2, 20, 0.1, meters)
         add_slider(lay, "room_height", "Hauteur sous plafond", 2, 8, 0.1, meters)
 
         # Réflexions précoces (interrupteur = ordre > 0)
-        self.refl = Collapsible("", "réflexions précoces", "Désactivées : seule la réverbération "
-                                "tardive reste.", nested=True)
+        self.refl = Collapsible("", "Réflexions", "Désactivées : seule la réverbération "
+                                "tardive reste.")
+        self.refl.setFixedWidth(270)
         self.refl.toggled.connect(self._refl_toggled)
         add_seg(self.refl.lay, "reflection_order", "Ordre (rebonds simulés)",
                 [(1, "1"), (2, "2"), (3, "3"), (4, "4")])
         add_slider(self.refl.lay, "room_diffusion", "Diffusion du mur arrière", 0, 1, 0.05, pct)
-        lay.addWidget(self.refl)
+        self.row.addWidget(self.refl, 0, Qt.AlignmentFlag.AlignTop)
+        self.room_cards = [treat, mats, dims, self.refl]
 
-        lay.addWidget(caption("placement"))
-        add_slider(lay, "speaker_angle", "Angle des enceintes", 10, 80, 1, lambda v: f"{v:.0f}°")
-        add_slider(lay, "speaker_distance", "Distance d'écoute", 0.5, 10, 0.05, meters2)
-        add_slider(lay, "front_gap", "Enceintes – mur avant", 0.2, 5, 0.05, meters2)
-        add_slider(lay, "listener_offset", "Décalage latéral de l'auditeur", -3, 3, 0.05,
+        # Placement (toujours utile, même sans pièce)
+        place, lay = card("", "Placement", 500)
+        g = grid2(lay)
+        add_slider(g, "speaker_angle", "Angle des enceintes", 10, 80, 1, lambda v: f"{v:.0f}°",
+                   pos=(0, 0))
+        add_slider(g, "speaker_distance", "Distance d'écoute", 0.5, 10, 0.05, meters2, pos=(1, 0))
+        add_slider(g, "front_gap", "Enceintes – mur avant", 0.2, 5, 0.05, meters2, pos=(2, 0))
+        add_slider(g, "listener_offset", "Décalage latéral", -3, 3, 0.05,
                    lambda v: "centré" if abs(v) < 1e-9 else
-                   f"{fr_num(abs(v), 2)} m {'à gauche' if v > 0 else 'à droite'}")
-        add_slider(lay, "ear_height", "Hauteur des oreilles", 0.6, 2.0, 0.05, meters2)
-        add_slider(lay, "speaker_height", "Hauteur des tweeters", 0, 3, 0.05,
-                   lambda v: "aux oreilles" if v <= 0 else f"{fr_num(v, 2)} m")
+                   f"{fr_num(abs(v), 2)} m {'gauche' if v > 0 else 'droite'}", pos=(0, 1))
+        add_slider(g, "ear_height", "Hauteur des oreilles", 0.6, 2.0, 0.05, meters2, pos=(1, 1))
+        add_slider(g, "speaker_height", "Hauteur des tweeters", 0, 3, 0.05,
+                   lambda v: "aux oreilles" if v <= 0 else f"{fr_num(v, 2)} m", pos=(2, 1))
 
-        # ---- 04 Écoute (interrupteur = tonalité et balance actives)
+        # 04 Écoute (interrupteur = tonalité et balance actives)
         self.listen = Collapsible("04", "Écoute", "Tonalité et balance désactivées (réponse neutre).")
+        self.listen.setFixedWidth(460)
         self.listen.toggled.connect(lambda on: self.changed.emit({"tone_enabled": on}))
-        outer.addWidget(self.listen)
-        add_slider(self.listen.lay, "bass_db", "Basses (plateau 105 Hz)", -12, 12, 0.5, db)
-        add_slider(self.listen.lay, "treble_db", "Aigus (plateau 10 kHz)", -12, 12, 0.5, db)
-        add_slider(self.listen.lay, "balance_db", "Balance", -6, 6, 0.5,
+        g = grid2(self.listen.lay)
+        add_slider(g, "bass_db", "Basses (105 Hz)", -12, 12, 0.5, db, pos=(0, 0))
+        add_slider(g, "treble_db", "Aigus (10 kHz)", -12, 12, 0.5, db, pos=(1, 0))
+        add_slider(g, "balance_db", "Balance", -6, 6, 0.5,
                    lambda v: "centre" if abs(v) < 1e-9 else
-                   f"{abs(v):.1f} dB {'à droite' if v > 0 else 'à gauche'}")
-        add_slider(self.listen.lay, "preamp_db", "Préampli", -30, 20, 0.5, db)
+                   f"{abs(v):.1f} dB {'droite' if v > 0 else 'gauche'}", pos=(0, 1))
+        add_slider(g, "preamp_db", "Préampli", -30, 20, 0.5, db, pos=(1, 1))
+        self.row.addWidget(self.listen, 0, Qt.AlignmentFlag.AlignTop)
 
-        # ---- 05 Avancé (interrupteur = afficher les réglages avancés)
+        # 05 Avancé (interrupteur = afficher les réglages avancés)
         self.adv = Collapsible("05", "Avancé", "Réglages avancés masqués.")
+        self.adv.setFixedWidth(460)
         self.adv.toggled.connect(lambda on: self.ui_state.emit("show_advanced", on))
-        outer.addWidget(self.adv)
-        add_slider(self.adv.lay, "room_amount", "Quantité de pièce", 0, 2, 0.05, pct)
-        self.rt_auto = QtWidgets.QCheckBox("RT60 calculé depuis les matériaux")
+        g = grid2(self.adv.lay)
+        add_slider(g, "room_amount", "Quantité de pièce", 0, 2, 0.05, pct, pos=(0, 0))
+        add_slider(g, "rt60", "RT60 imposé (500 Hz–1 kHz)", 0.1, 4, 0.05,
+                   lambda v: f"{fr_num(v, 2)} s", pos=(1, 0))
+        self.rt_auto = QtWidgets.QCheckBox("RT60 calculé (matériaux)")
         self.rt_auto.toggled.connect(self._rt_auto_toggled)
-        self.adv.lay.addWidget(self.rt_auto)
-        add_slider(self.adv.lay, "rt60", "RT60 imposé (500 Hz – 1 kHz)", 0.1, 4, 0.05,
-                   lambda v: f"{fr_num(v, 2)} s")
-        self.df_eq = QtWidgets.QCheckBox("Égalisation champ diffus du HRTF")
+        g.addWidget(self.rt_auto, 2, 0)
+        self.df_eq = QtWidgets.QCheckBox("Égalisation champ diffus")
         self.df_eq.toggled.connect(lambda v: self.changed.emit({"diffuse_field_eq": v}))
-        self.adv.lay.addWidget(self.df_eq)
-        self.adv.lay.addWidget(label("Fréquence d'échantillonnage", muted=True))
+        g.addWidget(self.df_eq, 0, 1)
+        rate_box = QtWidgets.QVBoxLayout()
+        rate_box.setSpacing(4)
+        rate_box.addWidget(label("Fréquence d'échantillonnage", muted=True))
         self.rate = QtWidgets.QComboBox()
-        for text, value in (("Auto (horloge PipeWire / 48 kHz)", 0), ("44,1 kHz", 44100),
+        for text, value in (("Auto (PipeWire / 48 kHz)", 0), ("44,1 kHz", 44100),
                             ("48 kHz", 48000), ("96 kHz", 96000)):
             self.rate.addItem(text, value)
         self.rate.activated.connect(
             lambda i: self.changed.emit({"sample_rate": int(self.rate.itemData(i))}))
-        self.adv.lay.addWidget(self.rate)
+        rate_box.addWidget(self.rate)
+        g.addLayout(rate_box, 1, 1)
+        self.row.addWidget(self.adv, 0, Qt.AlignmentFlag.AlignTop)
         self._last_order = 2
+
+    def add_card(self, widget: QtWidgets.QWidget, width: int = 320) -> None:
+        widget.setFixedWidth(width)
+        self.row.addWidget(widget, 0, Qt.AlignmentFlag.AlignTop)
+
+    def finish(self) -> None:
+        self.row.addStretch(1)
+
+    def _room_toggled(self, on: bool):
+        for c in self.room_cards:
+            c.setVisible(on)
+        self.changed.emit({"room_enabled": on})
 
     def _per_wall_visible(self, per_wall: bool):
         self.global_box.setVisible(not per_wall)
@@ -1256,6 +1321,8 @@ class RoomPanel(QtWidgets.QWidget):
         if s.reflection_order > 0:
             self._last_order = s.reflection_order
         self.room.set_on(s.room_enabled)
+        for c in self.room_cards:
+            c.setVisible(s.room_enabled)
         self.refl.set_on(s.reflection_order > 0)
         self.listen.set_on(s.tone_enabled)
         self.adv.set_on(bool(s.extra.get("show_advanced", False)))
@@ -1383,28 +1450,33 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progress.setFixedHeight(2)
         main.addWidget(self.progress)
 
-        # Corps : trois colonnes
+        # Corps : en haut sources · plan · courbes ; en bas la rangée de réglages
         body = QtWidgets.QWidget()
         body.setObjectName("body")
-        bl = QtWidgets.QHBoxLayout(body)
-        bl.setContentsMargins(16, 14, 16, 14)
-        bl.setSpacing(14)
+        bv = QtWidgets.QVBoxLayout(body)
+        bv.setContentsMargins(16, 14, 16, 10)
+        bv.setSpacing(12)
+        upper = QtWidgets.QHBoxLayout()
+        upper.setSpacing(14)
 
+        # Sources : casque et enceintes en onglets
         left = QtWidgets.QWidget()
         left.setFixedWidth(330)
         ll = QtWidgets.QVBoxLayout(left)
         ll.setContentsMargins(0, 0, 0, 0)
-        ll.setSpacing(14)
+        ll.setSpacing(8)
+        self.source_tabs = Segmented([(0, "01 Casque"), (1, "02 Enceintes")])
+        ll.addWidget(self.source_tabs)
+        self.source_stack = QtWidgets.QStackedWidget()
         self.hp_panel = HeadphonePanel()
         self.spk_panel = SpeakerPanel(app.speakers)
-        ll.addWidget(self.hp_panel, 1)
-        ll.addWidget(self.spk_panel, 1)
-        bl.addWidget(left)
+        self.source_stack.addWidget(self.hp_panel)
+        self.source_stack.addWidget(self.spk_panel)
+        ll.addWidget(self.source_stack, 1)
+        self.source_tabs.changed.connect(self.source_stack.setCurrentIndex)
+        self.source_tabs.set_value(0)
+        upper.addWidget(left)
 
-        center = QtWidgets.QWidget()
-        cl = QtWidgets.QVBoxLayout(center)
-        cl.setContentsMargins(0, 0, 0, 0)
-        cl.setSpacing(14)
         plan_frame = QtWidgets.QFrame()
         plan_frame.setObjectName("card")
         pl = QtWidgets.QVBoxLayout(plan_frame)
@@ -1417,36 +1489,43 @@ class MainWindow(QtWidgets.QMainWindow):
         head.addWidget(self.hud)
         pl.addLayout(head)
         self.plan = RoomPlan()
+        self.plan.setMinimumSize(380, 300)
         pl.addWidget(self.plan, 1)
-        cl.addWidget(plan_frame, 5)
-        lower = QtWidgets.QHBoxLayout()
-        lower.setSpacing(14)
+        upper.addWidget(plan_frame, 1)
+
+        curves = QtWidgets.QWidget()
+        curves.setFixedWidth(400)
+        cv = QtWidgets.QVBoxLayout(curves)
+        cv.setContentsMargins(0, 0, 0, 0)
+        cv.setSpacing(12)
         resp_frame, resp_lay = section("Hz", "Réponse simulée")
         self.plot = ResponsePlot()
+        self.plot.setMinimumHeight(130)
         resp_lay.addWidget(self.plot, 1)
         rt_frame, rt_lay = section("RT", "Réverbération")
         self.rt = RtMeter()
+        self.rt.setMinimumHeight(130)
         rt_lay.addWidget(self.rt, 1)
         rt_lay.addWidget(caption("zone sarcelle : 0,2–0,4 s, écoute critique"))
-        lower.addWidget(resp_frame, 3)
-        lower.addWidget(rt_frame, 2)
-        cl.addLayout(lower, 4)
-        bl.addWidget(center, 1)
+        cv.addWidget(resp_frame, 1)
+        cv.addWidget(rt_frame, 1)
+        upper.addWidget(curves)
+        bv.addLayout(upper, 1)
 
-        right = QtWidgets.QWidget()
-        rl = QtWidgets.QVBoxLayout(right)
-        rl.setContentsMargins(0, 0, 6, 0)
-        rl.setSpacing(14)
+        # Rangée de réglages (défilement horizontal)
         self.room_panel = RoomPanel()
         self.out_panel = OutputPanel()
-        rl.addWidget(self.room_panel)
-        rl.addWidget(self.out_panel)
-        rl.addStretch(1)
-        self.right_scroll = scroll_wrap(right)
-        self.right_scroll.setFixedWidth(340)
-        bl.addWidget(self.right_scroll)
+        self.room_panel.add_card(self.out_panel, 320)
+        self.room_panel.finish()
+        self.right_scroll = HScrollArea()
+        self.right_scroll.setWidgetResizable(True)
+        self.right_scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        self.right_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.right_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.right_scroll.setWidget(self.room_panel)
+        bv.addWidget(self.right_scroll)
 
-        body.setMinimumSize(1160, 720)
+        body.setMinimumSize(1160, 780)
         main.addWidget(scroll_wrap(body, horizontal=True), 1)
 
         # Pied de page
@@ -1518,6 +1597,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.right_scroll.setVisible(show)
         self.refresh_room()
 
+    def _fit_row(self):
+        """Hauteur de la rangée = carte la plus haute (+ barre de défilement)."""
+        self.room_panel.adjustSize()
+        h = max((self.room_panel.row.itemAt(i).widget().sizeHint().height()
+                 for i in range(self.room_panel.row.count())
+                 if self.room_panel.row.itemAt(i).widget() is not None
+                 and not self.room_panel.row.itemAt(i).widget().isHidden()), default=200)
+        self.right_scroll.setFixedHeight(h + 16)
+
     def refresh_room(self, preview: dict | None = None):
         s = self.app.settings
         if preview:
@@ -1525,11 +1613,15 @@ class MainWindow(QtWidgets.QMainWindow):
             s = replace(s, **preview)
         room = self.app.room_spec(s)
         self.plan.set_state(s, room)
+        if not preview:
+            QtCore.QTimer.singleShot(0, self._fit_row)
         self.rt.set_values(room.rt60_bands())
         preset = ROOM_PRESETS.get(s.room_preset, {}).get("label", "Pièce personnalisée")
         self.plan_title.setText(preset)
+        treat = ("traitement par paroi" if room.per_wall
+                 else f"traitement {room.treatment * 100:.0f} %")
         self.hud.setText(f"RT60 {fr_num(room.rt60, 2)} s  ·  Dc {fr_num(room.critical_distance(), 2)} m"
-                         f"  ·  traitement {room.treatment * 100:.0f} %".upper())
+                         f"  ·  {treat}".upper())
         hp = self.app.headphone
         spk = self.app.speaker()
         sep = f" <span style='color:{AMBER}'>→</span> "
