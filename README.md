@@ -1,4 +1,3 @@
-<h1 align="center">!!! ATTENTION BETA TEST !!!</h1>
 
 <p align="center"><img src="speaker-sim/packaging/icon.png" width="96" alt=""></p>
 
