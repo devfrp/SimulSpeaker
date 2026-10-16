@@ -27,7 +27,7 @@ if sys.platform == "darwin":
     coll = COLLECT(exe, a.binaries, a.datas, name=NAME)
     app = BUNDLE(coll, name=f"{NAME}.app", icon=icon,
                  bundle_identifier="io.github.devfrp.speakersim",
-                 info_plist={"CFBundleShortVersionString": "1.0.1",
+                 info_plist={"CFBundleShortVersionString": "1.1.0",
                              "NSHighResolutionCapable": True,
                              "NSHumanReadableCopyright": "© 2026 devfrp — MIT"})
 else:
