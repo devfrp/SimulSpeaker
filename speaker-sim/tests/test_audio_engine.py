@@ -96,6 +96,45 @@ class CeaTests(unittest.TestCase):
             ae.parse_cea2034(bad)
 
 
+def make_polar_text(plane: str, beam: float) -> str:
+    """Fichier polaire Klippel synthétique : niveau qui baisse avec l'angle (« beam » dB/10°)."""
+    angles = [0] + [a for k in range(10, 180, 10) for a in (k, -k)] + [180]
+    names = "\t\t".join('"On-Axis"' if a == 0 else f'"{a}°"' for a in angles)
+    rows = []
+    for f in np.geomspace(20, 20000, 40):
+        cells = []
+        for a in angles:
+            cells += [f"{f:.4f}", f"{86 - beam * abs(a) / 10:.3f}"]
+        rows.append("\t".join(cells))
+    return f'"SPL {plane}"\n{names}\n"Frequency"\t"SPL"\n' + "\n".join(rows) + "\n"
+
+
+class PolarTests(unittest.TestCase):
+    def test_omni_gives_identical_curves(self):
+        h = ae.parse_klippel_polar(make_polar_text("Horizontal", 0))
+        v = ae.parse_klippel_polar(make_polar_text("Vertical", 0))
+        self.assertEqual(len(h[1]), 36)
+        curves = ae.cea2034_from_polar(h, v)
+        for name in ("Listening Window", "Early Reflections", "Sound Power"):
+            np.testing.assert_allclose(curves[name][1], 86.0, atol=1e-9)
+
+    def test_directional_speaker_has_positive_di(self):
+        h = ae.parse_klippel_polar(make_polar_text("Horizontal", 1.5))
+        v = ae.parse_klippel_polar(make_polar_text("Vertical", 1.5))
+        spk = ae.SpeakerResponse.from_curves(ae.cea2034_from_polar(h, v))
+        self.assertGreater(spk.directivity_index(), 3)
+        self.assertTrue(np.all(spk.early_reflections < spk.listening_window))
+
+    def test_load_speaker_from_folder(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            folder = paths.cache_dir / "spk"
+            folder.mkdir()
+            (folder / "SPL Horizontal.txt").write_text(make_polar_text("Horizontal", 1))
+            (folder / "SPL Vertical.txt").write_text(make_polar_text("Vertical", 1))
+            self.assertGreater(ae.load_speaker(folder).directivity_index(), 1)
+
+
 class RoomTests(unittest.TestCase):
     def test_image_source_counts(self):
         room = ae.RoomSpec(4, 5, 2.5)

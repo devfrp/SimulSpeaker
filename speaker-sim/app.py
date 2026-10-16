@@ -209,7 +209,7 @@ class SpeakerSimApp:
         fs = self.sample_rate()
 
         report(0.02, f"Mesure CEA-2034 : {spk['brand']} {spk['model']}")
-        speaker = ae.SpeakerResponse.load(self.downloader.ensure_speaker(spk))
+        speaker = ae.load_speaker(self.downloader.ensure_speaker(spk))
 
         hp_fir = None
         hp = self.headphone

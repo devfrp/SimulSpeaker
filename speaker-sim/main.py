@@ -37,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--export", metavar="DOSSIER",
                    help="exporter les filtres (WAV, true stereo, Equalizer APO)")
     p.add_argument("--version", action="store_true", help="afficher la version")
-    p.add_argument("--list-speakers", action="store_true", help="lister les 85 haut-parleurs")
+    p.add_argument("--list-speakers", action="store_true", help="lister les haut-parleurs du catalogue")
     p.add_argument("--search-headphones", metavar="TEXTE", help="chercher dans l'index AutoEq")
     p.add_argument("--set-headphone", metavar="CHEMIN",
                    help="casque, par chemin AutoEq (source/banc/modèle)")
@@ -82,7 +82,9 @@ def run_cli(args) -> int:
     try:
         if args.list_speakers:
             for spk in app.speakers:
-                print(f"{spk['id']:<48} score {spk['pref_score_wsub']:.1f}  {spk['shape']}")
+                score = spk.get("pref_score_wsub")
+                print(f"{spk['id']:<40} {spk.get('category', 'hifi'):<7} "
+                      f"score {score if score is not None else '—':>4}  {spk['shape']}")
         if args.search_headphones is not None:
             for e in app.search_headphones(args.search_headphones, limit=50):
                 print(f"{e.path}\t({e.source}, {e.rig})")

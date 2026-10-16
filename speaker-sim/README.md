@@ -18,8 +18,11 @@ Applications ──► [Speaker Sim] (sortie virtuelle, devient la sortie par d�
 
 - **Écouteurs** : recherche parmi les **8 850** mesures AutoEq (index figé au
   commit `7ae0f56d`) ; la correction est téléchargée une seule fois puis mise en cache.
-- **Haut-parleurs** : **85** modèles mesurés par ASR sur Klippel NFS (Spinorama,
-  commit `acc757bb`), sélectionnés par score de préférence (≤ 4 par marque).
+- **Haut-parleurs** : **130** modèles mesurés sur Klippel NFS (ASR, Erin's Audio
+  Corner ; Spinorama, commit `acc757bb`), dont **69 moniteurs de studio** (Genelec,
+  Neumann, Kali, Adam, JBL, Kii, Focal, Yamaha…). Quand Spinorama ne fournit que les
+  mesures polaires, le CEA-2034 est calculé localement (calcul identique à celui de
+  Klippel, vérifié sur le KEF R3).
 - **Filtrage** :
   - son direct filtré par la *Listening Window*, réflexions précoces par
     les *Early Reflections*, réverbération par la *Sound Power* (FIR à phase minimale) ;

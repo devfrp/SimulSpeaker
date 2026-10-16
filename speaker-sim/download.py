@@ -245,10 +245,19 @@ class Downloader:
         return f"{SPINORAMA_RAW}/{SPINORAMA_COMMIT}/{_quote_path(rel_path)}"
 
     def ensure_speaker(self, speaker: dict, progress: ProgressCallback | None = None) -> Path:
-        """Télécharge la mesure CEA-2034 (format Klippel) d'un haut-parleur du catalogue."""
+        """Télécharge la mesure d'un haut-parleur du catalogue (format Klippel).
+
+        ``CEA2034.txt`` → chemin du fichier ; mesures polaires seules
+        (``format: polar``) → dossier contenant ``SPL Horizontal/Vertical.txt``,
+        dont le CEA-2034 est calculé localement.
+        """
         rel = speaker["path"]
-        dest = self.spinorama_dir / speaker["id"] / "CEA2034.txt"
-        return self.fetch(self.spinorama_url(rel), dest, progress)
+        folder = self.spinorama_dir / speaker["id"]
+        if speaker.get("format") == "polar":
+            for name in ("SPL Horizontal.txt", "SPL Vertical.txt"):
+                self.fetch(self.spinorama_url(f"{rel}/{name}"), folder / name, progress)
+            return folder
+        return self.fetch(self.spinorama_url(rel), folder / "CEA2034.txt", progress)
 
     # -- HRTF -----------------------------------------------------------
     def ensure_hrtf(self, preferred: str = "", progress: ProgressCallback | None = None) -> Path:

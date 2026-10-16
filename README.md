@@ -9,7 +9,7 @@
 
 <p align="center"><img src="docs/assets/screenshot.png" width="760" alt="Fenêtre principale de Speaker Sim"></p>
 
-Speaker Sim combine la réponse mesurée (CEA-2034) de **85 enceintes**, une
+Speaker Sim combine la réponse mesurée (CEA-2034) de **130 enceintes** (dont 69 moniteurs de studio), une
 **pièce simulée** (sources-images + réverbération), une **tête KEMAR** (HRTF)
 et la **correction AutoEq** de votre casque parmi **8 850 mesures**.
 

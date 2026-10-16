@@ -75,10 +75,18 @@ class SettingsTests(unittest.TestCase):
 
     def test_speaker_catalog(self):
         speakers = config.load_speaker_catalog()
-        self.assertEqual(len(speakers), 85)
-        self.assertEqual(len({s["id"] for s in speakers}), 85)
+        self.assertGreaterEqual(len(speakers), 130)
+        self.assertEqual(len({s["id"] for s in speakers}), len(speakers))
+        self.assertGreaterEqual(sum(s["category"] == "studio" for s in speakers), 69)
         for s in speakers:
-            self.assertTrue(s["path"].endswith("/asr/CEA2034.txt"))
+            self.assertIn(s["category"], ("studio", "hifi"))
+            if s["format"] == "polar":
+                self.assertFalse(s["path"].endswith(".txt"))
+            else:
+                self.assertTrue(s["path"].endswith("/CEA2034.txt"))
+        ids = {s["id"] for s in speakers}
+        for must in ("Neumann KH 150", "Genelec 8361A", "Kii Audio Three", "Yamaha HS8"):
+            self.assertIn(must, ids)
 
 
 if __name__ == "__main__":

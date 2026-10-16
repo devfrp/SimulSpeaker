@@ -323,6 +323,98 @@ def parse_cea2034(text: str) -> dict[str, tuple[np.ndarray, np.ndarray]]:
     return curves
 
 
+# Pondérations CEA-2034 de la puissance acoustique, par angle (0°…180°, pas de 10°).
+_SP_WEIGHTS = (0.000604486, 0.004730189, 0.008955027, 0.012387354, 0.014989611,
+               0.016868154, 0.018165946, 0.019006236, 0.019477078, 0.019629421,
+               0.019477078, 0.019006236, 0.018165946, 0.016868154, 0.014989611,
+               0.012387354, 0.008955027, 0.004730189, 0.000604486)
+
+
+def parse_klippel_polar(text: str) -> tuple[np.ndarray, dict[int, np.ndarray]]:
+    """``SPL Horizontal.txt`` / ``SPL Vertical.txt`` (Klippel) → (fréquences, {angle: dB})."""
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if len(lines) < 4:
+        raise AudioEngineError("Fichier polaire trop court")
+    angles = []
+    for name in re.findall(r'"([^"]*)"', lines[1]):
+        m = re.search(r"(-?\d+)", name)
+        angles.append(0 if "on" in name.lower() and "axis" in name.lower() else
+                      int(m.group(1)) if m else None)
+    if not angles or None in angles:
+        raise AudioEngineError("Angles illisibles dans le fichier polaire")
+    rows = []
+    for line in lines[3:]:
+        fields = line.split("\t") if "\t" in line else line.split()
+        try:
+            values = [_parse_number(f) for f in fields[:2 * len(angles)]]
+        except ValueError:
+            continue
+        if len(values) == 2 * len(angles):
+            rows.append(values)
+    if len(rows) < 10:
+        raise AudioEngineError("Pas assez de points dans le fichier polaire")
+    data = np.array(rows)
+    freqs = data[:, 0]
+    return freqs, {a: data[:, 2 * i + 1] for i, a in enumerate(angles)}
+
+
+def cea2034_from_polar(horizontal: tuple[np.ndarray, dict[int, np.ndarray]],
+                       vertical: tuple[np.ndarray, dict[int, np.ndarray]]
+                       ) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Courbes CEA-2034 (ANSI/CTA-2034-A) calculées depuis les mesures polaires.
+
+    Moyennes spatiales en pression quadratique : Listening Window (0°, ±10° V,
+    ±10/20/30° H), Early Reflections (sol, plafond, murs avant, latéraux et
+    arrière) et Sound Power (70 points pondérés). Identique au calcul Klippel.
+    """
+    f, h = horizontal
+    fv, v = vertical
+    if len(fv) != len(f) or not np.allclose(fv, f, rtol=1e-3):
+        v = {a: np.interp(np.log(f), np.log(fv), db) for a, db in v.items()}
+    h = {(180 if a == -180 else a): db for a, db in h.items()}
+    v = {(180 if a == -180 else a): db for a, db in v.items()}
+
+    def avg(curves):
+        if not curves:
+            raise AudioEngineError("Angles manquants pour le calcul CEA-2034")
+        return 10 * np.log10(np.mean([10 ** (c / 10) for c in curves], axis=0))
+
+    def pick(plane, angles):
+        return [plane[a] for a in angles if a in plane]
+
+    lw = avg(pick(h, (0, 10, -10, 20, -20, 30, -30)) + pick(v, (10, -10)))
+    # Réflexions sol, plafond, murs avant, latéraux et arrière : moyenne en
+    # puissance des 26 directions regroupées (convention du logiciel Klippel,
+    # vérifiée à l'identique sur le CEA2034.txt du KEF R3).
+    er = avg(pick(v, (-20, -30, -40)) + pick(v, (40, 50, 60))
+             + pick(h, (0, 10, -10, 20, -20, 30, -30))
+             + pick(h, (40, -40, 50, -50, 60, -60, 70, -70, 80, -80))
+             + pick(h, (90, -90, 180)))
+    num = np.zeros(len(f))
+    den = 0.0
+    for plane, skip in ((h, ()), (v, (0, 180))):   # 0° et 180° comptés une seule fois
+        for a, db in plane.items():
+            if a in skip:
+                continue
+            w = _SP_WEIGHTS[abs(a) // 10]
+            num += w * 10 ** (db / 10)
+            den += w
+    sp = 10 * np.log10(num / den)
+    return {"On Axis": (f, h[0]), "Listening Window": (f, lw),
+            "Early Reflections": (f, er), "Sound Power": (f, sp)}
+
+
+def load_speaker(path: Path) -> "SpeakerResponse":
+    """Fichier ``CEA2034.txt``, ou dossier contenant ``SPL Horizontal/Vertical.txt``."""
+    path = Path(path)
+    if path.is_dir():
+        read = lambda name: (path / name).read_text(encoding="utf-8", errors="replace")
+        curves = cea2034_from_polar(parse_klippel_polar(read("SPL Horizontal.txt")),
+                                    parse_klippel_polar(read("SPL Vertical.txt")))
+        return SpeakerResponse.from_curves(curves)
+    return SpeakerResponse.load(path)
+
+
 @dataclass
 class SpeakerResponse:
     """Courbes CEA-2034 normalisées sur la Listening Window (300 Hz – 3 kHz)."""

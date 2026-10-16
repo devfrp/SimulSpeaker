@@ -2,6 +2,21 @@
  "spinorama_commit": "acc757bb98d63327092ee537bde25d9c227811f3",
  "speakers": [
   {
+   "id": "Adam A4V",
+   "brand": "Adam",
+   "model": "A4V",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "422",
+   "pref_score": 3.92,
+   "pref_score_wsub": 6.33,
+   "lfx_hz": 52,
+   "path": "datas/measurements/Adam A4V/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
    "id": "Adam A5X",
    "brand": "Adam",
    "model": "A5X",
@@ -11,7 +26,40 @@
    "pref_score": 4.08,
    "pref_score_wsub": 6.49,
    "lfx_hz": 52,
-   "path": "datas/measurements/Adam A5X/asr/CEA2034.txt"
+   "path": "datas/measurements/Adam A5X/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Adam D3V",
+   "brand": "Adam",
+   "model": "D3V",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "309",
+   "pref_score": 5.37,
+   "pref_score_wsub": 7.59,
+   "lfx_hz": 47,
+   "path": "datas/measurements/Adam D3V/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "Adam S2V",
+   "brand": "Adam",
+   "model": "S2V",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "3500",
+   "pref_score": null,
+   "pref_score_wsub": null,
+   "lfx_hz": null,
+   "path": "datas/measurements/Adam S2V/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Adam T5V",
@@ -23,7 +71,10 @@
    "pref_score": 4.65,
    "pref_score_wsub": 7.02,
    "lfx_hz": 51,
-   "path": "datas/measurements/Adam T5V/asr/CEA2034.txt"
+   "path": "datas/measurements/Adam T5V/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Adam T8V",
@@ -35,7 +86,10 @@
    "pref_score": 4.65,
    "pref_score_wsub": 6.31,
    "lfx_hz": 35,
-   "path": "datas/measurements/Adam T8V/asr/CEA2034.txt"
+   "path": "datas/measurements/Adam T8V/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Ascend Acoustics CBM-170 SE",
@@ -47,7 +101,10 @@
    "pref_score": 4.27,
    "pref_score_wsub": 7.06,
    "lfx_hz": 64,
-   "path": "datas/measurements/Ascend Acoustics CBM-170 SE/asr/CEA2034.txt"
+   "path": "datas/measurements/Ascend Acoustics CBM-170 SE/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Ascend Acoustics Sierra 2",
@@ -59,7 +116,10 @@
    "pref_score": 4.22,
    "pref_score_wsub": 6.56,
    "lfx_hz": 50,
-   "path": "datas/measurements/Ascend Acoustics Sierra 2/asr/CEA2034.txt"
+   "path": "datas/measurements/Ascend Acoustics Sierra 2/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "ATC SCM19 v1",
@@ -71,7 +131,10 @@
    "pref_score": 4.61,
    "pref_score_wsub": 7.03,
    "lfx_hz": 52,
-   "path": "datas/measurements/ATC SCM19 v1/asr/CEA2034.txt"
+   "path": "datas/measurements/ATC SCM19 v1/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Audio Engine A5+ Powered",
@@ -83,7 +146,25 @@
    "pref_score": 4.59,
    "pref_score_wsub": 7.06,
    "lfx_hz": 54,
-   "path": "datas/measurements/Audio Engine A5+ Powered/asr/CEA2034.txt"
+   "path": "datas/measurements/Audio Engine A5+ Powered/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Audio Smile Little British Monitor",
+   "brand": "Audio Smile",
+   "model": "Little British Monitor",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "530",
+   "pref_score": 5.46,
+   "pref_score_wsub": 8.21,
+   "lfx_hz": 62,
+   "path": "datas/measurements/Audio Smile Little British Monitor/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Barefoot Footprint 01",
@@ -95,7 +176,10 @@
    "pref_score": 5.48,
    "pref_score_wsub": 6.7,
    "lfx_hz": 27,
-   "path": "datas/measurements/Barefoot Footprint 01/asr/CEA2034.txt"
+   "path": "datas/measurements/Barefoot Footprint 01/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Behringer B2030p",
@@ -107,7 +191,10 @@
    "pref_score": 3.3,
    "pref_score_wsub": 6.37,
    "lfx_hz": 74,
-   "path": "datas/measurements/Behringer B2030p/asr/CEA2034.txt"
+   "path": "datas/measurements/Behringer B2030p/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Bowers & Wilkins 607 S2 Anniversary Edition",
@@ -119,7 +206,10 @@
    "pref_score": 4.01,
    "pref_score_wsub": 6.2,
    "lfx_hz": 46,
-   "path": "datas/measurements/Bowers & Wilkins 607 S2 Anniversary Edition/asr/CEA2034.txt"
+   "path": "datas/measurements/Bowers & Wilkins 607 S2 Anniversary Edition/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Buchardt Audio S400",
@@ -131,7 +221,10 @@
    "pref_score": 5.23,
    "pref_score_wsub": 7.43,
    "lfx_hz": 46,
-   "path": "datas/measurements/Buchardt Audio S400/asr/CEA2034.txt"
+   "path": "datas/measurements/Buchardt Audio S400/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Carmody S2000 DIY Speaker Kit",
@@ -143,7 +236,10 @@
    "pref_score": 4.42,
    "pref_score_wsub": 6.89,
    "lfx_hz": 54,
-   "path": "datas/measurements/Carmody S2000 DIY Speaker Kit/asr/CEA2034.txt"
+   "path": "datas/measurements/Carmody S2000 DIY Speaker Kit/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Chane A1.5",
@@ -155,7 +251,10 @@
    "pref_score": 3.98,
    "pref_score_wsub": 6.23,
    "lfx_hz": 48,
-   "path": "datas/measurements/Chane A1.5/asr/CEA2034.txt"
+   "path": "datas/measurements/Chane A1.5/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dali Spektor 1",
@@ -167,7 +266,10 @@
    "pref_score": 4.0,
    "pref_score_wsub": 6.75,
    "lfx_hz": 62,
-   "path": "datas/measurements/Dali Spektor 1/asr/CEA2034.txt"
+   "path": "datas/measurements/Dali Spektor 1/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dayton Audio MK402X",
@@ -179,7 +281,10 @@
    "pref_score": 4.01,
    "pref_score_wsub": 6.42,
    "lfx_hz": 52,
-   "path": "datas/measurements/Dayton Audio MK402X/asr/CEA2034.txt"
+   "path": "datas/measurements/Dayton Audio MK402X/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Definitive Technology Demand D11",
@@ -191,7 +296,10 @@
    "pref_score": 4.12,
    "pref_score_wsub": 6.48,
    "lfx_hz": 51,
-   "path": "datas/measurements/Definitive Technology Demand D11/asr/CEA2034.txt"
+   "path": "datas/measurements/Definitive Technology Demand D11/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Definitive Technology ProMonitor 1000",
@@ -203,7 +311,10 @@
    "pref_score": 3.2,
    "pref_score_wsub": 6.58,
    "lfx_hz": 87,
-   "path": "datas/measurements/Definitive Technology ProMonitor 1000/asr/CEA2034.txt"
+   "path": "datas/measurements/Definitive Technology ProMonitor 1000/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dennis Murphy Affordable Accuracy Monitor",
@@ -215,7 +326,10 @@
    "pref_score": 5.07,
    "pref_score_wsub": 7.82,
    "lfx_hz": 62,
-   "path": "datas/measurements/Dennis Murphy Affordable Accuracy Monitor/asr/CEA2034.txt"
+   "path": "datas/measurements/Dennis Murphy Affordable Accuracy Monitor/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dynaudio Core 47",
@@ -227,7 +341,10 @@
    "pref_score": 4.99,
    "pref_score_wsub": 6.65,
    "lfx_hz": 35,
-   "path": "datas/measurements/Dynaudio Core 47/asr/CEA2034.txt"
+   "path": "datas/measurements/Dynaudio Core 47/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dynaudio Emit M10",
@@ -239,7 +356,10 @@
    "pref_score": 4.56,
    "pref_score_wsub": 6.93,
    "lfx_hz": 51,
-   "path": "datas/measurements/Dynaudio Emit M10/asr/CEA2034.txt"
+   "path": "datas/measurements/Dynaudio Emit M10/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dynaudio Excite X14",
@@ -251,7 +371,10 @@
    "pref_score": 4.57,
    "pref_score_wsub": 6.94,
    "lfx_hz": 51,
-   "path": "datas/measurements/Dynaudio Excite X14/asr/CEA2034.txt"
+   "path": "datas/measurements/Dynaudio Excite X14/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Dynaudio LYD 5",
@@ -263,7 +386,25 @@
    "pref_score": 5.51,
    "pref_score_wsub": 8.17,
    "lfx_hz": 60,
-   "path": "datas/measurements/Dynaudio LYD 5/asr/CEA2034.txt"
+   "path": "datas/measurements/Dynaudio LYD 5/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Edifier MR4",
+   "brand": "Edifier",
+   "model": "MR4",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "130",
+   "pref_score": 3.35,
+   "pref_score_wsub": 6.01,
+   "lfx_hz": 60,
+   "path": "datas/measurements/Edifier MR4/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Edifier S2000 Pro",
@@ -275,7 +416,10 @@
    "pref_score": 4.33,
    "pref_score_wsub": 6.41,
    "lfx_hz": 43,
-   "path": "datas/measurements/Edifier S2000 Pro/asr/CEA2034.txt"
+   "path": "datas/measurements/Edifier S2000 Pro/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Elac BS U5 Slim",
@@ -287,7 +431,10 @@
    "pref_score": 4.71,
    "pref_score_wsub": 6.79,
    "lfx_hz": 43,
-   "path": "datas/measurements/Elac BS U5 Slim/asr/CEA2034.txt"
+   "path": "datas/measurements/Elac BS U5 Slim/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Elac Debut 2.0 B6.2",
@@ -299,7 +446,10 @@
    "pref_score": 4.75,
    "pref_score_wsub": 7.0,
    "lfx_hz": 48,
-   "path": "datas/measurements/Elac Debut 2.0 B6.2/asr/CEA2034.txt"
+   "path": "datas/measurements/Elac Debut 2.0 B6.2/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Elac Debut Reference DBR-62",
@@ -311,7 +461,10 @@
    "pref_score": 5.17,
    "pref_score_wsub": 7.36,
    "lfx_hz": 46,
-   "path": "datas/measurements/Elac Debut Reference DBR-62/asr/CEA2034.txt"
+   "path": "datas/measurements/Elac Debut Reference DBR-62/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Elac Uni-Fi 2.0 UB52",
@@ -323,7 +476,10 @@
    "pref_score": 5.32,
    "pref_score_wsub": 7.34,
    "lfx_hz": 42,
-   "path": "datas/measurements/Elac Uni-Fi 2.0 UB52/asr/CEA2034.txt"
+   "path": "datas/measurements/Elac Uni-Fi 2.0 UB52/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Emotiva Airmotiv 6s",
@@ -335,7 +491,10 @@
    "pref_score": 4.73,
    "pref_score_wsub": 6.63,
    "lfx_hz": 39,
-   "path": "datas/measurements/Emotiva Airmotiv 6s/asr/CEA2034.txt"
+   "path": "datas/measurements/Emotiva Airmotiv 6s/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Emotiva Airmotiv B1+",
@@ -347,7 +506,55 @@
    "pref_score": 4.73,
    "pref_score_wsub": 7.2,
    "lfx_hz": 54,
-   "path": "datas/measurements/Emotiva Airmotiv B1+/asr/CEA2034.txt"
+   "path": "datas/measurements/Emotiva Airmotiv B1+/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Eve Audio SC305",
+   "brand": "Eve Audio",
+   "model": "SC305",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "655",
+   "pref_score": 3.66,
+   "pref_score_wsub": 6.03,
+   "lfx_hz": 51,
+   "path": "datas/measurements/Eve Audio SC305/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Fluid Audio FX50",
+   "brand": "Fluid Audio",
+   "model": "FX50",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "300",
+   "pref_score": 2.15,
+   "pref_score_wsub": 4.61,
+   "lfx_hz": 54,
+   "path": "datas/measurements/Fluid Audio FX50/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Fluid Audio FX50v2",
+   "brand": "Fluid Audio",
+   "model": "FX50v2",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "300",
+   "pref_score": 1.8,
+   "pref_score_wsub": 4.42,
+   "lfx_hz": 58,
+   "path": "datas/measurements/Fluid Audio FX50v2/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Fluid Audio Image 2",
@@ -359,7 +566,25 @@
    "pref_score": 5.62,
    "pref_score_wsub": 7.03,
    "lfx_hz": 30,
-   "path": "datas/measurements/Fluid Audio Image 2/asr/CEA2034.txt"
+   "path": "datas/measurements/Fluid Audio Image 2/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Focal Alpha 65 Evo",
+   "brand": "Focal",
+   "model": "Alpha 65 Evo",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "900",
+   "pref_score": 4.71,
+   "pref_score_wsub": 6.59,
+   "lfx_hz": 39,
+   "path": "datas/measurements/Focal Alpha 65 Evo/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Focal Aria 906",
@@ -371,7 +596,10 @@
    "pref_score": 5.26,
    "pref_score_wsub": 7.67,
    "lfx_hz": 52,
-   "path": "datas/measurements/Focal Aria 906/asr/CEA2034.txt"
+   "path": "datas/measurements/Focal Aria 906/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Focal Solo6 Be",
@@ -383,7 +611,25 @@
    "pref_score": 4.96,
    "pref_score_wsub": 7.09,
    "lfx_hz": 45,
-   "path": "datas/measurements/Focal Solo6 Be/asr/CEA2034.txt"
+   "path": "datas/measurements/Focal Solo6 Be/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Focal Solo6 ST6",
+   "brand": "Focal",
+   "model": "Solo6 ST6",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "2400",
+   "pref_score": 5.32,
+   "pref_score_wsub": 7.34,
+   "lfx_hz": 42,
+   "path": "datas/measurements/Focal Solo6 ST6/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Fostex PM03",
@@ -395,7 +641,10 @@
    "pref_score": 3.02,
    "pref_score_wsub": 6.46,
    "lfx_hz": 90,
-   "path": "datas/measurements/Fostex PM03/asr/CEA2034.txt"
+   "path": "datas/measurements/Fostex PM03/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Genelec 8010A",
@@ -407,7 +656,10 @@
    "pref_score": 4.88,
    "pref_score_wsub": 7.8,
    "lfx_hz": 68,
-   "path": "datas/measurements/Genelec 8010A/asr/CEA2034.txt"
+   "path": "datas/measurements/Genelec 8010A/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Genelec 8030C",
@@ -419,7 +671,25 @@
    "pref_score": 6.12,
    "pref_score_wsub": 8.38,
    "lfx_hz": 48,
-   "path": "datas/measurements/Genelec 8030C/asr/CEA2034.txt"
+   "path": "datas/measurements/Genelec 8030C/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Genelec 8050B",
+   "brand": "Genelec",
+   "model": "8050B",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "3000",
+   "pref_score": 6.08,
+   "pref_score_wsub": 7.4,
+   "lfx_hz": 29,
+   "path": "datas/measurements/Genelec 8050B/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Genelec 8320A",
@@ -431,7 +701,10 @@
    "pref_score": 5.52,
    "pref_score_wsub": 8.04,
    "lfx_hz": 55,
-   "path": "datas/measurements/Genelec 8320A/asr/CEA2034.txt"
+   "path": "datas/measurements/Genelec 8320A/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Genelec 8330A",
@@ -443,7 +716,100 @@
    "pref_score": 5.54,
    "pref_score_wsub": 7.79,
    "lfx_hz": 48,
-   "path": "datas/measurements/Genelec 8330A/asr/CEA2034.txt"
+   "path": "datas/measurements/Genelec 8330A/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Genelec 8331A",
+   "brand": "Genelec",
+   "model": "8331A",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "4500",
+   "pref_score": 6.57,
+   "pref_score_wsub": 8.51,
+   "lfx_hz": 41,
+   "path": "datas/measurements/Genelec 8331A/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "Genelec 8341A",
+   "brand": "Genelec",
+   "model": "8341A",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "4500",
+   "pref_score": 6.72,
+   "pref_score_wsub": 8.49,
+   "lfx_hz": 37,
+   "path": "datas/measurements/Genelec 8341A/asr-horizontal",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Genelec 8351B",
+   "brand": "Genelec",
+   "model": "8351B",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "6000",
+   "pref_score": 6.92,
+   "pref_score_wsub": 8.33,
+   "lfx_hz": 30,
+   "path": "datas/measurements/Genelec 8351B/asr-horizontal",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Genelec 8361A",
+   "brand": "Genelec",
+   "model": "8361A",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "10000",
+   "pref_score": 6.77,
+   "pref_score_wsub": 8.08,
+   "lfx_hz": 29,
+   "path": "datas/measurements/Genelec 8361A/asr-horizontal",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Genelec M040",
+   "brand": "Genelec",
+   "model": "M040",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "1200",
+   "pref_score": 5.47,
+   "pref_score_wsub": 7.67,
+   "lfx_hz": 46,
+   "path": "datas/measurements/Genelec M040/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Genelec S360",
+   "brand": "Genelec",
+   "model": "S360",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "6800",
+   "pref_score": 5.96,
+   "pref_score_wsub": 7.7,
+   "lfx_hz": 36,
+   "path": "datas/measurements/Genelec S360/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "GR Research X-LS Encore Kit",
@@ -455,7 +821,10 @@
    "pref_score": 5.05,
    "pref_score_wsub": 7.42,
    "lfx_hz": 51,
-   "path": "datas/measurements/GR Research X-LS Encore Kit/asr/CEA2034.txt"
+   "path": "datas/measurements/GR Research X-LS Encore Kit/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Harbeth Monitor 30.0",
@@ -467,7 +836,10 @@
    "pref_score": 4.58,
    "pref_score_wsub": 7.05,
    "lfx_hz": 54,
-   "path": "datas/measurements/Harbeth Monitor 30.0/asr/CEA2034.txt"
+   "path": "datas/measurements/Harbeth Monitor 30.0/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Hivi 3.1A DIY",
@@ -479,7 +851,10 @@
    "pref_score": 5.6,
    "pref_score_wsub": 7.54,
    "lfx_hz": 41,
-   "path": "datas/measurements/Hivi 3.1A DIY/asr/CEA2034.txt"
+   "path": "datas/measurements/Hivi 3.1A DIY/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Hsu Research HB-1 MK2",
@@ -491,7 +866,10 @@
    "pref_score": 3.94,
    "pref_score_wsub": 6.41,
    "lfx_hz": 54,
-   "path": "datas/measurements/Hsu Research HB-1 MK2/asr/CEA2034.txt"
+   "path": "datas/measurements/Hsu Research HB-1 MK2/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "IK Multimedia iLoud MTM",
@@ -503,7 +881,25 @@
    "pref_score": 4.98,
    "pref_score_wsub": 7.17,
    "lfx_hz": 46,
-   "path": "datas/measurements/IK Multimedia iLoud MTM/asr/CEA2034.txt"
+   "path": "datas/measurements/IK Multimedia iLoud MTM/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "IK Multimedia iLoud MTM MKII",
+   "brand": "IK Multimedia",
+   "model": "iLoud MTM MKII",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "485",
+   "pref_score": 5.22,
+   "pref_score_wsub": 7.44,
+   "lfx_hz": 47,
+   "path": "datas/measurements/IK Multimedia iLoud MTM MKII/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "Infinity Interlude IL10",
@@ -515,7 +911,10 @@
    "pref_score": 4.98,
    "pref_score_wsub": 7.34,
    "lfx_hz": 51,
-   "path": "datas/measurements/Infinity Interlude IL10/asr/CEA2034.txt"
+   "path": "datas/measurements/Infinity Interlude IL10/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Infinity R162",
@@ -527,7 +926,10 @@
    "pref_score": 5.07,
    "pref_score_wsub": 7.26,
    "lfx_hz": 46,
-   "path": "datas/measurements/Infinity R162/asr/CEA2034.txt"
+   "path": "datas/measurements/Infinity R162/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Infinity RC263",
@@ -539,7 +941,55 @@
    "pref_score": 4.71,
    "pref_score_wsub": 7.5,
    "lfx_hz": 64,
-   "path": "datas/measurements/Infinity RC263/asr/CEA2034.txt"
+   "path": "datas/measurements/Infinity RC263/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "JBL 104",
+   "brand": "JBL",
+   "model": "104",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "130",
+   "pref_score": 2.03,
+   "pref_score_wsub": 4.76,
+   "lfx_hz": 62,
+   "path": "datas/measurements/JBL 104/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "JBL 305P Mark ii",
+   "brand": "JBL",
+   "model": "305P Mark ii",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "300",
+   "pref_score": 4.99,
+   "pref_score_wsub": 7.06,
+   "lfx_hz": 43,
+   "path": "datas/measurements/JBL 305P Mark ii/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "JBL 306P Mark ii",
+   "brand": "JBL",
+   "model": "306P Mark ii",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "150",
+   "pref_score": 5.06,
+   "pref_score_wsub": 6.94,
+   "lfx_hz": 39,
+   "path": "datas/measurements/JBL 306P Mark ii/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "JBL 308P Mark ii",
@@ -551,7 +1001,55 @@
    "pref_score": 5.88,
    "pref_score_wsub": 7.69,
    "lfx_hz": 38,
-   "path": "datas/measurements/JBL 308P Mark ii/asr/CEA2034.txt"
+   "path": "datas/measurements/JBL 308P Mark ii/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "JBL 705P",
+   "brand": "JBL",
+   "model": "705P",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "2000",
+   "pref_score": 4.7,
+   "pref_score_wsub": 6.71,
+   "lfx_hz": 42,
+   "path": "datas/measurements/JBL 705P/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "JBL 708i active",
+   "brand": "JBL",
+   "model": "708i active",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "5400",
+   "pref_score": 4.33,
+   "pref_score_wsub": 6.21,
+   "lfx_hz": 39,
+   "path": "datas/measurements/JBL 708i active/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "JBL 708P",
+   "brand": "JBL",
+   "model": "708P",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "3600",
+   "pref_score": 4.81,
+   "pref_score_wsub": 6.68,
+   "lfx_hz": 39,
+   "path": "datas/measurements/JBL 708P/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "JBL HDI-1600",
@@ -563,7 +1061,25 @@
    "pref_score": 5.37,
    "pref_score_wsub": 7.32,
    "lfx_hz": 41,
-   "path": "datas/measurements/JBL HDI-1600/asr/CEA2034.txt"
+   "path": "datas/measurements/JBL HDI-1600/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "JBL M2",
+   "brand": "JBL",
+   "model": "M2",
+   "type": "active",
+   "shape": "floorstanders",
+   "price": "12000",
+   "pref_score": 5.74,
+   "pref_score_wsub": 6.58,
+   "lfx_hz": 22,
+   "path": "datas/measurements/JBL M2/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "JBL Stage A130",
@@ -575,7 +1091,10 @@
    "pref_score": 4.93,
    "pref_score_wsub": 7.35,
    "lfx_hz": 52,
-   "path": "datas/measurements/JBL Stage A130/asr/CEA2034.txt"
+   "path": "datas/measurements/JBL Stage A130/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "JBL Studio 530",
@@ -587,7 +1106,10 @@
    "pref_score": 5.21,
    "pref_score_wsub": 7.29,
    "lfx_hz": 43,
-   "path": "datas/measurements/JBL Studio 530/asr/CEA2034.txt"
+   "path": "datas/measurements/JBL Studio 530/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Jeff Bagby Mandolin DIY",
@@ -599,7 +1121,25 @@
    "pref_score": 5.1,
    "pref_score_wsub": 7.18,
    "lfx_hz": 43,
-   "path": "datas/measurements/Jeff Bagby Mandolin DIY/asr/CEA2034.txt"
+   "path": "datas/measurements/Jeff Bagby Mandolin DIY/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Kali IN-5",
+   "brand": "Kali",
+   "model": "IN-5",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "700",
+   "pref_score": 5.12,
+   "pref_score_wsub": 7.13,
+   "lfx_hz": 42,
+   "path": "datas/measurements/Kali IN-5/eac/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "Kali IN-8",
@@ -611,7 +1151,25 @@
    "pref_score": 4.8,
    "pref_score_wsub": 6.57,
    "lfx_hz": 37,
-   "path": "datas/measurements/Kali IN-8/asr/CEA2034.txt"
+   "path": "datas/measurements/Kali IN-8/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Kali IN-8v2",
+   "brand": "Kali",
+   "model": "IN-8v2",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "760",
+   "pref_score": 5.36,
+   "pref_score_wsub": 7.3,
+   "lfx_hz": 41,
+   "path": "datas/measurements/Kali IN-8v2/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "Kali LP-6",
@@ -623,7 +1181,70 @@
    "pref_score": 5.24,
    "pref_score_wsub": 7.18,
    "lfx_hz": 41,
-   "path": "datas/measurements/Kali LP-6/asr/CEA2034.txt"
+   "path": "datas/measurements/Kali LP-6/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Kali LP-6v2",
+   "brand": "Kali",
+   "model": "LP-6v2",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "300",
+   "pref_score": 5.53,
+   "pref_score_wsub": 7.48,
+   "lfx_hz": 41,
+   "path": "datas/measurements/Kali LP-6v2/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "Kali LP-8v2",
+   "brand": "Kali",
+   "model": "LP-8v2",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "300",
+   "pref_score": 4.94,
+   "pref_score_wsub": 6.68,
+   "lfx_hz": 36,
+   "path": "datas/measurements/Kali LP-8v2/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "Kali LP-UNF",
+   "brand": "Kali",
+   "model": "LP-UNF",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "300",
+   "pref_score": 4.6,
+   "pref_score_wsub": 6.67,
+   "lfx_hz": 43,
+   "path": "datas/measurements/Kali LP-UNF/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "Kali SM-5",
+   "brand": "Kali",
+   "model": "SM-5",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "1700",
+   "pref_score": 5.18,
+   "pref_score_wsub": 7.13,
+   "lfx_hz": 41,
+   "path": "datas/measurements/Kali SM-5/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "Kanto YU",
@@ -635,7 +1256,10 @@
    "pref_score": 3.46,
    "pref_score_wsub": 6.38,
    "lfx_hz": 68,
-   "path": "datas/measurements/Kanto YU/asr/CEA2034.txt"
+   "path": "datas/measurements/Kanto YU/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "KEF LS50 Meta",
@@ -647,7 +1271,10 @@
    "pref_score": 5.43,
    "pref_score_wsub": 7.57,
    "lfx_hz": 45,
-   "path": "datas/measurements/KEF LS50 Meta/asr/CEA2034.txt"
+   "path": "datas/measurements/KEF LS50 Meta/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "KEF Q100",
@@ -659,7 +1286,10 @@
    "pref_score": 4.96,
    "pref_score_wsub": 7.24,
    "lfx_hz": 49,
-   "path": "datas/measurements/KEF Q100/asr/CEA2034.txt"
+   "path": "datas/measurements/KEF Q100/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "KEF R3",
@@ -671,7 +1301,40 @@
    "pref_score": 6.2,
    "pref_score_wsub": 7.97,
    "lfx_hz": 37,
-   "path": "datas/measurements/KEF R3/asr/CEA2034.txt"
+   "path": "datas/measurements/KEF R3/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Kii Audio Three",
+   "brand": "Kii Audio",
+   "model": "Three",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "13000",
+   "pref_score": 7.7,
+   "pref_score_wsub": 8.35,
+   "lfx_hz": 20,
+   "path": "datas/measurements/Kii Audio Three/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "KRK Systems Classic 5",
+   "brand": "KRK Systems",
+   "model": "Classic 5",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "150",
+   "pref_score": 3.47,
+   "pref_score_wsub": 5.99,
+   "lfx_hz": 55,
+   "path": "datas/measurements/KRK Systems Classic 5/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "KRK Systems RoKit 5 G4",
@@ -683,7 +1346,55 @@
    "pref_score": 3.92,
    "pref_score_wsub": 6.29,
    "lfx_hz": 51,
-   "path": "datas/measurements/KRK Systems RoKit 5 G4/asr/CEA2034.txt"
+   "path": "datas/measurements/KRK Systems RoKit 5 G4/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "M-Audio BX3 D3",
+   "brand": "M-Audio",
+   "model": "BX3 D3",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "90",
+   "pref_score": 2.04,
+   "pref_score_wsub": 5.18,
+   "lfx_hz": 77,
+   "path": "datas/measurements/M-Audio BX3 D3/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "M-Audio BX8 D3",
+   "brand": "M-Audio",
+   "model": "BX8 D3",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "129",
+   "pref_score": 4.65,
+   "pref_score_wsub": 6.66,
+   "lfx_hz": 42,
+   "path": "datas/measurements/M-Audio BX8 D3/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Mackie CR3-X",
+   "brand": "Mackie",
+   "model": "CR3-X",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "100",
+   "pref_score": 2.5,
+   "pref_score_wsub": 5.42,
+   "lfx_hz": 68,
+   "path": "datas/measurements/Mackie CR3-X/eac/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "MartinLogan Motion 4i",
@@ -695,7 +1406,10 @@
    "pref_score": 2.73,
    "pref_score_wsub": 6.36,
    "lfx_hz": 101,
-   "path": "datas/measurements/MartinLogan Motion 4i/asr/CEA2034.txt"
+   "path": "datas/measurements/MartinLogan Motion 4i/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Micca RB42",
@@ -707,7 +1421,40 @@
    "pref_score": 4.59,
    "pref_score_wsub": 6.87,
    "lfx_hz": 49,
-   "path": "datas/measurements/Micca RB42/asr/CEA2034.txt"
+   "path": "datas/measurements/Micca RB42/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Neumann KH 120 II",
+   "brand": "Neumann",
+   "model": "KH 120 II",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "1000",
+   "pref_score": 6.49,
+   "pref_score_wsub": 8.44,
+   "lfx_hz": 41,
+   "path": "datas/measurements/Neumann KH 120 II/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Neumann KH 150",
+   "brand": "Neumann",
+   "model": "KH 150",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "3500",
+   "pref_score": 6.65,
+   "pref_score_wsub": 8.38,
+   "lfx_hz": 36,
+   "path": "datas/measurements/Neumann KH 150/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Neumann KH 310A",
@@ -719,7 +1466,40 @@
    "pref_score": 6.21,
    "pref_score_wsub": 7.7,
    "lfx_hz": 32,
-   "path": "datas/measurements/Neumann KH 310A/asr/CEA2034.txt"
+   "path": "datas/measurements/Neumann KH 310A/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Neumann KH 420G",
+   "brand": "Neumann",
+   "model": "KH 420G",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "9000",
+   "pref_score": 7.02,
+   "pref_score_wsub": 8.14,
+   "lfx_hz": 26,
+   "path": "datas/measurements/Neumann KH 420G/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
+  },
+  {
+   "id": "Neumann KH 80",
+   "brand": "Neumann",
+   "model": "KH 80",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "1000",
+   "pref_score": 5.75,
+   "pref_score_wsub": 8.16,
+   "lfx_hz": 52,
+   "path": "datas/measurements/Neumann KH 80/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "NHT C3",
@@ -731,7 +1511,10 @@
    "pref_score": 4.45,
    "pref_score_wsub": 6.86,
    "lfx_hz": 52,
-   "path": "datas/measurements/NHT C3/asr/CEA2034.txt"
+   "path": "datas/measurements/NHT C3/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "NHT Super Zero 2.1",
@@ -743,7 +1526,10 @@
    "pref_score": 3.03,
    "pref_score_wsub": 6.34,
    "lfx_hz": 84,
-   "path": "datas/measurements/NHT Super Zero 2.1/asr/CEA2034.txt"
+   "path": "datas/measurements/NHT Super Zero 2.1/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Paradigm Monitor SE Atom",
@@ -755,7 +1541,10 @@
    "pref_score": 4.13,
    "pref_score_wsub": 6.5,
    "lfx_hz": 51,
-   "path": "datas/measurements/Paradigm Monitor SE Atom/asr/CEA2034.txt"
+   "path": "datas/measurements/Paradigm Monitor SE Atom/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Paradigm Prestige 15B",
@@ -767,7 +1556,10 @@
    "pref_score": 4.76,
    "pref_score_wsub": 7.13,
    "lfx_hz": 51,
-   "path": "datas/measurements/Paradigm Prestige 15B/asr/CEA2034.txt"
+   "path": "datas/measurements/Paradigm Prestige 15B/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Part Express DIY C-Note",
@@ -779,7 +1571,25 @@
    "pref_score": 4.07,
    "pref_score_wsub": 6.78,
    "lfx_hz": 61,
-   "path": "datas/measurements/Part Express DIY C-Note/asr/CEA2034.txt"
+   "path": "datas/measurements/Part Express DIY C-Note/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Pioneer DJ VM-50",
+   "brand": "Pioneer",
+   "model": "DJ VM-50",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "340",
+   "pref_score": 4.64,
+   "pref_score_wsub": 7.0,
+   "lfx_hz": 51,
+   "path": "datas/measurements/Pioneer DJ VM-50/eac",
+   "format": "polar",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
   },
   {
    "id": "Pioneer SP-BS22-LR",
@@ -791,7 +1601,25 @@
    "pref_score": 4.76,
    "pref_score_wsub": 7.37,
    "lfx_hz": 58,
-   "path": "datas/measurements/Pioneer SP-BS22-LR/asr/CEA2034.txt"
+   "path": "datas/measurements/Pioneer SP-BS22-LR/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "PMC Result6",
+   "brand": "PMC",
+   "model": "Result6",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "2400",
+   "pref_score": 2.86,
+   "pref_score_wsub": 5.37,
+   "lfx_hz": 55,
+   "path": "datas/measurements/PMC Result6/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Polk Audio Signature S15",
@@ -803,7 +1631,40 @@
    "pref_score": 4.29,
    "pref_score_wsub": 6.9,
    "lfx_hz": 58,
-   "path": "datas/measurements/Polk Audio Signature S15/asr/CEA2034.txt"
+   "path": "datas/measurements/Polk Audio Signature S15/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Presonus Eris E3.5",
+   "brand": "Presonus",
+   "model": "Eris E3.5",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "110",
+   "pref_score": 2.01,
+   "pref_score_wsub": 4.94,
+   "lfx_hz": 69,
+   "path": "datas/measurements/Presonus Eris E3.5/eac/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "Erin's Audio Corner"
+  },
+  {
+   "id": "Presonus Eris E5 XT",
+   "brand": "Presonus",
+   "model": "Eris E5 XT",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "260",
+   "pref_score": 3.58,
+   "pref_score_wsub": 6.0,
+   "lfx_hz": 52,
+   "path": "datas/measurements/Presonus Eris E5 XT/asr/CEA2034.txt",
+   "format": "cea2034",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "PSB Alpha P5",
@@ -815,7 +1676,10 @@
    "pref_score": 3.99,
    "pref_score_wsub": 6.25,
    "lfx_hz": 48,
-   "path": "datas/measurements/PSB Alpha P5/asr/CEA2034.txt"
+   "path": "datas/measurements/PSB Alpha P5/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Q Acoustics 3020i",
@@ -827,7 +1691,10 @@
    "pref_score": 3.86,
    "pref_score_wsub": 6.38,
    "lfx_hz": 55,
-   "path": "datas/measurements/Q Acoustics 3020i/asr/CEA2034.txt"
+   "path": "datas/measurements/Q Acoustics 3020i/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Revel F228Be",
@@ -839,7 +1706,10 @@
    "pref_score": 6.01,
    "pref_score_wsub": 7.51,
    "lfx_hz": 32,
-   "path": "datas/measurements/Revel F228Be/asr/CEA2034.txt"
+   "path": "datas/measurements/Revel F228Be/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Revel M105",
@@ -851,7 +1721,10 @@
    "pref_score": 5.76,
    "pref_score_wsub": 8.18,
    "lfx_hz": 52,
-   "path": "datas/measurements/Revel M105/asr/CEA2034.txt"
+   "path": "datas/measurements/Revel M105/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Revel M106",
@@ -863,7 +1736,10 @@
    "pref_score": 5.62,
    "pref_score_wsub": 7.87,
    "lfx_hz": 48,
-   "path": "datas/measurements/Revel M106/asr/CEA2034.txt"
+   "path": "datas/measurements/Revel M106/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Revel M16",
@@ -875,7 +1751,10 @@
    "pref_score": 5.06,
    "pref_score_wsub": 7.28,
    "lfx_hz": 47,
-   "path": "datas/measurements/Revel M16/asr/CEA2034.txt"
+   "path": "datas/measurements/Revel M16/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Salk WoW1",
@@ -887,7 +1766,10 @@
    "pref_score": 4.39,
    "pref_score_wsub": 6.59,
    "lfx_hz": 46,
-   "path": "datas/measurements/Salk WoW1/asr/CEA2034.txt"
+   "path": "datas/measurements/Salk WoW1/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Selah Audio Integrity DIY",
@@ -899,7 +1781,10 @@
    "pref_score": 5.98,
    "pref_score_wsub": 7.71,
    "lfx_hz": 36,
-   "path": "datas/measurements/Selah Audio Integrity DIY/asr/CEA2034.txt"
+   "path": "datas/measurements/Selah Audio Integrity DIY/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Selah Audio RC3R",
@@ -911,7 +1796,10 @@
    "pref_score": 5.02,
    "pref_score_wsub": 7.56,
    "lfx_hz": 56,
-   "path": "datas/measurements/Selah Audio RC3R/asr/CEA2034.txt"
+   "path": "datas/measurements/Selah Audio RC3R/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Sony SS-CS5",
@@ -923,7 +1811,10 @@
    "pref_score": 4.35,
    "pref_score_wsub": 7.1,
    "lfx_hz": 62,
-   "path": "datas/measurements/Sony SS-CS5/asr/CEA2034.txt"
+   "path": "datas/measurements/Sony SS-CS5/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "SVS Ultra Bookshelf",
@@ -935,7 +1826,10 @@
    "pref_score": 5.62,
    "pref_score_wsub": 8.04,
    "lfx_hz": 52,
-   "path": "datas/measurements/SVS Ultra Bookshelf/asr/CEA2034.txt"
+   "path": "datas/measurements/SVS Ultra Bookshelf/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Triangle Borea BR03",
@@ -947,7 +1841,10 @@
    "pref_score": 4.33,
    "pref_score_wsub": 6.69,
    "lfx_hz": 51,
-   "path": "datas/measurements/Triangle Borea BR03/asr/CEA2034.txt"
+   "path": "datas/measurements/Triangle Borea BR03/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Vanatoo Transparent Zero",
@@ -959,7 +1856,10 @@
    "pref_score": 3.65,
    "pref_score_wsub": 6.4,
    "lfx_hz": 62,
-   "path": "datas/measurements/Vanatoo Transparent Zero/asr/CEA2034.txt"
+   "path": "datas/measurements/Vanatoo Transparent Zero/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Verdant Audio Bambusa AL 1",
@@ -971,7 +1871,10 @@
    "pref_score": 5.05,
    "pref_score_wsub": 7.12,
    "lfx_hz": 43,
-   "path": "datas/measurements/Verdant Audio Bambusa AL 1/asr/CEA2034.txt"
+   "path": "datas/measurements/Verdant Audio Bambusa AL 1/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Verdant Audio Bambusa MG 1",
@@ -983,7 +1886,10 @@
    "pref_score": 5.15,
    "pref_score_wsub": 7.1,
    "lfx_hz": 41,
-   "path": "datas/measurements/Verdant Audio Bambusa MG 1/asr/CEA2034.txt"
+   "path": "datas/measurements/Verdant Audio Bambusa MG 1/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Yamaha HS5",
@@ -995,7 +1901,10 @@
    "pref_score": 3.7,
    "pref_score_wsub": 6.32,
    "lfx_hz": 58,
-   "path": "datas/measurements/Yamaha HS5/asr/CEA2034.txt"
+   "path": "datas/measurements/Yamaha HS5/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
   },
   {
    "id": "Yamaha HS7",
@@ -1007,7 +1916,25 @@
    "pref_score": 4.54,
    "pref_score_wsub": 6.48,
    "lfx_hz": 41,
-   "path": "datas/measurements/Yamaha HS7/asr/CEA2034.txt"
+   "path": "datas/measurements/Yamaha HS7/asr/CEA2034.txt",
+   "category": "studio",
+   "origin": "ASR",
+   "format": "cea2034"
+  },
+  {
+   "id": "Yamaha HS8",
+   "brand": "Yamaha",
+   "model": "HS8",
+   "type": "active",
+   "shape": "bookshelves",
+   "price": "800",
+   "pref_score": 5.85,
+   "pref_score_wsub": 7.58,
+   "lfx_hz": 36,
+   "path": "datas/measurements/Yamaha HS8/asr",
+   "format": "polar",
+   "category": "studio",
+   "origin": "ASR"
   },
   {
    "id": "Zaph Audio ZA5.2",
@@ -1019,7 +1946,10 @@
    "pref_score": 5.41,
    "pref_score_wsub": 7.6,
    "lfx_hz": 46,
-   "path": "datas/measurements/Zaph Audio ZA5.2/asr/CEA2034.txt"
+   "path": "datas/measurements/Zaph Audio ZA5.2/asr/CEA2034.txt",
+   "category": "hifi",
+   "origin": "ASR",
+   "format": "cea2034"
   }
  ]
 }

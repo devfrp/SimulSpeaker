@@ -315,35 +315,55 @@ class SpeakerPanel(QtWidgets.QFrame):
 
     def __init__(self, speakers: list[dict], parent=None):
         super().__init__(parent)
-        frame, lay = card("Haut-parleurs", f"{len(speakers)} modèles mesurés (CEA-2034, "
-                                           "Spinorama / Klippel NFS).")
+        n_studio = sum(sp.get("category") == "studio" for sp in speakers)
+        frame, lay = card("Haut-parleurs", f"{len(speakers)} modèles mesurés, dont {n_studio} "
+                                           "moniteurs de studio (CEA-2034, Spinorama / Klippel NFS).")
         outer = QtWidgets.QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(frame)
         self.search = QtWidgets.QLineEdit()
         self.search.setPlaceholderText("Filtrer par marque ou modèle…")
         self.search.setClearButtonEnabled(True)
-        lay.addWidget(self.search)
+        self.category = QtWidgets.QComboBox()
+        self.category.addItem("Toutes", "")
+        self.category.addItem("Moniteurs de studio", "studio")
+        self.category.addItem("Hi-Fi", "hifi")
+        self.category.setToolTip("Filtrer par type d'enceinte")
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self.search, 1)
+        row.addWidget(self.category)
+        lay.addLayout(row)
         self.list = QtWidgets.QListWidget()
         self.list.setMinimumHeight(180)
         for spk in speakers:
-            item = QtWidgets.QListWidgetItem(f"{spk['brand']} {spk['model']}")
+            studio = spk.get("category") == "studio"
+            item = QtWidgets.QListWidgetItem(f"{spk['brand']} {spk['model']}"
+                                             + ("   · studio" if studio else ""))
             item.setData(Qt.ItemDataRole.UserRole, spk["id"])
+            item.setData(Qt.ItemDataRole.UserRole + 1, spk.get("category", "hifi"))
             kind = {"bookshelves": "bibliothèque", "floorstanders": "colonne",
                     "center": "centrale"}.get(spk.get("shape"), spk.get("shape", ""))
-            item.setToolTip(f"{kind} · {spk.get('type', '')} · score Olive "
-                            f"{spk.get('pref_score')} ({spk.get('pref_score_wsub')} avec caisson)"
-                            f" · LFX {spk.get('lfx_hz')} Hz")
+            origin = spk.get("origin", "ASR")
+            computed = " (CEA-2034 calculé depuis les mesures polaires)" \
+                if spk.get("format") == "polar" else ""
+            item.setToolTip(f"{'moniteur de studio' if studio else 'hi-fi'} · {kind} · "
+                            f"{spk.get('type', '')}\nscore Olive {spk.get('pref_score')} "
+                            f"({spk.get('pref_score_wsub')} avec caisson) · LFX {spk.get('lfx_hz')} Hz"
+                            f"\nmesure : {origin}, Klippel NFS{computed}")
             self.list.addItem(item)
         lay.addWidget(self.list, 1)
-        self.search.textChanged.connect(self._filter)
+        self.search.textChanged.connect(lambda _t: self._filter())
+        self.category.currentIndexChanged.connect(lambda _i: self._filter())
         self.list.currentItemChanged.connect(self._changed)
 
-    def _filter(self, text: str):
-        patterns = query_patterns(text)
+    def _filter(self):
+        patterns = query_patterns(self.search.text())
+        wanted = self.category.currentData()
         for i in range(self.list.count()):
             item = self.list.item(i)
-            item.setHidden(not matches(patterns, item.text()))
+            ok = matches(patterns, item.text()) and (
+                not wanted or item.data(Qt.ItemDataRole.UserRole + 1) == wanted)
+            item.setHidden(not ok)
 
     def _changed(self, current, _previous):
         if current is not None:

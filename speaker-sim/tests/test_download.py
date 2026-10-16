@@ -135,6 +135,13 @@ class DownloaderTests(unittest.TestCase):
             p = d.ensure_speaker(spk)
             self.assertEqual(p, d.spinorama_dir / "KEF R3" / "CEA2034.txt")
             self.assertIn(download.SPINORAMA_COMMIT, session.urls[0])
+            polar = {"id": "Neumann KH 150", "format": "polar",
+                     "path": "datas/measurements/Neumann KH 150/asr"}
+            session.routes["SPL%20Horizontal.txt"] = b"h"
+            session.routes["SPL%20Vertical.txt"] = b"v"
+            folder = d.ensure_speaker(polar)
+            self.assertTrue((folder / "SPL Horizontal.txt").is_file())
+            self.assertTrue((folder / "SPL Vertical.txt").is_file())
             custom = paths.cache_dir / "my.sofa"
             custom.write_bytes(b"s")
             self.assertEqual(d.ensure_hrtf(str(custom)), custom)
