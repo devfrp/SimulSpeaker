@@ -506,10 +506,19 @@ class RoomPlan(QtWidgets.QWidget):
             self._labels(p, rect, room)
             return
 
-        # Rayons : premières réflexions (murs) puis son direct
+        # Rayons : premières réflexions (murs) — seulement si elles sont simulées — puis son direct
         beta = room.reflection_bands()
         surfaces_2d = {"rear": 0, "front": 1, "right": 2, "left": 3}
-        for side in ("L", "R"):
+        reflections_on = (self.s.room_enabled and self.s.room_amount > 0
+                          and self.s.reflection_order >= 1)
+        if not reflections_on:
+            p.setPen(C(RED, 220))
+            p.setFont(QtGui.QFont(MONO, 9))
+            p.drawText(QtCore.QRectF(rect.left(), rect.center().y() + 0.9 * sc, rect.width(), 18),
+                       Qt.AlignmentFlag.AlignCenter,
+                       "pièce désactivée" if not self.s.room_enabled or self.s.room_amount <= 0
+                       else "réflexions désactivées (ordre : aucune)")
+        for side in (("L", "R") if reflections_on else ()):
             src = layout.speakers[side]
             for img in ae.image_sources(src, room, 1):
                 if img.reflections != 1:
@@ -1007,6 +1016,7 @@ class RoomPanel(QtWidgets.QWidget):
     changed = Signal(dict)          # réglages validés
     preview = Signal(dict)          # aperçu pendant un glissement
     preset_chosen = Signal(str)
+    enable_room = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1017,6 +1027,20 @@ class RoomPanel(QtWidgets.QWidget):
         # 03 Salle
         frame, lay = section("03", "Salle")
         outer.addWidget(frame)
+        self.warning = QtWidgets.QFrame()
+        self.warning.setStyleSheet(f"QFrame {{ background: rgba(229,72,77,28); border: 1px solid "
+                                   f"rgba(229,72,77,110); border-radius: 9px; }} "
+                                   f"QLabel {{ background: transparent; border: none; }}")
+        wl = QtWidgets.QHBoxLayout(self.warning)
+        wl.setContentsMargins(10, 8, 8, 8)
+        self.warning_text = label(wrap=True)
+        self.warning_text.setStyleSheet(f"color: {TEXT}; font-size: 12px;")
+        enable = QtWidgets.QPushButton("Activer")
+        enable.setObjectName("primary")
+        enable.clicked.connect(self.enable_room.emit)
+        wl.addWidget(self.warning_text, 1)
+        wl.addWidget(enable)
+        lay.addWidget(self.warning)
         lay.addWidget(caption("préréglages"))
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(6)
@@ -1093,7 +1117,11 @@ class RoomPanel(QtWidgets.QWidget):
         lay2.addWidget(self.room_enabled)
         add_slider(lay2, "room_amount", "Quantité de pièce", 0, 1.5, 0.05, pct)
         add_seg(lay2, "reflection_order", "Ordre des réflexions",
-                [(0, "0"), (1, "1"), (2, "2"), (3, "3")])
+                [(0, "Aucune"), (1, "1"), (2, "2"), (3, "3")])
+        self.segs["reflection_order"].setToolTip(
+            "Nombre de rebonds simulés pour chaque réflexion précoce.\n"
+            "« Aucune » : seule la réverbération tardive reste ; le mur avant,\n"
+            "la hauteur des oreilles et la diffusion n'ont alors plus d'effet.")
         self.rt_auto = QtWidgets.QCheckBox("RT60 calculé depuis les matériaux")
         self.rt_auto.toggled.connect(self._rt_auto_toggled)
         lay2.addWidget(self.rt_auto)
@@ -1127,6 +1155,16 @@ class RoomPanel(QtWidgets.QWidget):
             w.setChecked(v)
             w.blockSignals(False)
         self.sliders["rt60"].setEnabled(not s.rt60_auto)
+        if not s.room_enabled or s.room_amount <= 0:
+            self.warning_text.setText("La pièce n'est pas simulée : les réglages de salle "
+                                      "n'ont aucun effet.")
+            self.warning.setVisible(True)
+        elif s.reflection_order == 0:
+            self.warning_text.setText("Réflexions précoces désactivées : mur avant, hauteur "
+                                      "des oreilles et diffusion sans effet.")
+            self.warning.setVisible(True)
+        else:
+            self.warning.setVisible(False)
         idx = self.rate.findData(s.sample_rate)
         self.rate.setCurrentIndex(max(idx, 0))
         if s.room_preset in self.preset_keys:
@@ -1332,6 +1370,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.room_panel.changed.connect(self.on_setting)
         self.room_panel.preview.connect(self.on_preview)
         self.room_panel.preset_chosen.connect(self.on_preset)
+        self.room_panel.enable_room.connect(lambda: self.on_setting({
+            "room_enabled": True, "room_amount": max(self.app.settings.room_amount, 1.0),
+            "reflection_order": max(self.app.settings.reflection_order, 2)}))
         self.plan.committed.connect(self.on_setting)
         self.out_panel.sink_changed.connect(lambda n: self.on_setting({"output_sink": n}))
         self.out_panel.autostart_changed.connect(self.on_autostart)
