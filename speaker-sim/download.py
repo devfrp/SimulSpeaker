@@ -38,6 +38,15 @@ SYSTEM_SOFA_PATHS = (
 )
 
 USER_AGENT = "devfrp-speaker-sim/1.0 (+https://github.com/devfrp)"
+IMPORT_PREFIX = "import:"
+
+# Courbes cibles AutoEq proposées pour corriger une mesure brute importée.
+AUTOEQ_TARGETS = (
+    "Harman over-ear 2018",
+    "Harman in-ear 2019",
+    "Diffuse field ISO 11904-1",
+    "Diffuse field GRAS KEMAR",
+)
 ProgressCallback = Callable[[int, "int | None"], None]
 
 
@@ -53,6 +62,11 @@ class HeadphoneEntry:
     source: str
     rig: str
     path: str  # chemin relatif à results/, décodé (ex. "oratory1990/over-ear/Sennheiser HD 650")
+    target: str = ""  # import d'une mesure brute : courbe cible AutoEq
+
+    @property
+    def is_import(self) -> bool:
+        return self.path.startswith(IMPORT_PREFIX)
 
     @property
     def label(self) -> str:
@@ -60,12 +74,14 @@ class HeadphoneEntry:
         return f"{self.name} — {self.source}{rig}"
 
     def to_dict(self) -> dict:
-        return {"name": self.name, "source": self.source, "rig": self.rig, "path": self.path}
+        return {"name": self.name, "source": self.source, "rig": self.rig, "path": self.path,
+                "target": self.target}
 
     @classmethod
     def from_dict(cls, data: dict) -> "HeadphoneEntry":
         return cls(name=str(data["name"]), source=str(data.get("source", "")),
-                   rig=str(data.get("rig", "")), path=str(data["path"]))
+                   rig=str(data.get("rig", "")), path=str(data["path"]),
+                   target=str(data.get("target", "") or ""))
 
 
 def parse_autoeq_index(text: str) -> list[HeadphoneEntry]:
@@ -217,6 +233,12 @@ class Downloader:
                 errors.append(str(exc))
         raise DownloadError("Aucune correction AutoEq pour « %s » :\n%s"
                             % (entry.name, "\n".join(errors)))
+
+    def ensure_autoeq_target(self, name: str, progress: ProgressCallback | None = None) -> Path:
+        """Courbe cible AutoEq (``targets/<nom>.csv``, commit figé)."""
+        rel = f"targets/{name}.csv"
+        url = f"{AUTOEQ_RAW}/{AUTOEQ_COMMIT}/{_quote_path(rel)}"
+        return self.fetch(url, self.autoeq_dir / rel, progress)
 
     # -- Spinorama ------------------------------------------------------
     def spinorama_url(self, rel_path: str) -> str:

@@ -11,6 +11,7 @@ Exemples ::
     python3 main.py --stop
     python3 main.py --autostart on
     python3 main.py --export ~/irs                   # Windows/macOS : filtres portables
+    python3 main.py --import-headphone mesure.txt --name "Mon casque" --target "Harman in-ear 2019"
 
 ``--hook-started`` / ``--hook-stopped`` sont appelés par l'unité systemd.
 """
@@ -43,8 +44,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--set-speaker", metavar="ID", help="haut-parleur, par identifiant")
     p.add_argument("--autostart", choices=("on", "off"), help="auto-démarrage à la connexion")
     p.add_argument("-v", "--verbose", action="store_true")
-    p.add_argument("--hook-started", action="store_true", help=argparse.SUPPRESS)
-    p.add_argument("--hook-stopped", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--import-headphone", metavar="FICHIER",
+                   help="importer une mesure (fréquence, dB) ou un EQ AutoEq / Equalizer APO")
+    p.add_argument("--name", metavar="NOM", help="nom du casque importé")
+    p.add_argument("--target", metavar="CIBLE",
+                   help="cible pour une mesure brute (défaut : Harman over-ear 2018)")
+    # Hooks systemd : argument facultatif = instance (a/b) ; absent = unité v1.0.
+    p.add_argument("--hook-started", nargs="?", const="", default=None, help=argparse.SUPPRESS)
+    p.add_argument("--hook-stopped", nargs="?", const="", default=None, help=argparse.SUPPRESS)
     return p
 
 
@@ -55,9 +62,9 @@ def run_hooks(args) -> int:
     store = ConfigStore(Paths.default())
     pw = PipeWire()
     try:
-        if args.hook_started:
-            return hook_started(store, pw, log=lambda m: print(m, file=sys.stderr))
-        return hook_stopped(store, pw, log=lambda m: print(m, file=sys.stderr))
+        if args.hook_started is not None:
+            return hook_started(store, pw, args.hook_started, log=lambda m: print(m, file=sys.stderr))
+        return hook_stopped(store, pw, args.hook_stopped, log=lambda m: print(m, file=sys.stderr))
     except Exception as exc:  # un hook ne doit jamais faire échouer l'unité
         print(f"hook: {exc}", file=sys.stderr)
         return 0
@@ -89,6 +96,9 @@ def run_cli(args) -> int:
                 entry = matches[0]
             app.select_headphone(entry)
             print(f"Casque : {entry.label}")
+        if args.import_headphone:
+            entry = app.import_headphone(args.import_headphone, args.name or "", args.target or "")
+            print(f"Casque importé et sélectionné : {entry.label}")
         if args.set_speaker:
             app.select_speaker(args.set_speaker)
             print(f"Haut-parleur : {app.description()}")
@@ -127,11 +137,11 @@ def main(argv: list[str] | None = None) -> int:
         from config import APP_NAME, APP_VERSION
         print(f"{APP_NAME} {APP_VERSION}")
         return 0
-    if args.hook_started or args.hook_stopped:
+    if args.hook_started is not None or args.hook_stopped is not None:
         return run_hooks(args)
     cli = any([args.start, args.apply, args.stop, args.status, args.build, args.list_speakers,
                args.search_headphones is not None, args.set_headphone, args.set_speaker,
-               args.autostart, args.export])
+               args.autostart, args.export, args.import_headphone])
     return run_cli(args) if cli else run_gui()
 
 

@@ -125,6 +125,84 @@ def load_headphone_eq(path: Path) -> HeadphoneEq:
     return eq
 
 
+# ---------------------------------------------------------------------------
+# Mesures de casque importées par l'utilisateur
+# ---------------------------------------------------------------------------
+def detect_headphone_file_kind(text: str) -> str:
+    """``parametric`` (Equalizer APO / AutoEq), ``graphic`` (GraphicEQ) ou ``measurement``."""
+    if re.search(r"GraphicEQ\s*:", text, re.IGNORECASE):
+        return "graphic"
+    if _FILTER_RE.search(text) or re.search(r"^\s*Preamp\s*:", text, re.IGNORECASE | re.MULTILINE):
+        return "parametric"
+    return "measurement"
+
+
+def parse_measurement(text: str) -> tuple[np.ndarray, np.ndarray]:
+    """Réponse en fréquence brute (fréquence, dB) : export REW, Squiglink, CSV AutoEq…
+
+    Lignes de commentaires et en-têtes ignorées ; séparateurs virgule, point-virgule,
+    tabulation ou espaces. Avec un en-tête AutoEq, la colonne ``raw`` est utilisée.
+    """
+    column = 1
+    freqs, values = [], []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line[0] in "*#;/":
+            continue
+        fields = [f for f in re.split(r"[,;\t ]+", line) if f]
+        if fields and not re.match(r"^[-+]?\d", fields[0]):
+            names = [f.strip().strip('"').lower() for f in fields]
+            if "raw" in names:
+                column = names.index("raw")
+            continue
+        try:
+            f = float(fields[0])
+            v = float(fields[column])
+        except (ValueError, IndexError):
+            continue
+        if f > 0 and math.isfinite(v):
+            freqs.append(f)
+            values.append(v)
+    if len(freqs) < 10:
+        raise AudioEngineError("Mesure illisible : il faut au moins 10 lignes « fréquence, dB »")
+    f = np.asarray(freqs)
+    v = np.asarray(values)
+    order = np.argsort(f)
+    f, v = f[order], v[order]
+    keep = np.concatenate([[True], np.diff(f) > 0])
+    f, v = f[keep], v[keep]
+    if f[0] > 200 or f[-1] < 5000:
+        raise AudioEngineError("Mesure incomplète : elle doit couvrir au moins 200 Hz – 5 kHz")
+    return f, v
+
+
+def _smooth_log(values: np.ndarray, points: int) -> np.ndarray:
+    from scipy.ndimage import uniform_filter1d
+
+    return uniform_filter1d(values, size=max(1, points), mode="nearest")
+
+
+def measurement_eq(measurement: tuple[np.ndarray, np.ndarray],
+                   target: tuple[np.ndarray, np.ndarray],
+                   max_boost_db: float = 10.0, max_cut_db: float = -20.0) -> HeadphoneEq:
+    """Correction (EQ graphique) amenant ``measurement`` sur la courbe cible ``target``.
+
+    Erreur normalisée sur 200 Hz – 2 kHz, lissée au 1/12 d'octave puis au 1/3
+    d'octave au-dessus de 5–10 kHz (zone dépendant du placement), bornée.
+    """
+    grid = np.geomspace(20, 20000, 480)       # ≈ 48 points par octave
+    m = interp_log(*measurement, grid)
+    t = interp_log(*target, grid)
+    err = m - t
+    band = (grid >= 200) & (grid <= 2000)
+    err -= np.mean(err[band])
+    fine = _smooth_log(err, 4)                # 1/12 d'octave
+    coarse = _smooth_log(err, 16)             # 1/3 d'octave
+    w = np.clip((np.log(grid) - np.log(5000)) / (np.log(10000) - np.log(5000)), 0, 1)
+    eq = np.clip(-((1 - w) * fine + w * coarse), max_cut_db, max_boost_db)
+    return HeadphoneEq(graphic=(grid, eq))
+
+
 def biquad_coefficients(bq: Biquad, fs: float) -> tuple[np.ndarray, np.ndarray] | None:
     """Coefficients RBJ (Audio EQ Cookbook). ``None`` si fc ≥ Nyquist."""
     if bq.fc <= 0 or bq.fc >= fs / 2 * 0.999:

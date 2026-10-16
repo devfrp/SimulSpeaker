@@ -13,7 +13,8 @@ from typing import Callable
 
 from app import AppError, SpeakerSimApp, setup_logging
 from config import APP_DIR, APP_NAME
-from download import HeadphoneEntry, matches, query_patterns
+from download import AUTOEQ_TARGETS, HeadphoneEntry, matches, query_patterns
+import audio_engine as ae
 from qt_compat import QtCore, QtGui, QtWidgets, Signal
 
 Qt = QtCore.Qt
@@ -221,6 +222,8 @@ class ResponsePlot(QtWidgets.QWidget):
 class HeadphonePanel(QtWidgets.QFrame):
     selected = Signal(object)          # HeadphoneEntry
     eq_toggled = Signal(bool)
+    import_requested = Signal()
+    remove_requested = Signal(object)  # HeadphoneEntry importé
 
     def __init__(self, parent=None):
         frame, lay = card("Écouteurs", "8 850 mesures AutoEq (commit figé). "
@@ -249,8 +252,17 @@ class HeadphonePanel(QtWidgets.QFrame):
         self.current = QtWidgets.QLabel("Aucun casque sélectionné")
         self.current.setWordWrap(True)
         lay.addWidget(self.current)
-        self.eq_enabled = QtWidgets.QCheckBox("Appliquer la correction AutoEq du casque")
-        lay.addWidget(self.eq_enabled)
+        self.eq_enabled = QtWidgets.QCheckBox("Appliquer la correction du casque")
+        import_btn = QtWidgets.QPushButton("Importer une mesure…")
+        import_btn.setToolTip("Votre propre mesure (fréquence, dB : REW, Squiglink, CSV AutoEq)\n"
+                              "ou un EQ AutoEq / Equalizer APO (ParametricEQ, GraphicEQ)")
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self.eq_enabled, 1)
+        row.addWidget(import_btn)
+        lay.addLayout(row)
+        import_btn.clicked.connect(self.import_requested.emit)
+        self.view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.view.customContextMenuRequested.connect(self._context_menu)
 
         self._timer = QtCore.QTimer(self, singleShot=True, interval=150)
         self._timer.timeout.connect(self._apply_filter)
@@ -261,12 +273,21 @@ class HeadphonePanel(QtWidgets.QFrame):
     def set_entries(self, entries: list[HeadphoneEntry]) -> None:
         self.model.clear()
         for e in entries:
-            item = QtGui.QStandardItem(e.label)
+            item = QtGui.QStandardItem(("★ " if e.is_import else "") + e.label)
             item.setData(e, Qt.ItemDataRole.UserRole)
             item.setData(f"{e.name} {e.source} {e.rig}".lower(), Qt.ItemDataRole.UserRole + 1)
             self.model.appendRow(item)
         self.search.setEnabled(True)
         self._apply_filter()
+
+    def _context_menu(self, pos):
+        entry = self.proxy.data(self.view.indexAt(pos), Qt.ItemDataRole.UserRole)
+        if entry is None or not entry.is_import:
+            return
+        menu = QtWidgets.QMenu(self)
+        remove = menu.addAction("Supprimer cet import")
+        if menu.exec(self.view.viewport().mapToGlobal(pos)) == remove:
+            self.remove_requested.emit(entry)
 
     def set_error(self, message: str) -> None:
         self.count.setText(f"Index indisponible : {message}")
@@ -579,6 +600,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # Connexions
         self.hp_panel.selected.connect(self.on_headphone)
         self.hp_panel.eq_toggled.connect(lambda v: self.on_setting({"headphone_eq_enabled": v}))
+        self.hp_panel.import_requested.connect(self.on_import)
+        self.hp_panel.remove_requested.connect(self.on_remove_import)
         self.spk_panel.selected.connect(self.on_speaker)
         self.room_panel.changed.connect(self.on_setting)
         self.out_panel.sink_changed.connect(lambda n: self.on_setting({"output_sink": n}))
@@ -691,7 +714,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.status.setText(message)
 
     def _headphones_loaded(self, entries):
-        self.hp_panel.set_entries(entries)
+        self.hp_panel.set_entries(self.app.imported_headphones() + entries)
         self.status.setText(f"Index AutoEq chargé ({len(entries)} mesures)")
 
     def _show_result(self, result):
@@ -730,6 +753,54 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_apply(self):
         fn = self.app.apply if self.app.is_running() else self.app.build_filters
         self.run_task(fn, self._show_result, with_progress=True, message="Génération des filtres…")
+
+    def _reload_headphones(self):
+        try:
+            self.hp_panel.set_entries(self.app.imported_headphones() + self.app.headphones())
+        except Exception:  # index AutoEq indisponible : au moins les imports
+            self.hp_panel.set_entries(self.app.imported_headphones())
+
+    def on_import(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Importer une mesure ou un EQ de casque", str(self.app.paths.state_dir.parent),
+            "Mesures et EQ (*.txt *.csv *.frd *.tsv);;Tous les fichiers (*)")
+        if not path:
+            return
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                kind = ae.detect_headphone_file_kind(fh.read())
+        except OSError as exc:
+            QtWidgets.QMessageBox.critical(self, APP_NAME, f"Lecture impossible : {exc}")
+            return
+        import os
+        name, ok = QtWidgets.QInputDialog.getText(
+            self, "Nom du casque", "Nom affiché :", text=os.path.splitext(os.path.basename(path))[0])
+        if not ok:
+            return
+        target = ""
+        if kind == "measurement":
+            target, ok = QtWidgets.QInputDialog.getItem(
+                self, "Courbe cible",
+                "Mesure brute détectée : vers quelle cible corriger ?\n"
+                "(Harman over-ear = cible des corrections AutoEq de casques circum-auriculaires)",
+                list(AUTOEQ_TARGETS), 0, False)
+            if not ok:
+                return
+        try:
+            entry = self.app.import_headphone(path, name, target)
+        except AppError as exc:
+            QtWidgets.QMessageBox.critical(self, APP_NAME, str(exc))
+            return
+        self._reload_headphones()
+        self.hp_panel.show_current(entry)
+        self.status.setText(f"Casque importé : {entry.label}")
+        self.mark_dirty()
+
+    def on_remove_import(self, entry):
+        self.app.remove_import(entry)
+        self._reload_headphones()
+        self.hp_panel.show_current(self.app.headphone)
+        self.mark_dirty()
 
     def on_export(self):
         folder = QtWidgets.QFileDialog.getExistingDirectory(

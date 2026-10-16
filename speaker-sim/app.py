@@ -8,17 +8,22 @@ exécute dans un thread de travail.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import logging.handlers
+import re
+import shutil
 from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
 import audio_engine as ae
 from config import APP_NAME, IS_LINUX, ConfigStore, Paths, Settings, load_speaker_catalog
-from download import Downloader, HeadphoneEntry, search_headphones
-from system import (NODE_NAME, PipeWire, Systemd, SystemError_, default_runner,
-                    is_sim_node, missing_tools, write_filter_config)
+from download import (AUTOEQ_TARGETS, IMPORT_PREFIX, Downloader, HeadphoneEntry,
+                      search_headphones)
+from system import (SLOTS, PipeWire, Systemd, SystemError_, default_runner, is_sim_node,
+                    missing_tools, node_name, other_slot, write_filter_config)
 
 log = logging.getLogger("speaker_sim")
 Progress = Callable[[float, str], None]
@@ -77,7 +82,85 @@ class SpeakerSimApp:
         return self._headphones
 
     def search_headphones(self, query: str, limit: int | None = 200) -> list[HeadphoneEntry]:
-        return search_headphones(self.headphones(), query, limit)
+        return search_headphones(self.imported_headphones() + self.headphones(), query, limit)
+
+    # -- mesures importées ------------------------------------------------
+    @property
+    def _imports_index(self) -> Path:
+        return self.paths.imports_dir / "index.json"
+
+    def imported_headphones(self) -> list[HeadphoneEntry]:
+        try:
+            data = json.loads(self._imports_index.read_text(encoding="utf-8"))
+            return [HeadphoneEntry.from_dict(d) for d in data
+                    if (self.paths.imports_dir / d["path"][len(IMPORT_PREFIX):]).is_file()]
+        except (OSError, ValueError, KeyError, TypeError):
+            return []
+
+    def _save_imports(self, entries: list[HeadphoneEntry]) -> None:
+        from config import atomic_write_json
+
+        atomic_write_json(self._imports_index, [e.to_dict() for e in entries])
+
+    def import_headphone(self, source: Path | str, name: str = "",
+                         target: str = "") -> HeadphoneEntry:
+        """Importe une mesure ou un EQ de casque, le valide, le copie et le sélectionne.
+
+        * EQ paramétrique / graphique (AutoEq, Equalizer APO) : appliqué tel quel ;
+        * mesure brute (fréquence, dB) : corrigée vers ``target`` (cible AutoEq).
+        """
+        src = Path(source).expanduser()
+        try:
+            text = src.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            raise AppError(f"Lecture impossible : {exc}") from exc
+        kind = ae.detect_headphone_file_kind(text)
+        try:
+            if kind == "measurement":
+                ae.parse_measurement(text)
+                target = target or AUTOEQ_TARGETS[0]
+                if target not in AUTOEQ_TARGETS:
+                    raise AppError(f"Cible inconnue : {target}")
+                rig = f"mesure → {target}"
+            else:
+                eq = ae.parse_graphic_eq(text) if kind == "graphic" else ae.parse_parametric_eq(text)
+                if kind == "parametric" and not eq.filters:
+                    raise AppError("Aucun filtre « Filter N: ON … » reconnu dans ce fichier")
+                target = ""
+                rig = "EQ graphique" if kind == "graphic" else "EQ paramétrique"
+        except ae.AudioEngineError as exc:
+            raise AppError(str(exc)) from exc
+        digest = hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:12]
+        safe = re.sub(r"[^A-Za-z0-9._-]+", "_", src.name)[:80] or "mesure.txt"
+        self.paths.imports_dir.mkdir(parents=True, exist_ok=True)
+        dest = self.paths.imports_dir / f"{digest}-{safe}"
+        shutil.copyfile(src, dest)
+        entry = HeadphoneEntry(name=(name or src.stem).strip(), source="Import", rig=rig,
+                               path=IMPORT_PREFIX + dest.name, target=target)
+        others = [e for e in self.imported_headphones() if e.path != entry.path]
+        self._save_imports([entry] + others)
+        self.select_headphone(entry)
+        log.info("Casque importé : %s (%s)", entry.name, rig)
+        return entry
+
+    def remove_import(self, entry: HeadphoneEntry) -> None:
+        remaining = [e for e in self.imported_headphones() if e.path != entry.path]
+        self._save_imports(remaining)
+        (self.paths.imports_dir / entry.path[len(IMPORT_PREFIX):]).unlink(missing_ok=True)
+        if self.headphone and self.headphone.path == entry.path:
+            self.select_headphone(None)
+
+    def _headphone_eq(self, hp: HeadphoneEntry) -> ae.HeadphoneEq:
+        if not hp.is_import:
+            return ae.load_headphone_eq(self.downloader.ensure_headphone_eq(hp))
+        path = self.paths.imports_dir / hp.path[len(IMPORT_PREFIX):]
+        if not path.is_file():
+            raise AppError(f"Fichier importé introuvable : {path}")
+        if not hp.target:
+            return ae.load_headphone_eq(path)
+        text = path.read_text(encoding="utf-8", errors="replace")
+        target_text = self.downloader.ensure_autoeq_target(hp.target).read_text(encoding="utf-8")
+        return ae.measurement_eq(ae.parse_measurement(text), ae.parse_measurement(target_text))
 
     @property
     def headphone(self) -> HeadphoneEntry | None:
@@ -131,9 +214,8 @@ class SpeakerSimApp:
         hp_fir = None
         hp = self.headphone
         if hp and s.headphone_eq_enabled:
-            report(0.06, f"Correction AutoEq : {hp.name}")
-            eq = ae.load_headphone_eq(self.downloader.ensure_headphone_eq(hp))
-            hp_fir = ae.headphone_eq_fir(eq, fs)
+            report(0.06, f"Correction du casque : {hp.name}")
+            hp_fir = ae.headphone_eq_fir(self._headphone_eq(hp), fs)
 
         report(0.1, "HRTF KEMAR")
         hrtf = self._hrtf_factory(self.downloader.ensure_hrtf(s.sofa_file), fs)
@@ -146,9 +228,13 @@ class SpeakerSimApp:
                 close()
 
         report(0.92, "Écriture des filtres")
-        ir_paths = ae.write_irs(result, self.paths.filters_dir)
-        if self.supports_live:
-            write_filter_config(self.paths, ir_paths, self.target_sink(), self.description())
+        # Les deux instances reçoivent les mêmes filtres : l'instance active a déjà
+        # chargé les siens en mémoire, l'autre démarrera avec les nouveaux.
+        target = self.target_sink() if self.supports_live else ""
+        for slot in SLOTS:
+            ir_paths = ae.write_irs(result, self.paths.slot_dir(slot))
+            if self.supports_live:
+                write_filter_config(self.paths, ir_paths, target, self.description(), slot)
         if not hp:
             result.notes.append("Aucun casque sélectionné : pas de correction AutoEq")
         self.last_result = result
@@ -217,22 +303,47 @@ class SpeakerSimApp:
         missing = missing_tools()
         if missing:
             raise AppError("Outils manquants : " + ", ".join(missing))
+        report = progress or (lambda *_: None)
         result = self.build_filters(progress)
-        running = self.is_running()
-        if running:
-            self.store.update_runtime(restarting=True)
         try:
-            (progress or (lambda *_: None))(0.96, "Démarrage du service")
-            self.systemd.start()
+            self._switch(report)
         except SystemError_ as exc:
-            self.store.update_runtime(restarting=None)
             raise AppError(f"Démarrage impossible : {exc}\n{self._logs()}") from exc
-        if running:
-            self.store.update_runtime(restarting=None)
-        if not self.is_running():
-            raise AppError("Le service s'est arrêté aussitôt.\n" + self._logs())
         log.info("Simulation démarrée (%s)", self.description())
         return result
+
+    def _switch(self, report: Progress) -> str:
+        """Démarre l'instance inactive puis arrête l'ancienne, sans coupure.
+
+        La nouvelle instance devient la sortie par défaut (hook) ; WirePlumber y
+        déplace les flux qui suivent la sortie par défaut ; on attend qu'ils aient
+        quitté l'ancienne instance avant de l'arrêter. La sortie virtuelle n'est donc
+        jamais absente et les lecteurs ne se mettent pas en pause.
+        """
+        active = self.systemd.active_slots()
+        legacy = self.systemd.legacy_active()
+        new = other_slot(active[0]) if active else "a"
+        report(0.95, "Bascule sans coupure" if active or legacy else "Démarrage du service")
+        self.systemd.start(new)
+        node = node_name(new)
+        if self.pw.wait_for_sink(node) is None:
+            self.systemd.stop(new)
+            raise SystemError_("la nouvelle instance n'est pas apparue dans PipeWire")
+        if self.pw.default_sink(configured_only=True) != node:
+            self.pw.set_default_sink(node)
+        old_nodes = [node_name(s) for s in active if s != new] + ([node_name("")] if legacy else [])
+        for old in old_nodes:
+            if not self.pw.wait_streams_left(old, timeout=3.0):
+                log.warning("Des flux restent liés à %s (cible explicite) ; arrêt quand même", old)
+        for slot in active:
+            if slot != new:
+                self.systemd.stop(slot)
+        if legacy:
+            self.systemd.stop_legacy()
+            self.systemd.cleanup_legacy()
+        if not self.systemd.active_slots():
+            raise SystemError_("le service s'est arrêté aussitôt")
+        return new
 
     apply = start  # reconstruire + (re)démarrer
 
@@ -249,6 +360,10 @@ class SpeakerSimApp:
         try:
             if enabled and not self.paths.filter_conf.exists():
                 self.build_filters()
+            if enabled and "a" in self.systemd.active_slots() and not self.systemd.is_linked("a"):
+                # L'instance A tourne en transitoire : basculer sur B (sans coupure)
+                # libère son nom pour l'unité persistante.
+                self._switch(lambda *_: None)
             self.systemd.set_autostart(enabled)
         except SystemError_ as exc:
             raise AppError(f"Auto-démarrage : {exc}") from exc
@@ -258,6 +373,7 @@ class SpeakerSimApp:
         rt = self.store.load_runtime()
         spk = self.speaker()
         hp = self.headphone
+        slots = self.systemd.active_slots() if self.supports_live else []
         default = ""
         if self.supports_live:
             try:
@@ -270,7 +386,8 @@ class SpeakerSimApp:
             "speaker": f"{spk['brand']} {spk['model']}",
             "headphone": hp.label if hp else None,
             "default_sink": default,
-            "sim_is_default": default == NODE_NAME,
+            "instance": slots[0].upper() if slots else None,
+            "sim_is_default": is_sim_node(default),
             "previous_sink": rt.get("previous_sink"),
             "filters_ready": self.paths.filter_conf.exists(),
         }
@@ -282,5 +399,5 @@ class SpeakerSimApp:
             return ""
 
 
-def ir_files(paths: Paths) -> list[Path]:
-    return sorted(paths.filters_dir.glob("ir_*.wav"))
+def ir_files(paths: Paths, slot: str = "a") -> list[Path]:
+    return sorted(paths.slot_dir(slot).glob("ir_*.wav"))

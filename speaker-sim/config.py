@@ -68,9 +68,21 @@ class Paths:
     def filters_dir(self) -> Path:
         return self.state_dir / "filters"
 
+    def slot_dir(self, slot: str) -> Path:
+        """IR et configuration d'une instance (A/B) ; chaque instance a ses fichiers."""
+        return self.filters_dir / slot
+
+    def slot_conf(self, slot: str) -> Path:
+        return self.slot_dir(slot) / "filter-chain.conf"
+
     @property
     def filter_conf(self) -> Path:
-        return self.filters_dir / "filter-chain.conf"
+        return self.slot_conf("a")
+
+    @property
+    def imports_dir(self) -> Path:
+        """Mesures et EQ de casques importés par l'utilisateur."""
+        return self.state_dir / "imports"
 
     @property
     def log_file(self) -> Path:
@@ -162,7 +174,7 @@ def _coerce(name: str, value: Any, default: Any) -> Any:
         if value is None:
             return None
         if isinstance(value, dict) and "path" in value and "name" in value:
-            return {k: str(value.get(k, "")) for k in ("name", "source", "rig", "path")}
+            return {k: str(value.get(k, "")) for k in ("name", "source", "rig", "path", "target")}
         return None
     if name == "extra":
         return value if isinstance(value, dict) else {}
