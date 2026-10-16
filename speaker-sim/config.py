@@ -25,7 +25,7 @@ from typing import Any
 
 APP_ID = "devfrp-speaker-sim"
 APP_NAME = "Speaker Sim"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.0.0"
 # Exécutable PyInstaller : les données sont extraites dans sys._MEIPASS.
 APP_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 IS_LINUX = sys.platform.startswith("linux")
