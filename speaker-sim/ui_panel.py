@@ -1633,7 +1633,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings_btn = QtWidgets.QPushButton("Réglages")
         self.settings_btn.setObjectName("chip")
         self.settings_btn.setCheckable(True)
-        self.settings_btn.setToolTip("Afficher / masquer la colonne des réglages")
+        self.settings_btn.setToolTip("Déplier / replier les réglages (les onglets restent visibles)")
         tl.addWidget(self.settings_btn)
         self.export_btn = QtWidgets.QPushButton("Exporter")
         self.export_btn.setToolTip("Enregistrer les filtres (WAV, true stereo, Equalizer APO)")
@@ -1734,9 +1734,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.room_panel.add_tab("output", "Sortie", self.out_panel)
         self.room_panel.finish()
         # Bande de réglages : une ligne de cartes qui partagent la largeur (pas de défilement)
-        self.right_scroll = self.room_panel
         bv.addWidget(self.room_panel)
-        self.room_panel.bar.selected.connect(lambda _k: QtCore.QTimer.singleShot(0, self._fit_row))
+        self.room_panel.bar.selected.connect(self._tab_selected)
         self.room_panel.tab_toggled.connect(self._tab_toggled)
         self.room_panel.import_requested.connect(self.on_import)
 
@@ -1818,7 +1817,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings_btn.blockSignals(True)
         self.settings_btn.setChecked(show)
         self.settings_btn.blockSignals(False)
-        self.right_scroll.setVisible(show)
+        self.room_panel.pages.setVisible(show)
         self.refresh_room()
 
     def _fit_row(self):
@@ -1827,7 +1826,9 @@ class MainWindow(QtWidgets.QMainWindow):
         h = rp.current_page().sizeHint().height()
         rp.pages.setFixedHeight(h)
         # La bande prend exactement sa hauteur ; tout le reste revient au plan.
-        rp.setFixedHeight(rp.bar.sizeHint().height() + rp.layout().spacing() + h)
+        # Repliée, seule la barre d'onglets (et ses interrupteurs) reste.
+        extra = rp.layout().spacing() + h if rp.pages.isVisible() else 0
+        rp.setFixedHeight(rp.bar.sizeHint().height() + extra)
 
     def refresh_room(self, preview: dict | None = None):
         s = self.app.settings
@@ -2006,8 +2007,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.app.update_settings(extra={**self.app.settings.extra, key: value})
 
     def _show_settings(self, show: bool):
-        self.right_scroll.setVisible(show)
+        """Replie ou déplie les réglages ; la barre d'onglets reste visible."""
+        self.room_panel.pages.setVisible(show)
         self.on_ui_state("show_settings", show)
+        QtCore.QTimer.singleShot(0, self._fit_row)
+
+    def _tab_selected(self, _key: str):
+        if not self.settings_btn.isChecked():
+            self.settings_btn.setChecked(True)  # un clic sur un onglet déplie les réglages
+        QtCore.QTimer.singleShot(0, self._fit_row)
 
     def on_preset(self, key: str):
         self.app.apply_room_preset(key)

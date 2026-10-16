@@ -22,7 +22,8 @@ EN: dict[str, str] = {
     "Appliquer automatiquement chaque changement pendant la simulation\n(bascule sans coupure)":
         "Apply every change automatically while the simulation runs\n(seamless switch)",
     "Réglages": "Settings",
-    "Afficher / masquer la colonne des réglages": "Show / hide the settings",
+    "Déplier / replier les réglages (les onglets restent visibles)":
+        "Expand / collapse the settings (tabs stay visible)",
     "Exporter": "Export",
     "Enregistrer les filtres (WAV, true stereo, Equalizer APO)":
         "Save the filters (WAV, true stereo, Equalizer APO)",
