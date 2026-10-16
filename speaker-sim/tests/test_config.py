@@ -45,6 +45,12 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(s.sample_rate, 0)
         self.assertGreaterEqual(s.room_length, 5.0)
 
+    def test_zero_room_amount_turns_room_off(self):
+        s = Settings(room_enabled=True, room_amount=0.0).validated()
+        self.assertFalse(s.room_enabled)
+        self.assertEqual(s.room_amount, 1.0)
+        self.assertEqual(Settings(room_amount=0.01).validated().room_amount, 0.05)
+
     def test_choices_and_presets(self):
         s = Settings(room_floor="lave", room_preset="inconnu").validated()
         self.assertEqual(s.room_floor, Settings().room_floor)

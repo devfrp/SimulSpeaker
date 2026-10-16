@@ -1295,7 +1295,7 @@ class RoomPanel(QtWidgets.QWidget):
                                                 ("full", "Très")])
         seg.setToolTip("Vide · meublé · très meublé")
         g = group(b, "intensité", 2, 180)
-        add_slider(g, "room_amount", "Quantité de pièce", 0, 2, 0.05, pct)
+        add_slider(g, "room_amount", "Quantité de pièce", 0.05, 2, 0.05, pct)
 
         # --- Traitement
         b = self._page("treatment", "Traitement")

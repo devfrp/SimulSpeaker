@@ -110,7 +110,7 @@ LIMITS: dict[str, tuple[float, float]] = {
     "room_diffusion": (0.0, 1.0),
     "front_gap": (0.2, 5.0),
     "ear_height": (0.6, 2.0),
-    "room_amount": (0.0, 2.0),
+    "room_amount": (0.05, 2.0),
     "reflection_order": (0, 4),
     "preamp_db": (-30.0, 20.0),
     "ir_length_ms": (50, 2500),
@@ -169,7 +169,7 @@ class Settings:
     placement_custom: bool = True        # placement réglé (sinon triangle stéréo standard)
     advanced_enabled: bool = True        # réglages avancés (sinon valeurs par défaut)
     language: str = ""                   # "fr", "en" ; "" = langue du système
-    room_amount: float = 1.0             # 0 = anéchoïque, 1 = niveau physique
+    room_amount: float = 1.0             # 1 = niveau physique ; sans pièce : room_enabled
     reflection_order: int = 2
     diffuse_field_eq: bool = True
     headphone_eq_enabled: bool = True
@@ -197,6 +197,9 @@ class Settings:
     def validated(self) -> "Settings":
         """Copie avec valeurs ramenées dans les bornes et cohérence de la pièce."""
         s = Settings.from_dict(self.to_dict())
+        # Une seule façon de couper la pièce : l'interrupteur (anciennes configs : quantité 0).
+        if s.room_amount <= 0:
+            s.room_enabled, s.room_amount = False, 1.0
         for name, (lo, hi) in LIMITS.items():
             v = getattr(s, name)
             v = min(max(v, lo), hi)
