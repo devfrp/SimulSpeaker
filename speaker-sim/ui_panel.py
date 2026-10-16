@@ -137,10 +137,15 @@ class WorkerSignals(QtCore.QObject):
 
 
 class Worker(QtCore.QRunnable):
-    def __init__(self, fn: Callable, *args, with_progress: bool = False):
+    """Tâche de fond. ``signals`` doit avoir un parent Qt vivant (la fenêtre) : sans
+    parent, PySide6 peut détruire l'objet pendant une boucle d'événements imbriquée
+    (boîte de dialogue ouverte pendant un calcul) → « Signal source has been deleted »."""
+
+    def __init__(self, fn: Callable, *args, with_progress: bool = False,
+                 signals: WorkerSignals | None = None):
         super().__init__()
         self.fn, self.args, self.with_progress = fn, args, with_progress
-        self.signals = WorkerSignals()
+        self.signals = signals or WorkerSignals()
 
     def run(self):
         try:
@@ -1482,12 +1487,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.refresh_state()
         self.status.setText(message.upper())
         self.progress.setValue(0)
-        worker = Worker(fn, with_progress=with_progress)
+        signals = WorkerSignals(self)
+        worker = Worker(fn, with_progress=with_progress, signals=signals)
         worker.setAutoDelete(False)
         self._tasks.add(worker)
 
         def finish():
             self._tasks.discard(worker)
+            signals.deleteLater()
             if not quiet:
                 self.busy = False
             self.progress.setValue(0)
