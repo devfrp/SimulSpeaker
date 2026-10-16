@@ -32,6 +32,8 @@
   "balance_db": 0.0,
   "bass_db": 0.0,
   "treble_db": 0.0,
+  "tone_enabled": true,
+  "language": "",
   "room_amount": 1.0,
   "reflection_order": 2,
   "diffuse_field_eq": true,

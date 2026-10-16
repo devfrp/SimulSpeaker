@@ -101,7 +101,9 @@ PySide6 fonctionne à la place de PyQt6 (repli automatique, voir `qt_compat.py`)
 - **Interface** : un **plan de la pièce vu de dessus**, interactif. Traitement, matériaux
   et rayons des premières réflexions y sont dessinés à l'échelle, et vous pouvez déplacer
   l'auditeur ou les enceintes à la souris. Elle affiche aussi la réponse simulée et des
-  **vu-mètres RT60 par octave**. Une **ligne de commande** complète est aussi disponible.
+  **vu-mètres RT60 par octave**. L'interface est en **français ou en anglais** : bouton
+  FR | EN dans la barre du haut (par défaut, la langue du système). Une **ligne de commande**
+  complète est aussi disponible.
 
 ## Fonctionnement
 

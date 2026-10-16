@@ -164,6 +164,7 @@ class Settings:
     bass_db: float = 0.0                 # tonalité : plateau grave 105 Hz
     treble_db: float = 0.0               # tonalité : plateau aigu 10 kHz
     tone_enabled: bool = True            # tonalité et balance actives
+    language: str = ""                   # "fr", "en" ; "" = langue du système
     room_amount: float = 1.0             # 0 = anéchoïque, 1 = niveau physique
     reflection_order: int = 2
     diffuse_field_eq: bool = True
@@ -222,6 +223,7 @@ CHOICES: dict[str, tuple[str, ...]] = {
     "room_ceiling": ("plaster", "cloud"),
     "room_furniture": ("empty", "furnished", "full"),
     "room_absorber": ("foam5", "wool10", "wool20"),
+    "language": ("", "fr", "en"),
 }
 
 # Préréglages de salle : chaque entrée remplace les réglages de pièce correspondants.

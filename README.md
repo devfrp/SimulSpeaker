@@ -99,7 +99,8 @@ PySide6 works in place of PyQt6 (automatic fallback, see `qt_compat.py`).
 - **Interface**: an interactive **top-down room plan**. Treatment, materials and
   first-reflection rays are drawn to scale, and you can drag the listener or the speakers.
   It also shows the simulated frequency response and **RT60 meters per octave**. The
-  interface is in French. A full **command line** is also available.
+  interface is in **French or English**: switch with the FR | EN button in the top bar
+  (it follows your system language by default). A full **command line** is also available.
 
 ## How it works
 

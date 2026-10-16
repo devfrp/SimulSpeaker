@@ -15,6 +15,7 @@ The user documentation lives in the [repository README](../README.md)
 | `download.py` | pinned downloads and cache (AutoEq, Spinorama, KEMAR, AutoEq targets) |
 | `system.py` | PipeWire (`pw-dump`, `wpctl`), filter-chain config, systemd A/B units, hooks |
 | `qt_compat.py` | PyQt6, or PySide6 as a fallback |
+| `i18n.py` | interface language: French source strings, English dictionary (`tr`, `trf`, `tr_message`) |
 | `packaging/` | icon, PyInstaller spec (Windows exe, macOS app), bundled fonts |
 | `tools/` | developer scripts that regenerate `data/speakers.json` |
 | `data/` | speaker catalogue (130 entries) and default settings |
@@ -27,4 +28,5 @@ python3 -m unittest discover -s tests -t .        # tests (no network / PipeWire
 pyinstaller --noconfirm packaging/speaker-sim.spec  # standalone binary
 ```
 
-The interface strings are in French; code comments and docstrings are in French too.
+Interface strings are written in French and translated to English by `i18n.py`; add new
+visible texts to its `EN` dictionary. Code comments and docstrings are in French.
