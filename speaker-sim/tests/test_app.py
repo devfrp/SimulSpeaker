@@ -85,6 +85,26 @@ class AppTests(unittest.TestCase):
 
 
 
+class RoomSettingsTests(unittest.TestCase):
+    def test_preset_changes_rt60_and_layout(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            app = make_app(paths)
+            living = app.room_spec().rt60
+            app.apply_room_preset("studio")
+            self.assertEqual(app.settings.room_preset, "studio")
+            self.assertLess(app.room_spec().rt60, living / 2)
+            layout = app.layout()
+            self.assertAlmostEqual(layout.speakers["L"][0], 5.5 - 0.6)
+
+    def test_manual_rt60(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            app = make_app(paths)
+            app.update_settings(rt60_auto=False, rt60=0.8)
+            self.assertAlmostEqual(app.room_spec().rt60, 0.8, places=6)
+
+
 class SwitchTests(unittest.TestCase):
     """Bascule A→B : démarrer B, en faire la sortie, attendre les flux, arrêter A."""
 

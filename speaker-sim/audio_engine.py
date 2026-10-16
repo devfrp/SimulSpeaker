@@ -662,28 +662,118 @@ def diffuse_field_db(hrtf: HrtfProvider, nfft: int, n_dirs: int = 200) -> np.nda
 # ---------------------------------------------------------------------------
 # Pièce
 # ---------------------------------------------------------------------------
+# Bandes d'octave du modèle acoustique.
+OCTAVES = np.array([125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0])
+
+# Coefficients d'absorption par bande d'octave (valeurs usuelles de la littérature).
+MATERIALS: dict[str, tuple[float, ...]] = {
+    "drywall": (0.29, 0.10, 0.05, 0.04, 0.07, 0.09, 0.09),   # plaque de plâtre sur ossature
+    "masonry": (0.02, 0.02, 0.03, 0.04, 0.05, 0.06, 0.06),   # enduit sur brique / béton
+    "panel": (0.30, 0.75, 1.00, 1.00, 1.00, 1.00, 0.95),     # panneau laine minérale 10 cm
+    "tile": (0.01, 0.01, 0.015, 0.02, 0.02, 0.02, 0.02),     # carrelage / béton
+    "wood": (0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07),      # parquet sur lambourdes
+    "carpet": (0.08, 0.24, 0.57, 0.69, 0.71, 0.73, 0.73),    # moquette épaisse sur thibaude
+}
+WALLS = {"masonry": "Maçonnerie (brique, béton)", "drywall": "Placo (plaque de plâtre)"}
+FLOORS = {"tile": "Carrelage / béton", "wood": "Parquet", "rug": "Parquet + tapis",
+          "carpet": "Moquette"}
+CEILINGS = {"plaster": "Plâtre", "cloud": "Nuage acoustique"}
+FURNITURE = {"empty": "Vide", "furnished": "Meublé", "full": "Très meublé"}
+# Aire d'absorption équivalente du mobilier (m²) pour 25 m² de sol.
+_FURNITURE_AREA = {"empty": np.zeros(7),
+                   "furnished": np.array([2.0, 3.0, 4.0, 5.0, 5.0, 5.0, 5.0]),
+                   "full": np.array([4.0, 6.0, 9.0, 11.0, 11.0, 11.0, 11.0])}
+# Pièges à basses d'angle (jeu complet), aire équivalente (m²).
+_BASS_TRAPS_AREA = np.array([6.0, 4.0, 2.0, 1.0, 1.0, 1.0, 1.0])
+# Absorption de l'air, coefficient m (1/m) à 20 °C, 50 % HR.
+_AIR_M = np.array([0.0001, 0.0003, 0.0006, 0.001, 0.0024, 0.0075, 0.024])
+
+# Surfaces de la pièce, dans l'ordre utilisé par les sources-images :
+# x=0 mur arrière, x=L mur avant (enceintes), y=0 mur droit, y=W mur gauche, sol, plafond.
+SURFACES = ("rear", "front", "right", "left", "floor", "ceiling")
+
+
 @dataclass(frozen=True)
 class RoomSpec:
     width: float = 4.5
     length: float = 6.0
     height: float = 2.6
-    rt60: float = 0.35
     order: int = 2
+    walls: str = "masonry"
+    treatment: float = 0.0        # fraction des murs couverte de panneaux absorbants
+    bass_traps: float = 0.0       # 0 = aucun, 1 = jeu complet de pièges d'angle
+    floor: str = "rug"
+    ceiling: str = "plaster"
+    furniture: str = "furnished"
+    diffusion: float = 0.0        # diffusion du mur arrière (0–1)
+    front_gap: float = 0.8        # distance enceintes – mur avant (m)
+    ear_height: float = EAR_HEIGHT
+    rt60_override: float = 0.0    # > 0 : RT60 imposé (moyenne 500 Hz–1 kHz)
 
     @property
     def volume(self) -> float:
         return self.width * self.length * self.height
 
+    def areas(self) -> np.ndarray:
+        w, l, h = self.width, self.length, self.height
+        return np.array([w * h, w * h, l * h, l * h, l * w, l * w])
+
     @property
     def surface(self) -> float:
-        w, l, h = self.width, self.length, self.height
-        return 2 * (w * l + w * h + l * h)
+        return float(self.areas().sum())
+
+    def surface_absorption(self) -> np.ndarray:
+        """Coefficients d'absorption (6 surfaces × 7 bandes)."""
+        m = {k: np.array(v) for k, v in MATERIALS.items()}
+        t = min(max(self.treatment, 0.0), 1.0)
+        bare = m["drywall"] if self.walls == "drywall" else m["masonry"]
+        wall = (1 - t) * bare + t * m["panel"]
+        floor = {"tile": m["tile"], "wood": m["wood"], "carpet": m["carpet"],
+                 "rug": 0.5 * m["wood"] + 0.5 * m["carpet"]}.get(self.floor, m["wood"])
+        ceiling = 0.5 * bare + 0.5 * m["panel"] if self.ceiling == "cloud" else bare
+        return np.stack([wall, wall, wall, wall, floor, ceiling])
+
+    def _auto_rt60(self) -> tuple[np.ndarray, np.ndarray]:
+        alpha = self.surface_absorption()
+        extra = (_FURNITURE_AREA.get(self.furniture, np.zeros(7)) * (self.length * self.width / 25)
+                 + _BASS_TRAPS_AREA * min(max(self.bass_traps, 0.0), 1.0))
+        a_total = (self.areas()[:, None] * alpha).sum(axis=0) + extra
+        mean_alpha = np.clip(a_total / self.surface, 0.01, 0.95)
+        v, s = self.volume, self.surface
+        rt = 0.161 * v / (-s * np.log(1 - mean_alpha) + 4 * _AIR_M * v)   # Eyring
+        return rt, mean_alpha
+
+    def rt60_bands(self) -> np.ndarray:
+        """RT60 (s) par bande d'octave."""
+        rt, _ = self._auto_rt60()
+        if self.rt60_override > 0:
+            rt = rt * self.rt60_override / float(np.mean(rt[2:4]))
+        return rt
+
+    @property
+    def rt60(self) -> float:
+        """RT60 « moyen » (500 Hz – 1 kHz)."""
+        return float(np.mean(self.rt60_bands()[2:4]))
+
+    def reflection_bands(self) -> np.ndarray:
+        """Coefficient de réflexion spéculaire β (6 surfaces × 7 bandes)."""
+        alpha = self.surface_absorption()
+        if self.rt60_override > 0:
+            # RT imposé : absorption uniforme cohérente avec ce RT (Eyring inversé).
+            v, s = self.volume, self.surface
+            rt = self.rt60_bands()
+            mean_alpha = 1 - np.exp(-(0.161 * v / rt - 4 * _AIR_M * v) / s)
+            alpha = np.tile(np.clip(mean_alpha, 0.01, 0.95), (6, 1))
+        beta = np.sqrt(np.clip(1 - alpha, 0.0, 1.0))
+        beta[0] *= math.sqrt(1 - 0.7 * min(max(self.diffusion, 0.0), 1.0))  # mur arrière diffusant
+        return beta
 
     def reflection_coefficient(self) -> float:
-        """β des parois depuis le RT60 (Sabine), identique pour toutes les parois."""
-        alpha = 0.161 * self.volume / (self.surface * self.rt60)
-        alpha = min(max(alpha, 0.02), 0.99)
-        return math.sqrt(1 - alpha)
+        """β moyen (rapport, compatibilité)."""
+        return float(np.mean(self.reflection_bands()[:, 2:4]))
+
+    def critical_distance_bands(self) -> np.ndarray:
+        return 0.057 * np.sqrt(self.volume / self.rt60_bands())
 
     def critical_distance(self) -> float:
         return 0.057 * math.sqrt(self.volume / self.rt60)
@@ -700,8 +790,7 @@ class Layout:
 
 def stereo_layout(room: RoomSpec, angle_deg: float, distance: float) -> Layout:
     a = math.radians(angle_deg)
-    front_gap = min(1.0, max(0.3, (room.length - distance * math.cos(a)) / 3))
-    sx = room.length - front_gap
+    sx = room.length - room.front_gap
     lx = sx - distance * math.cos(a)
     if lx < 0.3:
         raise AudioEngineError("La pièce est trop courte pour cette distance d'écoute")
@@ -709,20 +798,29 @@ def stereo_layout(room: RoomSpec, angle_deg: float, distance: float) -> Layout:
     dy = distance * math.sin(a)
     if cy + dy > room.width - 0.2:
         raise AudioEngineError("La pièce est trop étroite pour cet angle/distance")
-    return Layout(listener=np.array([lx, cy, EAR_HEIGHT]),
-                  speakers={"L": np.array([sx, cy + dy, EAR_HEIGHT]),
-                            "R": np.array([sx, cy - dy, EAR_HEIGHT])})
+    z = min(max(room.ear_height, 0.3), room.height - 0.3)
+    return Layout(listener=np.array([lx, cy, z]),
+                  speakers={"L": np.array([sx, cy + dy, z]),
+                            "R": np.array([sx, cy - dy, z])})
 
 
 @dataclass(frozen=True)
 class ImageSource:
     position: np.ndarray
     reflections: int
-    gain: float  # β^reflections
+    counts: tuple[int, ...]  # réflexions par surface, ordre SURFACES
+
+    def gain_bands(self, beta: np.ndarray) -> np.ndarray:
+        """Atténuation par bande d'octave (produit des β des surfaces touchées)."""
+        return np.prod(beta ** np.asarray(self.counts)[:, None], axis=0)
 
 
-def image_sources(source: np.ndarray, room: RoomSpec, order: int, beta: float) -> list[ImageSource]:
-    """Sources-images (Allen & Berkley) jusqu'à ``order`` réflexions incluses."""
+def image_sources(source: np.ndarray, room: RoomSpec, order: int) -> list[ImageSource]:
+    """Sources-images (Allen & Berkley) jusqu'à ``order`` réflexions incluses.
+
+    Pour chaque axe d'indice n et de parité p : |n − p| réflexions sur la paroi
+    à 0 et |n| sur la paroi opposée.
+    """
     dims = np.array([room.length, room.width, room.height])
     out = []
     rng = range(-order, order + 1)
@@ -732,12 +830,22 @@ def image_sources(source: np.ndarray, room: RoomSpec, order: int, beta: float) -
                 n = np.array([nx, ny, nz])
                 for p in np.ndindex(2, 2, 2):
                     p = np.array(p)
-                    refl = int(np.sum(np.abs(n - p) + np.abs(n)))
+                    near = np.abs(n - p)
+                    far = np.abs(n)
+                    refl = int(near.sum() + far.sum())
                     if refl > order:
                         continue
                     pos = (1 - 2 * p) * source + 2 * n * dims
-                    out.append(ImageSource(pos, refl, beta ** refl))
+                    counts = (int(near[0]), int(far[0]), int(near[1]), int(far[1]),
+                              int(near[2]), int(far[2]))
+                    out.append(ImageSource(pos, refl, counts))
     return out
+
+
+def bands_to_grid(values: np.ndarray, freqs: np.ndarray) -> np.ndarray:
+    """Valeurs par bande d'octave → grille de fréquences (interpolation log, extrémités tenues)."""
+    f = np.maximum(freqs, 1.0)
+    return np.interp(np.log(f), np.log(OCTAVES), values)
 
 
 # ---------------------------------------------------------------------------
@@ -765,21 +873,35 @@ class RenderResult:
     plot_freqs: np.ndarray
     plot_curves: dict[str, np.ndarray]
     notes: list[str] = field(default_factory=list)
+    rt60_bands: np.ndarray | None = None
 
 
 ProgressFn = Callable[[float, str], None]
 
 
-def _band_rt_noise(n: int, fs: int, rt60: float, rng: np.random.Generator) -> np.ndarray:
-    """Bruit gaussien à décroissance exponentielle, RT60 plus court dans les aigus."""
+def _late_tail(n: int, fs: int, rt60: np.ndarray, energy: np.ndarray,
+               rng: np.random.Generator) -> np.ndarray:
+    """Queue de réverbération : bruit par bande d'octave, décroissance RT60 propre à
+    chaque bande, énergie ``energy[b]`` (relative à un son direct d'énergie 1)."""
     t = np.arange(n) / fs
     noise = rng.standard_normal(n)
-    bands = [(signal.butter(4, 500, "lowpass", fs=fs, output="sos"), 1.15),
-             (signal.butter(4, [500, 4000], "bandpass", fs=fs, output="sos"), 1.0),
-             (signal.butter(4, 4000, "highpass", fs=fs, output="sos"), 0.7)]
+    nyq = fs / 2
+    edges = [0.0] + [f * math.sqrt(2) for f in OCTAVES[:-1]] + [nyq]
     out = np.zeros(n)
-    for sos, factor in bands:
-        out += signal.sosfiltfilt(sos, noise) * np.exp(-6.9078 * t / (rt60 * factor))
+    for b in range(len(OCTAVES)):
+        lo, hi = edges[b], min(edges[b + 1], nyq * 0.98)
+        if lo == 0:
+            sos = signal.butter(4, hi, "lowpass", fs=fs, output="sos")
+        elif b == len(OCTAVES) - 1:
+            sos = signal.butter(4, lo, "highpass", fs=fs, output="sos")
+        else:
+            sos = signal.butter(4, [lo, hi], "bandpass", fs=fs, output="sos")
+        band = signal.sosfiltfilt(sos, noise) * np.exp(-6.9078 * t / rt60[b])
+        e = float(np.sum(band ** 2))
+        if e > 0:
+            # Part du spectre d'un son direct blanc tombant dans cette bande.
+            share = (min(edges[b + 1], nyq) - lo) / nyq
+            out += band * math.sqrt(energy[b] * share / e)
     return out
 
 
@@ -793,7 +915,9 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
     notes: list[str] = []
     room = params.room
     use_room = params.room_enabled and params.room_amount > 0
-    ir_ms = params.ir_length_ms if not use_room else max(params.ir_length_ms, 900 * room.rt60)
+    rt_bands = room.rt60_bands()
+    ir_ms = params.ir_length_ms if not use_room else max(params.ir_length_ms,
+                                                         900 * float(np.max(rt_bands[1:5])))
     ir_len = int(min(ir_ms, 1500) * fs / 1000)
     nfft = next_pow2(ir_len + 3 * FIR_TAPS)
     freqs = np.fft.rfftfreq(nfft, 1 / fs)
@@ -819,34 +943,39 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
         late_color = minimum_phase_spectrum(df_mag, nfft)
 
     layout = stereo_layout(room, params.angle_deg, params.distance)
-    beta = room.reflection_coefficient()
+    beta = room.reflection_bands()
     order = room.order if use_room else 0
     pre_delay = 0.0005  # marge avant le son direct (s)
 
     rng = np.random.default_rng(params.seed)
-    late_energy = 0.0
+    late_energy = np.zeros(len(OCTAVES))
     t_start = 0.0
     if use_room:
-        rc = room.critical_distance()
+        rc = room.critical_distance_bands()
         late_energy = (params.distance / rc) ** 2 * params.room_amount
+        # Sous la fréquence de Schroeder (≈ 2000·√(T/V)), le champ diffus statistique
+        # surestime l'énergie (régime modal) : excès borné à +6 dB par rapport aux médiums.
+        late_energy = np.minimum(late_energy, 4.0 * float(np.mean(late_energy[2:4])))
         t_start = max(2e-3 * math.sqrt(room.volume), 0.012)
-        notes.append(f"Distance critique {rc:.2f} m, β={beta:.2f}, "
-                     f"{len(image_sources(layout.speakers['L'], room, order, beta))} sources-images/enceinte")
+        notes.append(f"RT60 {room.rt60:.2f} s (500 Hz–1 kHz), distance critique "
+                     f"{room.critical_distance():.2f} m, "
+                     f"{len(image_sources(layout.speakers['L'], room, order))} sources-images/enceinte")
 
     spectra: dict[str, np.ndarray] = {}
     for si, side in enumerate(("L", "R")):
         src = layout.speakers[side]
         direct = [np.zeros(len(freqs), complex), np.zeros(len(freqs), complex)]
         early = [np.zeros(len(freqs), complex), np.zeros(len(freqs), complex)]
-        for img in image_sources(src, room, order, beta):
+        for img in image_sources(src, room, order):
             vec = img.position - layout.listener
             dist = float(np.linalg.norm(vec))
             tau = (dist - params.distance) / SPEED_OF_SOUND + pre_delay
             if tau * fs >= ir_len:
                 continue
-            amp = img.gain * params.distance / dist
+            amp = params.distance / dist
             if img.reflections:
-                amp *= params.room_amount
+                # Réflexion filtrée par les matériaux de chaque paroi touchée.
+                amp = amp * params.room_amount * bands_to_grid(img.gain_bands(beta), freqs)
             hl, hr, dl, dr = hrtf.hrir(vec / dist)
             target = direct if img.reflections == 0 else early
             for ei, (h, d) in enumerate(((hl, dl), (hr, dr))):
@@ -855,9 +984,8 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
 
         for ei, ear in enumerate(("L", "R")):
             total = h_df_inv * (h_lw * direct[ei] + h_er * early[ei])
-            if late_energy > 0:
-                tail = _band_rt_noise(ir_len, fs, room.rt60, rng)
-                tail *= math.sqrt(late_energy / np.sum(tail ** 2))
+            if np.any(late_energy > 0):
+                tail = _late_tail(ir_len, fs, rt_bands, late_energy, rng)
                 t = np.arange(ir_len) / fs
                 onset = np.clip((t - pre_delay - t_start) / 0.01, 0, 1)
                 tail *= 0.5 - 0.5 * np.cos(np.pi * onset)
@@ -896,7 +1024,7 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
     }
     report(1.0, "Terminé")
     return RenderResult(fs=fs, irs=irs, gain_db=gain_db, plot_freqs=plot_f,
-                        plot_curves=curves, notes=notes)
+                        plot_curves=curves, notes=notes, rt60_bands=rt_bands)
 
 
 def write_irs(result: RenderResult, directory: Path) -> dict[str, Path]:

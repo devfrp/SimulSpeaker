@@ -45,6 +45,18 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(s.sample_rate, 0)
         self.assertGreaterEqual(s.room_length, 5.0)
 
+    def test_choices_and_presets(self):
+        s = Settings(room_floor="lave", room_preset="inconnu").validated()
+        self.assertEqual(s.room_floor, Settings().room_floor)
+        self.assertEqual(s.room_preset, "")
+        for key in config.ROOM_PRESETS:
+            applied = Settings.from_dict({**Settings().to_dict(),
+                                          **config.preset_settings(key)}).validated()
+            self.assertEqual(applied.room_preset, key)
+            self.assertTrue(applied.rt60_auto)
+            for k in config.ROOM_KEYS:
+                self.assertIn(k, config.ROOM_PRESETS[key])
+
     def test_corrupted_file_is_set_aside(self):
         tmp, paths = temp_paths()
         with tmp:

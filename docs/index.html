@@ -249,8 +249,8 @@
   </section>
 
   <figure class="shot">
-    <img src="assets/screenshot.png" width="1280" height="1234" loading="lazy" alt="Speaker Sim main window: headphone search, speaker list, room settings and simulated frequency response">
-    <figcaption data-en="Search 8,850 headphone measurements, pick a speaker, shape the room — the frequency response updates on every build." data-fr="Cherchez parmi 8 850 mesures de casques, choisissez une enceinte, r&eacute;glez la pi&egrave;ce — la r&eacute;ponse se met &agrave; jour &agrave; chaque g&eacute;n&eacute;ration.">Search 8,850 headphone measurements, pick a speaker, shape the room — the frequency response updates on every build.</figcaption>
+    <img src="assets/screenshot.png" width="1440" height="900" loading="lazy" alt="Speaker Sim main window: headphone and speaker strips, interactive top-down room plan, response and RT60 meters, room settings">
+    <figcaption data-en="A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live." data-fr="Le plan de votre pi&egrave;ce virtuelle : d&eacute;placez-vous ou d&eacute;placez les enceintes, r&eacute;glez traitement acoustique et mat&eacute;riaux, et voyez r&eacute;flexions et RT60 changer en direct.">A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live.</figcaption>
   </figure>
 
   <section id="stats" class="section">
@@ -275,8 +275,8 @@
       </div>
       <div class="node">
         <h3 data-en="Room" data-fr="Pi&egrave;ce">Room</h3>
-        <p data-en="Shoebox image-source model up to 3rd order, plus a decorrelated late tail whose level follows the critical distance." data-fr="Mod&egrave;le de sources-images jusqu'&agrave; l'ordre 3, plus une queue tardive d&eacute;corr&eacute;l&eacute;e dont le niveau suit la distance critique.">Shoebox image-source model up to 3rd order, plus a decorrelated late tail whose level follows the critical distance.</p>
-        <span class="chip">RT60 · Sabine</span>
+        <p data-en="Real materials and acoustic treatment, absorption per octave band, RT60 per band (Eyring), and image sources filtered by every wall they hit." data-fr="Vrais mat&eacute;riaux et traitement acoustique, absorption par bande d'octave, RT60 par bande (Eyring), et sources-images filtr&eacute;es par chaque paroi touch&eacute;e.">Real materials and acoustic treatment, absorption per octave band, RT60 per band (Eyring), and image sources filtered by every wall they hit.</p>
+        <span class="chip">RT60 / octave · Eyring</span>
       </div>
       <div class="node">
         <h3 data-en="Head" data-fr="T&ecirc;te">Head</h3>
@@ -363,6 +363,10 @@
       <details>
         <summary data-en="What does it write on my system?" data-fr="Qu'&eacute;crit-il sur mon syst&egrave;me ?">What does it write on my system?</summary>
         <p data-en="Settings and filters in ~/.local/state/devfrp-speaker-sim, measurements in ~/.cache/devfrp-speaker-sim. Enabling auto-start asks systemd to link the unit, which creates symlinks under ~/.config/systemd/user; disabling removes them." data-fr="R&eacute;glages et filtres dans ~/.local/state/devfrp-speaker-sim, mesures dans ~/.cache/devfrp-speaker-sim. Activer l'auto-d&eacute;marrage demande &agrave; systemd de lier l'unit&eacute;, ce qui cr&eacute;e des liens symboliques dans ~/.config/systemd/user ; d&eacute;sactiver les supprime.">Settings and filters in ~/.local/state/devfrp-speaker-sim, measurements in ~/.cache/devfrp-speaker-sim. Enabling auto-start asks systemd to link the unit, which creates symlinks under ~/.config/systemd/user; disabling removes them.</p>
+      </details>
+      <details>
+        <summary data-en="What does the acoustic treatment rate change?" data-fr="Que change le taux de traitement acoustique ?">What does the acoustic treatment rate change?</summary>
+        <p data-en="It is the share of the walls covered with absorbing panels. Panels soak up the mids and highs much more than the bass, so the RT60 meters drop above 250 Hz first; add bass traps to tame the low end. Six presets go from a bare room to a very dead control room." data-fr="C'est la part des murs couverte de panneaux absorbants. Les panneaux absorbent bien plus les m&eacute;diums et les aigus que le grave : les vu-m&egrave;tres RT60 baissent d'abord au-dessus de 250 Hz ; ajoutez des pi&egrave;ges &agrave; basses pour le grave. Six pr&eacute;r&eacute;glages vont de la pi&egrave;ce nue &agrave; la r&eacute;gie tr&egrave;s mate.">It is the share of the walls covered with absorbing panels. Panels soak up the mids and highs much more than the bass, so the RT60 meters drop above 250 Hz first; add bass traps to tame the low end. Six presets go from a bare room to a very dead control room.</p>
       </details>
       <details>
         <summary data-en="Why is it quieter than direct playback?" data-fr="Pourquoi est-ce moins fort qu'en direct ?">Why is it quieter than direct playback?</summary>

@@ -139,27 +139,66 @@ class RoomTests(unittest.TestCase):
     def test_image_source_counts(self):
         room = ae.RoomSpec(4, 5, 2.5)
         src = np.array([1.0, 1.5, 1.2])
-        counts = [len(ae.image_sources(src, room, k, 0.8)) for k in (0, 1, 2)]
+        counts = [len(ae.image_sources(src, room, k)) for k in (0, 1, 2)]
         self.assertEqual(counts, [1, 7, 25])
 
-    def test_first_order_floor_image(self):
+    def test_first_order_images_hit_one_named_surface(self):
         room = ae.RoomSpec(4, 5, 2.5)
         src = np.array([1.0, 1.5, 1.2])
-        imgs = ae.image_sources(src, room, 1, 0.8)
-        z = sorted(round(float(i.position[2]), 6) for i in imgs if i.reflections == 1)
-        self.assertIn(-1.2, z)          # sol
-        self.assertIn(2 * 2.5 - 1.2, z)  # plafond
+        imgs = [i for i in ae.image_sources(src, room, 1) if i.reflections == 1]
+        by_surface = {ae.SURFACES[i.counts.index(1)]: i.position for i in imgs}
+        self.assertEqual(set(by_surface), set(ae.SURFACES))
+        self.assertAlmostEqual(by_surface["floor"][2], -1.2)            # sol
+        self.assertAlmostEqual(by_surface["ceiling"][2], 2 * 2.5 - 1.2)  # plafond
+        self.assertAlmostEqual(by_surface["front"][0], 2 * 5 - 1.0)      # mur avant (x = L)
+        self.assertAlmostEqual(by_surface["rear"][0], -1.0)
 
-    def test_reflection_coefficient_bounds(self):
-        self.assertTrue(0 < ae.RoomSpec(rt60=0.1).reflection_coefficient() < 1)
-        self.assertGreater(ae.RoomSpec(rt60=1.0).reflection_coefficient(),
-                           ae.RoomSpec(rt60=0.2).reflection_coefficient())
+    def test_treatment_shortens_rt60_mostly_above_bass(self):
+        bare = ae.RoomSpec(treatment=0.0).rt60_bands()
+        treated = ae.RoomSpec(treatment=0.6).rt60_bands()
+        self.assertTrue(np.all(treated < bare))
+        ratio = treated / bare
+        self.assertGreater(ratio[0], ratio[3])   # les panneaux agissent peu à 125 Hz
 
-    def test_layout_symmetry_and_errors(self):
-        layout = ae.stereo_layout(ae.RoomSpec(4.5, 6, 2.6), 30, 2.0)
+    def test_bass_traps_act_on_low_bands(self):
+        base = ae.RoomSpec().rt60_bands()
+        traps = ae.RoomSpec(bass_traps=1.0).rt60_bands()
+        self.assertLess(traps[0], base[0] * 0.8)
+        self.assertGreater(traps[4], base[4] * 0.9)
+
+    def test_materials_and_furniture(self):
+        tile = ae.RoomSpec(floor="tile", furniture="empty").rt60
+        carpet = ae.RoomSpec(floor="carpet", furniture="full").rt60
+        self.assertGreater(tile, 2 * carpet)
+        self.assertLess(ae.RoomSpec(walls="drywall").rt60_bands()[0],
+                        ae.RoomSpec(walls="masonry").rt60_bands()[0])
+
+    def test_rt60_override(self):
+        room = ae.RoomSpec(rt60_override=0.5)
+        self.assertAlmostEqual(room.rt60, 0.5, places=6)
+        # L'absorption uniforme déduite reproduit ce RT : β cohérent avec le Sabine/Eyring
+        self.assertTrue(np.all((room.reflection_bands() > 0) & (room.reflection_bands() < 1)))
+
+    def test_reflection_filtered_by_treated_walls(self):
+        room = ae.RoomSpec(treatment=1.0)
+        beta = room.reflection_bands()
+        img = next(i for i in ae.image_sources(np.array([5.0, 2.0, 1.2]), room, 1)
+                   if i.counts[ae.SURFACES.index("left")] == 1)
+        g = img.gain_bands(beta)
+        self.assertGreater(g[0], 3 * g[4])   # panneau : grave réfléchi, aigu absorbé
+
+    def test_diffusion_reduces_rear_specular(self):
+        self.assertLess(ae.RoomSpec(diffusion=1.0).reflection_bands()[0, 3],
+                        ae.RoomSpec(diffusion=0.0).reflection_bands()[0, 3])
+
+    def test_layout_symmetry_front_gap_and_errors(self):
+        room = ae.RoomSpec(4.5, 6, 2.6, front_gap=1.0, ear_height=1.1)
+        layout = ae.stereo_layout(room, 30, 2.0)
         left, right = layout.speakers["L"], layout.speakers["R"]
         self.assertAlmostEqual(np.linalg.norm(left - layout.listener), 2.0)
         self.assertGreater(left[1], right[1])  # y vers la gauche
+        self.assertAlmostEqual(left[0], 5.0)   # 1 m du mur avant
+        self.assertAlmostEqual(layout.listener[2], 1.1)
         with self.assertRaises(ae.AudioEngineError):
             ae.stereo_layout(ae.RoomSpec(2.0, 6, 2.6), 60, 3.0)
 
@@ -169,7 +208,8 @@ class RenderTests(unittest.TestCase):
         self.speaker = ae.SpeakerResponse.from_curves(ae.parse_cea2034(make_cea_text()))
 
     def _render(self, **kw):
-        params = ae.RenderParams(fs=48000, ir_length_ms=200, room=ae.RoomSpec(rt60=0.2), **kw)
+        params = ae.RenderParams(fs=48000, ir_length_ms=200,
+                                 room=ae.RoomSpec(rt60_override=0.2), **kw)
         return ae.render(self.speaker, None, FakeHrtf(fs=48000), params)
 
     def test_render_shapes_and_headroom(self):

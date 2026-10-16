@@ -191,12 +191,33 @@ class SpeakerSimApp:
         except SystemError_:
             return 48000
 
+    def room_spec(self, settings: Settings | None = None) -> ae.RoomSpec:
+        s = settings or self.settings
+        return ae.RoomSpec(
+            width=s.room_width, length=s.room_length, height=s.room_height,
+            order=s.reflection_order, walls=s.room_walls, treatment=s.room_treatment,
+            bass_traps=s.room_bass_traps, floor=s.room_floor, ceiling=s.room_ceiling,
+            furniture=s.room_furniture, diffusion=s.room_diffusion, front_gap=s.front_gap,
+            ear_height=s.ear_height, rt60_override=0.0 if s.rt60_auto else s.rt60)
+
+    def layout(self) -> ae.Layout | None:
+        """Positions auditeur / enceintes (vue en plan de l'interface)."""
+        try:
+            return ae.stereo_layout(self.room_spec(), self.settings.speaker_angle,
+                                    self.settings.speaker_distance)
+        except ae.AudioEngineError:
+            return None
+
+    def apply_room_preset(self, key: str) -> Settings:
+        from config import preset_settings
+
+        return self.update_settings(**preset_settings(key))
+
     def render_params(self, fs: int) -> ae.RenderParams:
         s = self.settings
         return ae.RenderParams(
             fs=fs, angle_deg=s.speaker_angle, distance=s.speaker_distance,
-            room=ae.RoomSpec(width=s.room_width, length=s.room_length, height=s.room_height,
-                             rt60=s.rt60, order=s.reflection_order),
+            room=self.room_spec(),
             room_enabled=s.room_enabled, room_amount=s.room_amount,
             diffuse_field_eq=s.diffuse_field_eq, ir_length_ms=s.ir_length_ms,
             preamp_db=s.preamp_db)
