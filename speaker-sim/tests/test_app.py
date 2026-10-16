@@ -152,6 +152,28 @@ MEASUREMENT = "* REW export\nFreq(Hz) SPL(dB) Phase\n" + "\n".join(
 TARGET_CSV = "frequency,raw\n" + "\n".join(f"{20 * 1.12 ** i:.1f},0.0" for i in range(61)) + "\n"
 
 
+class ABTests(unittest.TestCase):
+    def test_switch_keeps_both_configurations(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            app = make_app(paths)
+            app.update_settings(speaker_id="KEF R3", bass_db=2.0)
+            self.assertEqual(app.ab_slot(), "A")
+            app.ab_switch("B")                       # B vide : copie de A
+            self.assertEqual(app.ab_slot(), "B")
+            self.assertEqual(app.settings.bass_db, 2.0)
+            app.apply_room_preset("studio")
+            app.update_settings(bass_db=-4.0, output_sink="casque")
+            app.ab_switch("A")
+            self.assertEqual(app.settings.bass_db, 2.0)
+            self.assertEqual(app.settings.room_preset, "salon")
+            self.assertEqual(app.settings.output_sink, "casque")   # matériel commun
+            app.ab_switch("B")
+            self.assertEqual((app.settings.bass_db, app.settings.room_preset), (-4.0, "studio"))
+            reloaded = make_app(paths)
+            self.assertEqual(reloaded.ab_slot(), "B")
+
+
 class ImportTests(unittest.TestCase):
     def test_import_parametric_eq(self):
         tmp, paths = temp_paths()
@@ -197,6 +219,32 @@ class ImportTests(unittest.TestCase):
             good.write_text(MEASUREMENT)
             with self.assertRaises(AppError):
                 app.import_headphone(good, target="Inexistante")
+
+    def test_change_import_target(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            from app import AppError
+            app = make_app(paths)
+            src = paths.cache_dir.parent / "mesure.txt"
+            src.write_text(MEASUREMENT)
+            entry = app.import_headphone(src, "M", "Harman in-ear 2019")
+            updated = app.set_import_target(entry, "Harman over-ear 2018")
+            self.assertEqual(app.headphone.target, "Harman over-ear 2018")
+            self.assertEqual(app.imported_headphones()[0].rig, "mesure → Harman over-ear 2018")
+            self.assertEqual(updated.path, entry.path)
+            with self.assertRaises(AppError):
+                app.set_import_target(entry, "Inexistante")
+
+    def test_summary_and_alternatives(self):
+        tmp, paths = temp_paths()
+        with tmp:
+            app = make_app(paths)
+            entries = app.headphones()
+            hd650 = next(e for e in entries if e.name == "Sennheiser HD 650")
+            app.select_headphone(hd650)
+            self.assertEqual(app.headphone_summary(),
+                             {"filters": 1, "points": 0, "preamp_db": -3.0})
+            self.assertEqual([e.path for e in app.alternatives(hd650)], [hd650.path])
 
     def test_remove_import(self):
         tmp, paths = temp_paths()

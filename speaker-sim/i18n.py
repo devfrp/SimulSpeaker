@@ -260,6 +260,24 @@ EN: dict[str, str] = {
         "Unreadable measurement: at least 10 “frequency, dB” lines are needed",
     "Mesure incomplète : elle doit couvrir au moins 200 Hz – 5 kHz":
         "Incomplete measurement: it must cover at least 200 Hz – 5 kHz",
+    # --- onglet Casque, comparaison A/B, interrupteurs
+    "mesure": "measurement",
+    "Autres mesures de ce modèle": "Other measurements of this model",
+    "Même casque mesuré par une autre source ou sur un autre banc":
+        "Same headphones measured by another source or on another rig",
+    "Cible de la correction": "Correction target",
+    "Courbe vers laquelle votre mesure brute est corrigée":
+        "Curve your raw measurement is corrected to",
+    "Une seule mesure disponible pour ce modèle.": "Only one measurement is available for this model.",
+    "préampli {v} dB": "preamp {v} dB",
+    "EQ graphique · {n} points": "graphic EQ · {n} points",
+    "{n} filtres": "{n} filters",
+    "Comparaison A/B : deux configurations complètes (enceintes, pièce,\n"
+    "placement, écoute). Basculer applique l'autre sans coupure.":
+        "A/B comparison: two complete setups (speakers, room,\n"
+        "placement, listening). Switching applies the other one without dropouts.",
+    "Activer / désactiver « {tab} ».": "Turn “{tab}” on / off.",
+    "Coupé : {what}": "Off: {what}",
 }
 
 # Motifs (messages contenant des valeurs) : regex française → gabarit anglais.

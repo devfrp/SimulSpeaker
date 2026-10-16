@@ -94,6 +94,12 @@ PySide6 works in place of PyQt6 (automatic fallback, see `qt_compat.py`).
   The tab bar is always visible: the **Settings** button in the top bar only collapses
   the content, and clicking a tab expands it again. No scrolling: everything fits a
   1200 × 730 window.
+- **A/B comparison**: the **A | B** switch in the top bar keeps two complete setups
+  (speakers, room, placement, listening). Switching from one to the other applies it
+  without dropouts; the headphones and the output stay shared.
+- **Headphones tab**: number of filters and preamp of the correction, choice of **another
+  measurement of the same model** (another source or rig, e.g. oratory1990 or crinacle)
+  and, for an imported raw measurement, a **target** you can change at any time.
 - **Seamless changes**: *Apply* starts a second instance (A/B), makes it the default
   output, waits for the streams to move over, then stops the old one. The output never
   disappears, so players never pause. In **Auto** mode every change is applied this way

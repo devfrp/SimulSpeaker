@@ -94,6 +94,12 @@ PySide6 fonctionne à la place de PyQt6 (repli automatique, voir `qt_compat.py`)
   pièce* descend à 5 % au minimum). La barre d'onglets reste toujours visible : le bouton
   **Réglages** de la barre du haut ne fait que replier le contenu, et un clic sur un
   onglet le déplie. Aucun défilement : tout tient dans une fenêtre de 1200 × 730.
+- **Comparaison A/B** : le sélecteur **A | B** de la barre du haut garde deux
+  configurations complètes (enceintes, pièce, placement, écoute). Basculer de l'une à
+  l'autre l'applique sans coupure ; le casque et la sortie restent communs.
+- **Onglet Casque** : nombre de filtres et préampli de la correction, choix d'une **autre
+  mesure du même modèle** (autre source ou autre banc, par exemple oratory1990 ou
+  crinacle) et, pour une mesure brute importée, changement de la **cible** à tout moment.
 - **Changements sans coupure** : « Appliquer » démarre une seconde instance (A/B), en fait
   la sortie par défaut, attend que les flux l'aient rejointe, puis arrête l'ancienne. La
   sortie ne disparaît jamais, donc les lecteurs ne se mettent jamais en pause. En mode

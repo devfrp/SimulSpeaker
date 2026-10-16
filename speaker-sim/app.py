@@ -144,6 +144,37 @@ class SpeakerSimApp:
         log.info("Casque importé : %s (%s)", entry.name, rig)
         return entry
 
+    def set_import_target(self, entry: HeadphoneEntry, target: str) -> HeadphoneEntry:
+        """Change la cible d'une mesure brute importée (et du casque courant si c'est lui)."""
+        if not entry.is_import or not entry.target:
+            raise AppError("Seule une mesure brute importée a une cible")
+        if target not in AUTOEQ_TARGETS:
+            raise AppError(f"Cible inconnue : {target}")
+        updated = replace(entry, target=target, rig=f"mesure → {target}")
+        self._save_imports([updated if e.path == entry.path else e
+                            for e in self.imported_headphones()])
+        if self.headphone and self.headphone.path == entry.path:
+            self.select_headphone(updated)
+        return updated
+
+    def alternatives(self, entry: HeadphoneEntry | None) -> list[HeadphoneEntry]:
+        """Autres mesures AutoEq du même modèle (autres sources ou bancs)."""
+        if entry is None or entry.is_import or self._headphones is None:
+            return []
+        name = entry.name.casefold()
+        return [e for e in self._headphones if e.name.casefold() == name]
+
+    def headphone_summary(self) -> dict:
+        """Correction du casque courant : nombre de filtres (ou de points d'un EQ
+        graphique) et préampli. Vide sans casque."""
+        hp = self.headphone
+        if hp is None:
+            return {}
+        eq = self._headphone_eq(hp)
+        return {"filters": len(eq.filters),
+                "points": 0 if eq.graphic is None else len(eq.graphic[0]),
+                "preamp_db": float(eq.preamp_db)}
+
     def remove_import(self, entry: HeadphoneEntry) -> None:
         remaining = [e for e in self.imported_headphones() if e.path != entry.path]
         self._save_imports(remaining)
@@ -234,6 +265,34 @@ class SpeakerSimApp:
             return ae.stereo_layout(self.room_spec(), e.speaker_angle, e.speaker_distance)
         except ae.AudioEngineError:
             return None
+
+    # -- comparaison A/B --------------------------------------------------
+    # Réglages qui ne font pas partie du son comparé : matériel, système, interface.
+    AB_EXCLUDED = ("headphone", "output_sink", "sample_rate", "autostart", "language",
+                   "sofa_file", "ir_length_ms", "extra")
+
+    def ab_slot(self) -> str:
+        return (self.settings.extra.get("ab") or {}).get("slot", "A")
+
+    def _ab_snapshot(self) -> dict:
+        return {k: v for k, v in self.settings.to_dict().items() if k not in self.AB_EXCLUDED}
+
+    def ab_switch(self, slot: str) -> Settings:
+        """Bascule vers la configuration ``slot`` (A ou B) en gardant l'autre en mémoire.
+
+        Une configuration encore vide part de la configuration courante."""
+        if slot not in ("A", "B"):
+            raise AppError(f"Configuration inconnue : {slot}")
+        ab = dict(self.settings.extra.get("ab") or {})
+        current = ab.get("slot", "A")
+        if slot == current:
+            return self.settings
+        ab[current] = self._ab_snapshot()
+        target = ab.get(slot) or ab[current]
+        ab["slot"] = slot
+        known = {k: v for k, v in target.items() if hasattr(self.settings, k)
+                 and k not in self.AB_EXCLUDED}
+        return self.update_settings(**known, extra={**self.settings.extra, "ab": ab})
 
     def apply_room_preset(self, key: str) -> Settings:
         from config import preset_settings

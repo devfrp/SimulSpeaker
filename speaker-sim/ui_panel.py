@@ -1131,7 +1131,7 @@ class SwitchTabBar(QtWidgets.QWidget):
         self.tabs: dict[str, tuple[QtWidgets.QFrame, QtWidgets.QPushButton, QtWidgets.QCheckBox]] = {}
         self.current = ""
 
-    def add(self, key: str, text: str) -> None:
+    def add(self, key: str, text: str, tip: str = "") -> None:
         frame = QtWidgets.QFrame()
         frame.setObjectName("stab")
         h = QtWidgets.QHBoxLayout(frame)
@@ -1143,7 +1143,7 @@ class SwitchTabBar(QtWidgets.QWidget):
         sw = QtWidgets.QCheckBox()
         sw.setObjectName("stabSwitch")
         sw.setCursor(Qt.CursorShape.PointingHandCursor)
-        sw.setToolTip("Activer / désactiver — affiche ou retire les réglages")
+        sw.setToolTip(tip or tr("Activer / désactiver — affiche ou retire les réglages"))
         h.addWidget(btn, 1)
         h.addWidget(sw)
         btn.clicked.connect(lambda: self.select(key, emit=True))
@@ -1192,6 +1192,8 @@ class RoomPanel(QtWidgets.QWidget):
     ui_state = Signal(str, object)  # affichage seul (onglet courant)
     tab_toggled = Signal(str, bool) # interrupteurs gérés par la fenêtre (sortie)
     import_requested = Signal()
+    headphone_chosen = Signal(object)  # autre mesure du même modèle
+    target_chosen = Signal(str)        # cible d'une mesure brute importée
 
     # clé d'onglet → réglage booléen piloté par son interrupteur
     SWITCHES = {"room": "room_enabled", "treatment": "treatment_enabled",
@@ -1380,19 +1382,38 @@ class RoomPanel(QtWidgets.QWidget):
 
         # --- Casque
         b = self._page("headphone", "Casque")
-        g = group(b, "correction", 3, 300)
+        g = group(b, "correction", 3, 280)
         self.hp_name = label()
         self.hp_name.setStyleSheet(f"font-family: '{DISPLAY}'; font-size: 15px; font-weight: 600;")
         self.hp_sub = caption("")
+        self.hp_eq = label(mono=True, muted=True)
         g.addWidget(self.hp_name)
         g.addWidget(self.hp_sub)
-        g = group(b, "", 3, 300)
+        g.addWidget(self.hp_eq)
+        g = group(b, "mesure", 3, 280)
+        # Mesures AutoEq du même modèle (autre source, autre banc) ou cible d'un import brut
+        self.hp_alt_caption = label("Autres mesures de ce modèle", muted=True)
+        self.hp_alt = QtWidgets.QComboBox()
+        self.hp_alt.setToolTip("Même casque mesuré par une autre source ou sur un autre banc")
+        self.hp_alt.activated.connect(
+            lambda i: self.headphone_chosen.emit(self.hp_alt.itemData(i)))
+        self.hp_target_caption = label("Cible de la correction", muted=True)
+        self.hp_target = QtWidgets.QComboBox()
+        for t in AUTOEQ_TARGETS:
+            self.hp_target.addItem(t, t)
+        self.hp_target.setToolTip("Courbe vers laquelle votre mesure brute est corrigée")
+        self.hp_target.activated.connect(
+            lambda i: self.target_chosen.emit(self.hp_target.itemData(i)))
+        self.hp_single = label("Une seule mesure disponible pour ce modèle.", muted=True, wrap=True)
+        for w in (self.hp_alt_caption, self.hp_alt, self.hp_target_caption, self.hp_target,
+                  self.hp_single):
+            g.addWidget(w)
+        g = group(b, "", 3, 260)
         g.addWidget(label("Correction AutoEq de votre modèle (ou de votre propre mesure importée), "
                           "appliquée avant la simulation.", muted=True, wrap=True))
         imp = QtWidgets.QPushButton("Importer une mesure…")
         imp.clicked.connect(self.import_requested.emit)
         g.addWidget(imp, 0, Qt.AlignmentFlag.AlignLeft)
-        b.addStretch(1)
 
         # --- Écoute
         b = self._page("listening", "Écoute")
@@ -1424,7 +1445,9 @@ class RoomPanel(QtWidgets.QWidget):
     # -- construction --------------------------------------------------------
     def _page(self, key: str, title: str) -> QtWidgets.QHBoxLayout:
         """Ajoute un onglet ; renvoie la rangée où placer ses groupes de réglages."""
-        self.bar.add(key, title)
+        off = self.OFF_TEXT.get(key, "")
+        self.bar.add(key, title, trf("Activer / désactiver « {tab} ».", tab=tr(title))
+                     + ("\n" + trf("Coupé : {what}", what=tr(off)) if off else ""))
         page = QtWidgets.QFrame()
         page.setObjectName("card")
         pv = QtWidgets.QVBoxLayout(page)
@@ -1495,13 +1518,29 @@ class RoomPanel(QtWidgets.QWidget):
         if "output" in self.page_of:
             self._apply_tab("output", running, inert=False)
 
-    def set_headphone_info(self, entry) -> None:
+    def set_headphone_info(self, entry, alternatives=(), summary: str = "") -> None:
         if entry is None:
             self.hp_name.setText(tr("Aucun casque"))
             self.hp_sub.setText(tr("SANS CORRECTION"))
         else:
             self.hp_name.setText(entry.name)
             self.hp_sub.setText(f"{entry.source} · {entry.rig}".upper())
+        self.hp_eq.setText(summary)
+        self.hp_eq.setVisible(bool(summary))
+        raw_import = entry is not None and entry.is_import and bool(entry.target)
+        many = len(alternatives) > 1
+        self.hp_alt.clear()
+        for e in alternatives:
+            self.hp_alt.addItem(f"{e.source} · {e.rig}" if e.rig else e.source, e)
+            if entry is not None and e.path == entry.path:
+                self.hp_alt.setCurrentIndex(self.hp_alt.count() - 1)
+        if raw_import:
+            self.hp_target.setCurrentIndex(max(self.hp_target.findData(entry.target), 0))
+        self.hp_alt_caption.setVisible(many)
+        self.hp_alt.setVisible(many)
+        self.hp_target_caption.setVisible(raw_import)
+        self.hp_target.setVisible(raw_import)
+        self.hp_single.setVisible(entry is not None and not many and not raw_import)
 
     def load(self, s) -> None:
         for key, w in self.sliders.items():
@@ -1619,6 +1658,9 @@ class MainWindow(QtWidgets.QMainWindow):
         tl.addWidget(mark)
         self.chain = label(name="chain")
         self.chain.setTextFormat(Qt.TextFormat.RichText)
+        # Sans largeur minimale : la chaîne se coupe plutôt que d'élargir la fenêtre.
+        self.chain.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored,
+                                 QtWidgets.QSizePolicy.Policy.Preferred)
         tl.addWidget(self.chain, 1)
         self.status_pill = label(name="status")
         tl.addWidget(self.status_pill)
@@ -1626,6 +1668,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.auto.setToolTip("Appliquer automatiquement chaque changement pendant la simulation\n"
                              "(bascule sans coupure)")
         tl.addWidget(self.auto)
+        self.ab = Segmented([("A", "A"), ("B", "B")])
+        self.ab.setFixedWidth(64)
+        self.ab.setToolTip("Comparaison A/B : deux configurations complètes (enceintes, pièce,\n"
+                           "placement, écoute). Basculer applique l'autre sans coupure.")
+        tl.addWidget(self.ab)
         self.lang = Segmented([(code, code.upper()) for code in LANGUAGES])
         self.lang.setFixedWidth(84)
         self.lang.setToolTip("Langue de l'interface")
@@ -1738,6 +1785,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.room_panel.bar.selected.connect(self._tab_selected)
         self.room_panel.tab_toggled.connect(self._tab_toggled)
         self.room_panel.import_requested.connect(self.on_import)
+        self.room_panel.headphone_chosen.connect(self.on_alternative)
+        self.room_panel.target_chosen.connect(self.on_import_target)
+        self._hp_summaries: dict[str, dict] = {}
+        self._hp_pending: set[str] = set()
 
         # Pas de minimum forcé : les tailles minimales viennent des cartes elles-mêmes.
         main.addWidget(scroll_wrap(body), 1)
@@ -1764,6 +1815,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.room_panel.preset_chosen.connect(self.on_preset)
         self.room_panel.ui_state.connect(self.on_ui_state)
         self.lang.changed.connect(self._language_clicked)
+        self.ab.changed.connect(self.on_ab)
         self.settings_btn.toggled.connect(self._show_settings)
         self.plan.committed.connect(self.on_setting)
         self.out_panel.sink_changed.connect(lambda n: self.on_setting({"output_sink": n}))
@@ -1806,6 +1858,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hp_panel.eq_enabled.setChecked(s.headphone_eq_enabled)
         self.hp_panel.eq_enabled.blockSignals(False)
         self.out_panel.autostart.setChecked(s.autostart)
+        self.ab.set_value(self.app.ab_slot())
         self.auto.blockSignals(True)
         self.auto.setChecked(bool(s.extra.get("auto_apply", True)))
         self.auto.blockSignals(False)
@@ -1837,7 +1890,7 @@ class MainWindow(QtWidgets.QMainWindow):
             s = replace(s, **preview)
         room = self.app.room_spec(s)
         self.plan.set_state(self.app.effective(s), room)
-        self.room_panel.set_headphone_info(self.app.headphone)
+        self._update_headphone_tab()
         self.hp_panel.eq_enabled.blockSignals(True)
         self.hp_panel.eq_enabled.setChecked(self.app.settings.headphone_eq_enabled)
         self.hp_panel.eq_enabled.blockSignals(False)
@@ -1853,8 +1906,9 @@ class MainWindow(QtWidgets.QMainWindow):
         hp = self.app.headphone
         spk = self.app.speaker()
         sep = f" <span style='color:{AMBER}'>→</span> "
-        self.chain.setText(sep.join([hp.name if hp else tr("sans casque"),
-                                     f"{spk['brand']} {spk['model']}", preset]))
+        parts = [hp.name if hp else tr("sans casque"), f"{spk['brand']} {spk['model']}", preset]
+        self.chain.setText(sep.join(parts))
+        self.chain.setToolTip(" → ".join(parts))
 
     def refresh_sinks(self):
         if not self.app.supports_live:
@@ -1905,8 +1959,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if not quiet:
             self.busy = True
             self.refresh_state()
-        self.status.setText(tr_message(message).upper())
-        self.progress.setValue(0)
+        # Une tâche silencieuse sans message (résumé…) ne touche ni à l'état ni à la progression.
+        silent = quiet and not message
+        if not silent:
+            self.status.setText(tr_message(message).upper())
+            self.progress.setValue(0)
         signals = WorkerSignals(self)
         worker = Worker(fn, with_progress=with_progress, signals=signals)
         worker.setAutoDelete(False)
@@ -1917,7 +1974,8 @@ class MainWindow(QtWidgets.QMainWindow):
             signals.deleteLater()
             if not quiet:
                 self.busy = False
-            self.progress.setValue(0)
+            if not silent:
+                self.progress.setValue(0)
             self.refresh_state()
             if self.pending_apply and not self.busy:
                 self.pending_apply = False
@@ -1930,7 +1988,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def failed(msg):
             finish()
-            self.status.setText(tr("ERREUR"))
+            if not silent:
+                self.status.setText(tr("ERREUR"))
             msg = tr_message(msg)
             if on_error:
                 on_error(msg)
@@ -1946,9 +2005,60 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progress.setValue(int(fraction * 1000))
         self.status.setText(tr_message(message).upper())
 
+    def _update_headphone_tab(self):
+        """Onglet Casque : autres mesures du modèle, cible d'un import, résumé de l'EQ
+        (calculé en arrière-plan, une fois par casque)."""
+        hp = self.app.headphone
+        key = hp.path + "|" + hp.target if hp else ""
+        self.room_panel.set_headphone_info(hp, self.app.alternatives(hp),
+                                           self._summary_text(self._hp_summaries.get(key)))
+        if hp is None or key in self._hp_summaries or key in self._hp_pending:
+            return
+        self._hp_pending.add(key)
+
+        def done(text):
+            self._hp_pending.discard(key)
+            self._hp_summaries[key] = text
+            self._update_headphone_tab()
+
+        def failed(_msg):
+            self._hp_pending.discard(key)
+            self._hp_summaries[key] = {}
+
+        self.run_task(self.app.headphone_summary, done, on_error=failed, quiet=True)
+
+    @staticmethod
+    def _summary_text(summary: dict | None) -> str:
+        if not summary:
+            return ""
+        pre = trf("préampli {v} dB", v=f"{'+' if summary['preamp_db'] >= 0 else '−'}"
+                                       f"{num(abs(summary['preamp_db']))}")
+        if summary["points"]:
+            return trf("EQ graphique · {n} points", n=summary["points"]) + " · " + pre
+        return trf("{n} filtres", n=summary["filters"]) + " · " + pre
+
+    def on_alternative(self, entry):
+        if entry is not None and entry != self.app.headphone:
+            self.on_headphone(entry)
+            self.hp_panel.reveal(entry)
+
+    def on_import_target(self, target: str):
+        hp = self.app.headphone
+        if hp is None or not hp.is_import or target == hp.target:
+            return
+        try:
+            self.app.set_import_target(hp, target)
+        except AppError as exc:
+            QtWidgets.QMessageBox.critical(self, APP_NAME, tr_message(str(exc)))
+            return
+        self._reload_headphones()
+        self.hp_panel.reveal(self.app.headphone)
+        self.mark_dirty()
+
     def _headphones_loaded(self, entries):
         self.hp_panel.set_entries(self.app.imported_headphones() + entries)
         self.hp_panel.reveal(self.app.headphone)
+        self._update_headphone_tab()   # autres mesures du modèle : connues avec l'index
         self.status.setText(trf("INDEX AUTOEQ CHARGÉ · {n} MESURES", n=len(entries)))
 
     def _show_result(self, result):
@@ -1980,6 +2090,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.app.update_settings(**change)
         self.room_panel.load(self.app.settings)   # bornes / cohérence de la pièce
         self.mark_dirty()
+
+    def on_ab(self, slot: str):
+        """Bascule entre les configurations A et B ; l'autre est gardée telle quelle."""
+        if slot == self.app.ab_slot():
+            return
+        self.app.ab_switch(slot)
+        self.room_panel.load(self.app.settings)
+        self.spk_panel.select_id(self.app.settings.speaker_id)
+        self.mark_dirty()
+        self.status.setText(trf("CONFIGURATION {slot}", slot=slot))
 
     def _tab_toggled(self, key: str, on: bool):
         if key == "output" and on != self.app.is_running():
