@@ -78,6 +78,16 @@ PySide6 works in place of PyQt6 (automatic fallback, see `qt_compat.py`).
   ceiling (plaster or acoustic cloud), furniture, rear-wall diffusion, speaker distance
   from the front wall, ear height. Six presets are included: living room, treated
   studio, very dead control room, home cinema, bedroom, bare room.
+  Going further: **per-wall treatment** (front, sides, rear, ceiling), absorber type
+  (5 cm foam, 10 cm wool, 20 cm broadband wool), tweeter height separate from ear height,
+  an **off-centre seat** (lateral offset), up to 4th-order reflections, rooms up to
+  30 × 20 × 8 m, listening distance up to 10 m, angle up to 80°, manual RT60 up to 4 s.
+- **Listening**: bass and treble shelves (105 Hz / 10 kHz), left/right balance, preamp.
+- **On/off switches**: every settings section has a switch. Turning off *Salle* (room)
+  disables the room simulation and hides its settings. *Réflexions précoces* (early
+  reflections) and *Écoute* (tone and balance) work the same way, and *Avancé* (advanced)
+  shows or hides the expert settings. The **Réglages** button in the top bar hides the
+  whole settings column.
 - **Seamless changes**: *Apply* starts a second instance (A/B), makes it the default
   output, waits for the streams to move over, then stops the old one. The output never
   disappears, so players never pause. In **Auto** mode every change is applied this way

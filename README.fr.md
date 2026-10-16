@@ -79,6 +79,17 @@ PySide6 fonctionne à la place de PyQt6 (repli automatique, voir `qt_compat.py`)
   parquet, tapis, moquette), plafond (plâtre ou nuage acoustique), mobilier, diffusion du
   mur arrière, distance des enceintes au mur avant, hauteur des oreilles. Six préréglages
   sont fournis : salon, studio traité, régie très mate, home-cinéma, chambre, pièce nue.
+  Pour aller plus loin : **traitement paroi par paroi** (mur avant, murs latéraux, mur
+  arrière, plafond), type d'absorbeur (mousse 5 cm, laine 10 cm, laine 20 cm large bande),
+  hauteur des tweeters distincte de celle des oreilles, **place décentrée** (décalage
+  latéral), réflexions jusqu'à l'ordre 4, pièces jusqu'à 30 × 20 × 8 m, distance d'écoute
+  jusqu'à 10 m, angle jusqu'à 80°, RT60 imposé jusqu'à 4 s.
+- **Écoute** : plateaux grave et aigu (105 Hz / 10 kHz), balance gauche/droite, préampli.
+- **Interrupteurs** : chaque section de réglages a un interrupteur. Couper *Salle*
+  désactive la simulation de la pièce et masque ses réglages. *Réflexions précoces* et
+  *Écoute* (tonalité et balance) fonctionnent de la même façon, et *Avancé* affiche ou
+  masque les réglages experts. Le bouton **Réglages** de la barre du haut masque toute la
+  colonne des réglages.
 - **Changements sans coupure** : « Appliquer » démarre une seconde instance (A/B), en fait
   la sortie par défaut, attend que les flux l'aient rejointe, puis arrête l'ancienne. La
   sortie ne disparaît jamais, donc les lecteurs ne se mettent jamais en pause. En mode

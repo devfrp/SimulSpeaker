@@ -39,9 +39,9 @@ class SettingsTests(unittest.TestCase):
     def test_validation_clamps_and_room_fits(self):
         s = Settings(rt60=10.0, speaker_angle=5, preamp_db=-99, sample_rate=100,
                      speaker_distance=5.0, room_width=2.0, room_length=2.0).validated()
-        self.assertEqual(s.rt60, 2.0)
+        self.assertEqual(s.rt60, 4.0)
         self.assertEqual(s.speaker_angle, 10.0)
-        self.assertEqual(s.preamp_db, -24.0)
+        self.assertEqual(s.preamp_db, -30.0)
         self.assertEqual(s.sample_rate, 0)
         self.assertGreaterEqual(s.room_length, 5.0)
 
@@ -55,7 +55,9 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(applied.room_preset, key)
             self.assertTrue(applied.rt60_auto)
             for k in config.ROOM_KEYS:
-                self.assertIn(k, config.ROOM_PRESETS[key])
+                if k.startswith("treatment_") and k != "treatment_per_wall":
+                    continue   # sans objet : un préréglage désactive le réglage par paroi
+                self.assertIn(k, {**config.ROOM_PRESETS[key], **config.preset_settings(key)})
 
     def test_corrupted_file_is_set_aside(self):
         tmp, paths = temp_paths()

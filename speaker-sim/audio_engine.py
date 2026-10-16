@@ -670,10 +670,13 @@ MATERIALS: dict[str, tuple[float, ...]] = {
     "drywall": (0.29, 0.10, 0.05, 0.04, 0.07, 0.09, 0.09),   # plaque de plâtre sur ossature
     "masonry": (0.02, 0.02, 0.03, 0.04, 0.05, 0.06, 0.06),   # enduit sur brique / béton
     "panel": (0.30, 0.75, 1.00, 1.00, 1.00, 1.00, 0.95),     # panneau laine minérale 10 cm
+    "foam5": (0.08, 0.25, 0.60, 0.90, 0.95, 0.95, 0.95),     # mousse acoustique 5 cm
+    "wool20": (0.65, 0.95, 1.00, 1.00, 1.00, 1.00, 0.95),    # laine 20 cm, large bande
     "tile": (0.01, 0.01, 0.015, 0.02, 0.02, 0.02, 0.02),     # carrelage / béton
     "wood": (0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07),      # parquet sur lambourdes
     "carpet": (0.08, 0.24, 0.57, 0.69, 0.71, 0.73, 0.73),    # moquette épaisse sur thibaude
 }
+ABSORBERS = {"foam5": "Mousse 5 cm", "wool10": "Laine 10 cm", "wool20": "Laine 20 cm"}
 WALLS = {"masonry": "Maçonnerie (brique, béton)", "drywall": "Placo (plaque de plâtre)"}
 FLOORS = {"tile": "Carrelage / béton", "wood": "Parquet", "rug": "Parquet + tapis",
           "carpet": "Moquette"}
@@ -709,6 +712,14 @@ class RoomSpec:
     front_gap: float = 0.8        # distance enceintes – mur avant (m)
     ear_height: float = EAR_HEIGHT
     rt60_override: float = 0.0    # > 0 : RT60 imposé (moyenne 500 Hz–1 kHz)
+    absorber: str = "wool10"      # foam5 | wool10 | wool20
+    per_wall: bool = False        # traitement réglé paroi par paroi
+    treatment_front: float = 0.0
+    treatment_sides: float = 0.0
+    treatment_rear: float = 0.0
+    treatment_ceiling: float = 0.0
+    speaker_height: float = 0.0   # 0 = à hauteur d'oreille
+    listener_offset: float = 0.0  # décalage latéral de l'auditeur (m, + = vers la gauche)
 
     @property
     def volume(self) -> float:
@@ -727,11 +738,26 @@ class RoomSpec:
         m = {k: np.array(v) for k, v in MATERIALS.items()}
         t = min(max(self.treatment, 0.0), 1.0)
         bare = m["drywall"] if self.walls == "drywall" else m["masonry"]
-        wall = (1 - t) * bare + t * m["panel"]
+        panel = m["panel"] if self.absorber == "wool10" else m.get(self.absorber, m["panel"])
+        mix = lambda frac: (1 - min(max(frac, 0.0), 1.0)) * bare + min(max(frac, 0.0), 1.0) * panel
+        wall = mix(t)
         floor = {"tile": m["tile"], "wood": m["wood"], "carpet": m["carpet"],
                  "rug": 0.5 * m["wood"] + 0.5 * m["carpet"]}.get(self.floor, m["wood"])
-        ceiling = 0.5 * bare + 0.5 * m["panel"] if self.ceiling == "cloud" else bare
+        ceiling = mix(0.5) if self.ceiling == "cloud" else bare
+        if self.per_wall:
+            sides = mix(self.treatment_sides)
+            return np.stack([mix(self.treatment_rear), mix(self.treatment_front), sides, sides,
+                             floor, mix(self.treatment_ceiling)])
         return np.stack([wall, wall, wall, wall, floor, ceiling])
+
+    def wall_treatment(self) -> dict[str, float]:
+        """Taux de traitement par paroi (pour l'affichage)."""
+        if self.per_wall:
+            return {"front": self.treatment_front, "rear": self.treatment_rear,
+                    "left": self.treatment_sides, "right": self.treatment_sides,
+                    "ceiling": self.treatment_ceiling}
+        return {"front": self.treatment, "rear": self.treatment, "left": self.treatment,
+                "right": self.treatment, "ceiling": 0.5 if self.ceiling == "cloud" else 0.0}
 
     def _auto_rt60(self) -> tuple[np.ndarray, np.ndarray]:
         alpha = self.surface_absorption()
@@ -799,9 +825,11 @@ def stereo_layout(room: RoomSpec, angle_deg: float, distance: float) -> Layout:
     if cy + dy > room.width - 0.2:
         raise AudioEngineError("La pièce est trop étroite pour cet angle/distance")
     z = min(max(room.ear_height, 0.3), room.height - 0.3)
-    return Layout(listener=np.array([lx, cy, z]),
-                  speakers={"L": np.array([sx, cy + dy, z]),
-                            "R": np.array([sx, cy - dy, z])})
+    zs = z if room.speaker_height <= 0 else min(max(room.speaker_height, 0.2), room.height - 0.2)
+    ly = min(max(cy + room.listener_offset, 0.3), room.width - 0.3)
+    return Layout(listener=np.array([lx, ly, z]),
+                  speakers={"L": np.array([sx, cy + dy, zs]),
+                            "R": np.array([sx, cy - dy, zs])})
 
 
 @dataclass(frozen=True)
@@ -862,6 +890,9 @@ class RenderParams:
     diffuse_field_eq: bool = True
     ir_length_ms: int = 400
     preamp_db: float = 0.0
+    balance_db: float = 0.0       # + = enceinte droite plus forte
+    bass_db: float = 0.0          # plateau grave (105 Hz)
+    treble_db: float = 0.0        # plateau aigu (10 kHz)
     seed: int = 20240601
 
 
@@ -918,7 +949,7 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
     rt_bands = room.rt60_bands()
     ir_ms = params.ir_length_ms if not use_room else max(params.ir_length_ms,
                                                          900 * float(np.max(rt_bands[1:5])))
-    ir_len = int(min(ir_ms, 1500) * fs / 1000)
+    ir_len = int(min(ir_ms, 2500) * fs / 1000)
     nfft = next_pow2(ir_len + 3 * FIR_TAPS)
     freqs = np.fft.rfftfreq(nfft, 1 / fs)
     w = 2 * np.pi * freqs
@@ -931,6 +962,12 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
     h_er = spectrum_of(speaker.early_reflections)
     h_sp = spectrum_of(speaker.sound_power)
     h_hp = np.fft.rfft(hp_fir, nfft) if hp_fir is not None else np.ones_like(h_lw)
+    # Tonalité (plateaux grave / aigu, phase minimale) appliquée avec la correction du casque.
+    for bq in (Biquad("LSC", 105.0, params.bass_db, 0.7), Biquad("HSC", 10000.0, params.treble_db, 0.7)):
+        coeffs = biquad_coefficients(bq, fs) if abs(bq.gain_db) > 1e-6 else None
+        if coeffs is not None:
+            _, resp = signal.freqz(coeffs[0], coeffs[1], worN=w / fs)
+            h_hp = h_hp * resp
 
     report(0.15, "Champ diffus du HRTF")
     df_db = diffuse_field_db(hrtf, nfft)
@@ -961,6 +998,9 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
                      f"{room.critical_distance():.2f} m, "
                      f"{len(image_sources(layout.speakers['L'], room, order))} sources-images/enceinte")
 
+    # Référence temporelle : l'enceinte la plus proche (auditeur décentré possible).
+    d_ref = min(float(np.linalg.norm(layout.speakers[k] - layout.listener)) for k in ("L", "R"))
+    side_gain = {"L": 10 ** (-params.balance_db / 40), "R": 10 ** (params.balance_db / 40)}
     spectra: dict[str, np.ndarray] = {}
     for si, side in enumerate(("L", "R")):
         src = layout.speakers[side]
@@ -969,7 +1009,7 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
         for img in image_sources(src, room, order):
             vec = img.position - layout.listener
             dist = float(np.linalg.norm(vec))
-            tau = (dist - params.distance) / SPEED_OF_SOUND + pre_delay
+            tau = (dist - d_ref) / SPEED_OF_SOUND + pre_delay
             if tau * fs >= ir_len:
                 continue
             amp = params.distance / dist
@@ -990,7 +1030,7 @@ def render(speaker: SpeakerResponse, hp_fir: np.ndarray | None, hrtf: HrtfProvid
                 onset = np.clip((t - pre_delay - t_start) / 0.01, 0, 1)
                 tail *= 0.5 - 0.5 * np.cos(np.pi * onset)
                 total += np.fft.rfft(tail, nfft) * h_sp * late_color
-            spectra[side + ear] = total * h_hp
+            spectra[side + ear] = total * h_hp * side_gain[side]
         report(0.45 + 0.3 * si, f"Haut-parleur {side} : réverbération")
 
     # Normalisation : pire cas = signal mono identique sur les deux enceintes.

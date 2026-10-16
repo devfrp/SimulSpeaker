@@ -99,21 +99,30 @@ class Paths:
 # Bornes de validation : (min, max). Les valeurs hors bornes sont ramenées dedans.
 LIMITS: dict[str, tuple[float, float]] = {
     "sample_rate": (0, 192000),
-    "speaker_angle": (10.0, 60.0),
-    "speaker_distance": (0.5, 6.0),
+    "speaker_angle": (10.0, 80.0),
+    "speaker_distance": (0.5, 10.0),
     "room_width": (2.0, 20.0),
     "room_length": (2.0, 30.0),
     "room_height": (2.0, 8.0),
-    "rt60": (0.1, 2.0),
+    "rt60": (0.1, 4.0),
     "room_treatment": (0.0, 1.0),
     "room_bass_traps": (0.0, 1.0),
     "room_diffusion": (0.0, 1.0),
-    "front_gap": (0.2, 3.0),
-    "ear_height": (0.8, 1.8),
-    "room_amount": (0.0, 1.5),
-    "reflection_order": (0, 3),
-    "preamp_db": (-24.0, 12.0),
-    "ir_length_ms": (50, 1500),
+    "front_gap": (0.2, 5.0),
+    "ear_height": (0.6, 2.0),
+    "room_amount": (0.0, 2.0),
+    "reflection_order": (0, 4),
+    "preamp_db": (-30.0, 20.0),
+    "ir_length_ms": (50, 2500),
+    "treatment_front": (0.0, 1.0),
+    "treatment_sides": (0.0, 1.0),
+    "treatment_rear": (0.0, 1.0),
+    "treatment_ceiling": (0.0, 1.0),
+    "speaker_height": (0.0, 3.0),
+    "listener_offset": (-3.0, 3.0),
+    "balance_db": (-6.0, 6.0),
+    "bass_db": (-12.0, 12.0),
+    "treble_db": (-12.0, 12.0),
 }
 
 
@@ -142,7 +151,19 @@ class Settings:
     room_furniture: str = "furnished"    # empty | furnished | full
     room_diffusion: float = 0.1          # diffusion du mur arrière
     front_gap: float = 0.8               # enceintes – mur avant (m)
-    ear_height: float = 1.2              # hauteur des oreilles et des tweeters (m)
+    ear_height: float = 1.2              # hauteur des oreilles (m)
+    speaker_height: float = 0.0          # hauteur des tweeters (m), 0 = à hauteur d'oreille
+    listener_offset: float = 0.0         # décalage latéral de l'auditeur (m, + = gauche)
+    room_absorber: str = "wool10"        # foam5 | wool10 | wool20
+    treatment_per_wall: bool = False     # traitement réglé paroi par paroi
+    treatment_front: float = 0.0
+    treatment_sides: float = 0.0
+    treatment_rear: float = 0.0
+    treatment_ceiling: float = 0.0
+    balance_db: float = 0.0              # + = enceinte droite plus forte
+    bass_db: float = 0.0                 # tonalité : plateau grave 105 Hz
+    treble_db: float = 0.0               # tonalité : plateau aigu 10 kHz
+    tone_enabled: bool = True            # tonalité et balance actives
     room_amount: float = 1.0             # 0 = anéchoïque, 1 = niveau physique
     reflection_order: int = 2
     diffuse_field_eq: bool = True
@@ -183,6 +204,9 @@ class Settings:
         if s.room_preset not in ROOM_PRESETS:
             s.room_preset = ""
         s.ear_height = min(s.ear_height, s.room_height - 0.3)
+        if s.speaker_height:
+            s.speaker_height = min(max(s.speaker_height, 0.2), s.room_height - 0.2)
+        s.listener_offset = max(-(s.room_width / 2 - 0.3), min(s.listener_offset, s.room_width / 2 - 0.3))
         # La pièce doit contenir le triangle stéréo (0,5 m de marge).
         import math
         a = math.radians(s.speaker_angle)
@@ -197,6 +221,7 @@ CHOICES: dict[str, tuple[str, ...]] = {
     "room_floor": ("tile", "wood", "rug", "carpet"),
     "room_ceiling": ("plaster", "cloud"),
     "room_furniture": ("empty", "furnished", "full"),
+    "room_absorber": ("foam5", "wool10", "wool20"),
 }
 
 # Préréglages de salle : chaque entrée remplace les réglages de pièce correspondants.
@@ -228,13 +253,15 @@ ROOM_PRESETS: dict[str, dict[str, Any]] = {
 }
 ROOM_KEYS = ("room_width", "room_length", "room_height", "room_walls", "room_treatment",
              "room_bass_traps", "room_floor", "room_ceiling", "room_furniture",
-             "room_diffusion", "front_gap")
+             "room_diffusion", "front_gap", "room_absorber", "treatment_per_wall",
+             "treatment_front", "treatment_sides", "treatment_rear", "treatment_ceiling")
 
 
 def preset_settings(key: str) -> dict[str, Any]:
     """Réglages à appliquer pour un préréglage (RT60 recalculé automatiquement)."""
     preset = {k: v for k, v in ROOM_PRESETS[key].items() if k != "label"}
-    return {**preset, "room_preset": key, "rt60_auto": True, "room_enabled": True}
+    return {**preset, "room_preset": key, "rt60_auto": True, "room_enabled": True,
+            "room_absorber": "wool10", "treatment_per_wall": False}
 
 
 def _coerce(name: str, value: Any, default: Any) -> Any:

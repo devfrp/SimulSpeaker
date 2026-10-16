@@ -198,7 +198,11 @@ class SpeakerSimApp:
             order=s.reflection_order, walls=s.room_walls, treatment=s.room_treatment,
             bass_traps=s.room_bass_traps, floor=s.room_floor, ceiling=s.room_ceiling,
             furniture=s.room_furniture, diffusion=s.room_diffusion, front_gap=s.front_gap,
-            ear_height=s.ear_height, rt60_override=0.0 if s.rt60_auto else s.rt60)
+            ear_height=s.ear_height, rt60_override=0.0 if s.rt60_auto else s.rt60,
+            absorber=s.room_absorber, per_wall=s.treatment_per_wall,
+            treatment_front=s.treatment_front, treatment_sides=s.treatment_sides,
+            treatment_rear=s.treatment_rear, treatment_ceiling=s.treatment_ceiling,
+            speaker_height=s.speaker_height, listener_offset=s.listener_offset)
 
     def layout(self) -> ae.Layout | None:
         """Positions auditeur / enceintes (vue en plan de l'interface)."""
@@ -220,7 +224,10 @@ class SpeakerSimApp:
             room=self.room_spec(),
             room_enabled=s.room_enabled, room_amount=s.room_amount,
             diffuse_field_eq=s.diffuse_field_eq, ir_length_ms=s.ir_length_ms,
-            preamp_db=s.preamp_db)
+            preamp_db=s.preamp_db,
+            balance_db=s.balance_db if s.tone_enabled else 0.0,
+            bass_db=s.bass_db if s.tone_enabled else 0.0,
+            treble_db=s.treble_db if s.tone_enabled else 0.0)
 
     def build_filters(self, progress: Progress | None = None) -> ae.RenderResult:
         """Télécharge ce qui manque, calcule et écrit les IR + la config filter-chain."""

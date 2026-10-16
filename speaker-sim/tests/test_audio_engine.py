@@ -191,6 +191,34 @@ class RoomTests(unittest.TestCase):
         self.assertLess(ae.RoomSpec(diffusion=1.0).reflection_bands()[0, 3],
                         ae.RoomSpec(diffusion=0.0).reflection_bands()[0, 3])
 
+    def test_order_4_image_count(self):
+        room = ae.RoomSpec(5, 6, 3)
+        self.assertEqual(len(ae.image_sources(np.array([4.0, 2.0, 1.2]), room, 4)), 129)
+
+    def test_per_wall_treatment_only_changes_that_wall(self):
+        base = ae.RoomSpec(per_wall=True).reflection_bands()
+        front = ae.RoomSpec(per_wall=True, treatment_front=1.0).reflection_bands()
+        i_front = ae.SURFACES.index("front")
+        self.assertLess(front[i_front, 3], base[i_front, 3] * 0.5)
+        others = [i for i in range(6) if i != i_front]
+        np.testing.assert_allclose(front[others], base[others])
+
+    def test_absorber_types(self):
+        lf = {a: ae.RoomSpec(treatment=0.6, absorber=a).rt60_bands()[1]
+              for a in ("foam5", "wool10", "wool20")}
+        self.assertGreater(lf["foam5"], lf["wool10"])
+        self.assertGreater(lf["wool10"], lf["wool20"])
+
+    def test_speaker_height_and_listener_offset(self):
+        room = ae.RoomSpec(4.5, 6, 2.6, speaker_height=1.0, listener_offset=0.5)
+        lay = ae.stereo_layout(room, 30, 2.0)
+        self.assertAlmostEqual(lay.speakers["L"][2], 1.0)
+        self.assertAlmostEqual(lay.listener[2], 1.2)
+        self.assertAlmostEqual(lay.listener[1], 4.5 / 2 + 0.5)
+        dl = np.linalg.norm(lay.speakers["L"] - lay.listener)
+        dr = np.linalg.norm(lay.speakers["R"] - lay.listener)
+        self.assertLess(dl, dr)   # décalé vers la gauche : enceinte gauche plus proche
+
     def test_layout_symmetry_front_gap_and_errors(self):
         room = ae.RoomSpec(4.5, 6, 2.6, front_gap=1.0, ear_height=1.1)
         layout = ae.stereo_layout(room, 30, 2.0)
@@ -235,6 +263,28 @@ class RenderTests(unittest.TestCase):
         tail = slice(int(0.05 * 48000), None)
         self.assertGreater(np.sum(wet.irs["LL"][tail].astype(float) ** 2),
                            10 * np.sum(dry.irs["LL"][tail].astype(float) ** 2) + 1e-12)
+
+    def test_balance_and_offset(self):
+        e = lambda r, k: float(np.sum(r.irs[k].astype(float) ** 2))
+        right = self._render(room_enabled=False, balance_db=6.0)
+        self.assertGreater(e(right, "RR"), 3 * e(right, "LL"))
+        left_seat = ae.RenderParams(fs=48000, ir_length_ms=200, room_enabled=False,
+                                    room=ae.RoomSpec(rt60_override=0.2, listener_offset=0.6))
+        res = ae.render(self.speaker, None, FakeHrtf(fs=48000), left_seat)
+        self.assertGreater(e(res, "LL"), e(res, "RR"))
+        for v in res.irs.values():     # aucun repliement circulaire : début silencieux
+            self.assertLess(float(np.max(np.abs(v[-200:]))), 1e-3)
+
+    def test_tone_controls(self):
+        flat = self._render(room_enabled=False)
+        bass = self._render(room_enabled=False, bass_db=6.0)
+        n = 1 << 15
+        f = np.fft.rfftfreq(n, 1 / 48000)
+        spec = lambda r: np.abs(np.fft.rfft(r.irs["LL"].astype(float), n))
+        ratio = 20 * np.log10(spec(bass) / spec(flat))
+        low = ratio[(f > 30) & (f < 60)].mean()
+        mid = ratio[(f > 2000) & (f < 4000)].mean()
+        self.assertGreater(low - mid, 4.0)
 
     def test_rate_mismatch(self):
         with self.assertRaises(ae.AudioEngineError):
