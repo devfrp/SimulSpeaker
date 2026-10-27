@@ -33,13 +33,21 @@ from qt_compat import QtCore, QtGui, QtWidgets, Signal
 
 Qt = QtCore.Qt
 FONT_DIR = APP_DIR / "packaging" / "fonts"
-DISPLAY, BODY, MONO = "Space Grotesk", "Inter", "JetBrains Mono"
+DISPLAY, BODY, MONO = "Familjen Grotesk", "IBM Plex Sans", "JetBrains Mono"
 
-# Palette (identité devfrp)
-BG, PANEL, PANEL2 = "#14151a", "#1b1d24", "#21232b"
-BORDER, BORDER_STRONG = "#26282f", "#34363e"
-TEXT, MUTED = "#ededef", "#8b8d98"
-AMBER, TEAL, RED = "#e8a33d", "#49b9ae", "#e5484d"
+# Palette : le thème Cobalt du site (devfrp.github.io/SimulSpeaker).
+# Habillage clair : papier, encre, filets, un seul signal cobalt.
+PAPER, PAPER2, PAPER3 = "#f8fbfe", "#eff3f8", "#e3e8ef"
+INK, INK2, INK_MUTED, INK_FAINT = "#111825", "#363e49", "#5d646e", "#9aa1ab"
+RULE, RULE2 = "#dadee4", "#c2c8cf"
+ACCENT, ACCENT_DEEP, ACCENT_EDGE = "#0462d3", "#0040bb", "#003d98"
+ACCENT_WASH, ACCENT_INK = "#e3f0ff", "#f8fbfe"
+KEY_FACE, KEY_EDGE = "#fcfdff", "#b7bec8"
+# Vues de mesure (plan, courbes, RT60) sur graphite, comme le code sur le site.
+BG, PANEL, PANEL2 = "#121823", "#1e2532", "#262f3e"
+BORDER, BORDER_STRONG = "#2d3645", "#3a4b66"
+TEXT, MUTED = "#e3e8ee", "#939ca9"
+SIGNAL, SIGNAL_2, RED = "#75b4ff", "#e3e8ee", "#f2555a"
 
 
 def C(hex_color: str, alpha: int = 255) -> QtGui.QColor:
@@ -49,80 +57,88 @@ def C(hex_color: str, alpha: int = 255) -> QtGui.QColor:
 
 
 STYLE = f"""
-* {{ font-family: "{BODY}"; font-size: 13px; color: {TEXT}; }}
+* {{ font-family: "{BODY}"; font-size: 13px; color: {INK}; }}
 QMainWindow, QWidget#root, QWidget#body, QScrollArea, QScrollArea > QWidget > QWidget {{
-    background: {BG}; border: none; }}
-QLabel[muted="true"] {{ color: {MUTED}; }}
-QLabel[mono="true"] {{ font-family: "{MONO}"; font-size: 11px; letter-spacing: 0.5px; }}
-QLabel#wordmark {{ font-family: "{MONO}"; font-weight: 700; font-size: 15px; }}
-QLabel#chain {{ font-family: "{MONO}"; font-size: 12px; color: {MUTED}; }}
+    background: {PAPER2}; border: none; }}
+QLabel[muted="true"] {{ color: {INK_MUTED}; }}
+QLabel[mono="true"] {{ font-family: "{MONO}"; font-size: 11px; }}
+QLabel[caption="true"] {{ font-family: "{DISPLAY}"; font-size: 12px; font-weight: 500; color: {INK_MUTED}; }}
+QLabel#wordmark {{ font-family: "{DISPLAY}"; font-weight: 600; font-size: 17px; }}
+QLabel#chain {{ font-family: "{MONO}"; font-size: 12px; color: {INK_MUTED}; }}
 QLabel#sectionTitle {{ font-family: "{DISPLAY}"; font-size: 16px; font-weight: 600; }}
-QLabel#tag {{ font-family: "{MONO}"; font-size: 11px; color: {AMBER};
-    border: 1px solid {BORDER_STRONG}; border-radius: 9px; padding: 0 7px; }}
-QLabel#value {{ font-family: "{MONO}"; font-size: 12px; color: {AMBER}; }}
-QLabel#status {{ font-family: "{MONO}"; font-size: 11px; letter-spacing: 1px;
-    border-radius: 10px; padding: 3px 10px; }}
-QFrame#card {{ background: {PANEL}; border: 1px solid {BORDER}; border-radius: 14px; }}
-QFrame#topbar {{ background: rgba(20,21,26,235); border-bottom: 1px solid {BORDER}; }}
-QFrame#footer {{ background: {BG}; border-top: 1px solid {BORDER}; }}
-QLineEdit, QComboBox {{ background: {PANEL2}; border: 1px solid {BORDER_STRONG};
-    border-radius: 8px; padding: 7px 10px; selection-background-color: {AMBER};
-    selection-color: {BG}; }}
-QLineEdit:focus, QComboBox:focus {{ border-color: {TEAL}; }}
-QComboBox QAbstractItemView {{ background: {PANEL2}; border: 1px solid {BORDER_STRONG};
-    selection-background-color: {AMBER}; selection-color: {BG}; }}
-QListView, QListWidget {{ background: {BG}; border: 1px solid {BORDER}; border-radius: 10px;
+QLabel#tag {{ font-family: "{MONO}"; font-size: 11px; color: {ACCENT_DEEP};
+    border: 1px solid {RULE2}; border-radius: 4px; padding: 0 6px; }}
+QLabel#value {{ font-family: "{MONO}"; font-size: 12px; color: {ACCENT_DEEP}; }}
+QLabel#status {{ font-family: "{DISPLAY}"; font-size: 12px; font-weight: 500;
+    border-radius: 4px; padding: 3px 10px; }}
+QFrame#card {{ background: {PAPER}; border: 1px solid {RULE}; border-radius: 8px; }}
+QFrame#topbar {{ background: {PAPER}; border-bottom: 1px solid {RULE2}; }}
+QFrame#footer {{ background: {PAPER}; border-top: 1px solid {RULE}; }}
+QLineEdit, QComboBox {{ background: {KEY_FACE}; border: 1px solid {INK_MUTED};
+    border-radius: 6px; padding: 7px 10px; selection-background-color: {ACCENT};
+    selection-color: {ACCENT_INK}; }}
+QLineEdit:focus, QComboBox:focus {{ border: 1px solid {ACCENT}; }}
+QComboBox QAbstractItemView {{ background: {PAPER}; border: 1px solid {RULE2};
+    selection-background-color: {ACCENT_WASH}; selection-color: {ACCENT_DEEP}; }}
+QListView, QListWidget {{ background: {PAPER}; border: 1px solid {RULE}; border-radius: 6px;
     padding: 4px; outline: 0; }}
-QListView::item, QListWidget::item {{ padding: 6px 8px; border-radius: 6px; }}
-QListView::item:hover, QListWidget::item:hover {{ background: {PANEL2}; }}
-QListView::item:selected, QListWidget::item:selected {{ background: rgba(232,163,61,40);
-    color: {AMBER}; }}
-QPushButton {{ font-family: "{MONO}"; font-size: 12px; letter-spacing: 0.5px;
-    background: {PANEL}; border: 1px solid {BORDER_STRONG}; border-radius: 8px;
-    padding: 8px 14px; }}
-QPushButton:hover {{ border-color: {TEAL}; background: {PANEL2}; }}
-QPushButton:disabled {{ color: #5a5c66; border-color: {BORDER}; }}
-QPushButton#primary {{ background: {AMBER}; color: {BG}; border-color: {AMBER}; font-weight: 700; }}
-QPushButton#primary:hover {{ background: #f0b25a; }}
-QPushButton#seg {{ font-size: 11px; padding: 6px 4px; border-radius: 0; background: {PANEL2};
-    color: {MUTED}; border: 1px solid {BORDER_STRONG}; margin-left: -1px; }}
-QPushButton#seg[pos="first"] {{ border-top-left-radius: 7px; border-bottom-left-radius: 7px;
+QListView::item, QListWidget::item {{ padding: 6px 8px; border-radius: 4px; }}
+QListView::item:hover, QListWidget::item:hover {{ background: {PAPER2}; }}
+QListView::item:selected, QListWidget::item:selected {{ background: {ACCENT_WASH};
+    color: {ACCENT_DEEP}; }}
+QPushButton {{ font-family: "{DISPLAY}"; font-size: 13px; font-weight: 500;
+    background: {KEY_FACE}; color: {INK}; border: 1px solid {RULE2};
+    border-bottom: 3px solid {KEY_EDGE}; border-radius: 6px; padding: 7px 14px; }}
+QPushButton:hover {{ color: {ACCENT_DEEP}; border-color: {KEY_EDGE}; }}
+QPushButton:pressed {{ background: {PAPER3}; border-bottom-width: 1px; padding-top: 9px; }}
+QPushButton:focus {{ border-color: {ACCENT}; }}
+QPushButton:disabled {{ color: {INK_FAINT}; background: {PAPER2}; border-color: {RULE};
+    border-bottom-color: {RULE}; }}
+QPushButton#primary {{ background: {ACCENT}; color: {ACCENT_INK}; border-color: {ACCENT_EDGE};
+    font-weight: 600; }}
+QPushButton#primary:hover {{ background: {ACCENT_DEEP}; color: {ACCENT_INK}; }}
+QPushButton#primary:pressed {{ background: {ACCENT_EDGE}; }}
+QPushButton#seg {{ font-size: 12px; padding: 6px 4px; border-radius: 0; background: {KEY_FACE};
+    color: {INK2}; border: 1px solid {RULE2}; border-bottom: 3px solid {KEY_EDGE}; margin-left: -1px; }}
+QPushButton#seg[pos="first"] {{ border-top-left-radius: 6px; border-bottom-left-radius: 6px;
     margin-left: 0; }}
-QPushButton#seg[pos="last"] {{ border-top-right-radius: 7px; border-bottom-right-radius: 7px; }}
-QPushButton#seg[pos="only"] {{ border-radius: 7px; margin-left: 0; }}
-QPushButton#seg:checked {{ background: {AMBER}; color: {BG}; border-color: {AMBER}; font-weight: 700; }}
-QPushButton#seg:hover:!checked {{ color: {TEXT}; }}
-QPushButton#chip {{ font-size: 11px; padding: 5px 4px; border-radius: 13px; background: {PANEL2}; }}
-QPushButton#chip:checked {{ border-color: {TEAL}; color: {TEAL}; background: rgba(73,185,174,28); }}
+QPushButton#seg[pos="last"] {{ border-top-right-radius: 6px; border-bottom-right-radius: 6px; }}
+QPushButton#seg[pos="only"] {{ border-radius: 6px; margin-left: 0; }}
+QPushButton#seg:checked {{ background: {PAPER3}; color: {ACCENT_DEEP}; font-weight: 600;
+    border-bottom-width: 1px; padding-top: 8px; }}
+QPushButton#seg:hover:!checked {{ color: {ACCENT_DEEP}; }}
+QPushButton#chip {{ font-size: 12px; padding: 5px 4px; border-radius: 6px; }}
+QPushButton#chip:checked {{ border-color: {ACCENT}; color: {ACCENT_DEEP}; background: {ACCENT_WASH};
+    border-bottom: 1px solid {ACCENT}; padding-top: 7px; }}
 QCheckBox {{ spacing: 9px; }}
-QCheckBox::indicator {{ width: 30px; height: 16px; border-radius: 8px; background: {BORDER_STRONG};
+QCheckBox::indicator {{ width: 30px; height: 16px; border-radius: 8px; background: {RULE2};
     border: none; }}
-QCheckBox::indicator:checked {{ background: {TEAL}; }}
-QSlider::groove:horizontal {{ height: 4px; background: {BORDER_STRONG}; border-radius: 2px; }}
-QSlider::sub-page:horizontal {{ background: {AMBER}; border-radius: 2px; }}
-QSlider::handle:horizontal {{ background: {TEXT}; width: 14px; height: 14px; margin: -5px 0;
-    border-radius: 7px; }}
-QSlider[accent="teal"]::sub-page:horizontal {{ background: {TEAL}; }}
+QCheckBox::indicator:checked {{ background: {ACCENT}; }}
+QSlider::groove:horizontal {{ height: 4px; background: {RULE2}; border-radius: 2px; }}
+QSlider::sub-page:horizontal {{ background: {ACCENT}; border-radius: 2px; }}
+QSlider::handle:horizontal {{ background: {KEY_FACE}; border: 1px solid {KEY_EDGE}; width: 14px;
+    height: 14px; margin: -6px 0; border-radius: 8px; }}
+QSlider[accent="teal"]::sub-page:horizontal {{ background: {ACCENT}; }}
 QProgressBar {{ background: transparent; border: none; max-height: 2px; }}
-QProgressBar::chunk {{ background: {AMBER}; }}
+QProgressBar::chunk {{ background: {ACCENT}; }}
 QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
-QScrollBar::handle:vertical {{ background: {BORDER_STRONG}; border-radius: 4px; min-height: 40px; }}
+QScrollBar::handle:vertical {{ background: {RULE2}; border-radius: 4px; min-height: 40px; }}
 QScrollBar:horizontal {{ background: transparent; height: 10px; margin: 2px; }}
-QScrollBar::handle:horizontal {{ background: {BORDER_STRONG}; border-radius: 4px; min-width: 40px; }}
+QScrollBar::handle:horizontal {{ background: {RULE2}; border-radius: 4px; min-width: 40px; }}
 QScrollBar::add-line, QScrollBar::sub-line {{ width: 0; height: 0; }}
 QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
-QFrame#stab {{ background: {PANEL}; border: 1px solid {BORDER}; border-radius: 9px; }}
-QFrame#stab[current="true"] {{ background: {PANEL2}; border-color: {AMBER}; }}
+QFrame#stab {{ background: {PAPER}; border: 1px solid {RULE}; border-radius: 6px; }}
+QFrame#stab[current="true"] {{ background: {ACCENT_WASH}; border-color: {ACCENT}; }}
 QPushButton#stabLabel {{ background: transparent; border: none; padding: 6px 4px 6px 8px;
-    font-size: 12px; text-align: left; }}
-QPushButton#stabLabel:hover {{ background: transparent; color: {AMBER}; }}
-QFrame#stab[off="true"] QPushButton#stabLabel {{ color: {MUTED}; }}
-QFrame#stab[inert="true"] QPushButton#stabLabel {{ color: #5a5c66; }}
+    font-size: 13px; text-align: left; }}
+QPushButton#stabLabel:hover {{ background: transparent; color: {ACCENT_DEEP}; }}
+QFrame#stab[off="true"] QPushButton#stabLabel {{ color: {INK_MUTED}; }}
+QFrame#stab[inert="true"] QPushButton#stabLabel {{ color: {INK_FAINT}; }}
 QCheckBox#stabSwitch::indicator {{ width: 24px; height: 13px; border-radius: 6px; }}
-QToolTip {{ background: {PANEL2}; color: {TEXT}; border: 1px solid {BORDER_STRONG}; padding: 6px; }}
-QMenu {{ background: {PANEL2}; border: 1px solid {BORDER_STRONG}; padding: 4px; }}
-QMenu::item {{ padding: 6px 14px; border-radius: 5px; }}
-QMenu::item:selected {{ background: {AMBER}; color: {BG}; }}
+QToolTip {{ background: {BG}; color: {TEXT}; border: 1px solid {BORDER}; padding: 6px; }}
+QMenu {{ background: {PAPER}; border: 1px solid {RULE2}; padding: 4px; }}
+QMenu::item {{ padding: 6px 14px; border-radius: 4px; }}
+QMenu::item:selected {{ background: {ACCENT}; color: {ACCENT_INK}; }}
 """
 
 
@@ -144,7 +160,10 @@ def translate_tree(root: QtWidgets.QWidget) -> None:
             w.setToolTip(tr(w.toolTip()))
         if isinstance(w, QtWidgets.QLabel):
             if "<" not in w.text():
-                w.setText(tr(w.text()))
+                text = tr(w.text())
+                if w.property("caption"):
+                    text = text[:1].upper() + text[1:]
+                w.setText(text)
         elif isinstance(w, QtWidgets.QAbstractButton):
             w.setText(tr(w.text()))
         elif isinstance(w, QtWidgets.QLineEdit):
@@ -272,7 +291,9 @@ class Collapsible(QtWidgets.QFrame):
 
 
 def caption(text: str) -> QtWidgets.QLabel:
-    return label(text.upper(), muted=True, mono=True)
+    lbl = label(text[:1].upper() + text[1:], muted=True)
+    lbl.setProperty("caption", True)
+    return lbl
 
 
 class Segmented(QtWidgets.QWidget):
@@ -353,7 +374,7 @@ class ValueSlider(QtWidgets.QWidget):
 
 
 class PowerButton(QtWidgets.QAbstractButton):
-    """Bouton d'alimentation rond : ambre à l'arrêt, sarcelle lumineux en marche."""
+    """Bouton d'alimentation en touche : face claire à l'arrêt, cobalt enfoncé en marche."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -369,26 +390,27 @@ class PowerButton(QtWidgets.QAbstractButton):
     def paintEvent(self, _e):
         p = QtGui.QPainter(self)
         p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        color = C(TEAL) if self.on else C(AMBER)
+        down = self.on or self.isDown()
+        face = C(ACCENT) if self.on else C(PAPER3) if self.isDown() else C(KEY_FACE)
+        edge = C(ACCENT_EDGE) if self.on else C(KEY_EDGE)
+        glyph = C(ACCENT_INK) if self.on else C(ACCENT_DEEP) if self.underMouse() else C(INK)
         if not self.isEnabled():
-            color = C(MUTED)
-        r = QtCore.QRectF(5, 5, 36, 36)
-        if self.on:
-            glow = QtGui.QRadialGradient(r.center(), 24)
-            glow.setColorAt(0.55, C(TEAL, 90))
-            glow.setColorAt(1.0, C(TEAL, 0))
-            p.setBrush(glow)
-            p.setPen(Qt.PenStyle.NoPen)
-            p.drawEllipse(QtCore.QRectF(0, 0, 46, 46))
-        p.setBrush(C(PANEL2) if not self.underMouse() else C(BORDER_STRONG))
-        p.setPen(QtGui.QPen(color, 2))
-        p.drawEllipse(r)
-        pen = QtGui.QPen(color, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+            face, edge, glyph = C(PAPER2), C(RULE), C(INK_FAINT)
+        lift = 1.0 if down else 3.0
+        key = QtCore.QRectF(4, 4 + (3.0 - lift), 38, 36)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(edge)
+        p.drawRoundedRect(key.translated(0, lift), 7, 7)
+        p.setBrush(face)
+        p.setPen(QtGui.QPen(C(ACCENT_EDGE) if self.on else C(RULE2), 1))
+        p.drawRoundedRect(key, 7, 7)
+        pen = QtGui.QPen(glyph, 2.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
         p.setPen(pen)
         p.setBrush(Qt.BrushStyle.NoBrush)
-        inner = QtCore.QRectF(15, 15, 16, 16)
+        c = key.center()
+        inner = QtCore.QRectF(c.x() - 8, c.y() - 7, 16, 16)
         p.drawArc(inner, 120 * 16, -300 * 16)
-        p.drawLine(QtCore.QPointF(23, 12), QtCore.QPointF(23, 22))
+        p.drawLine(QtCore.QPointF(c.x(), c.y() - 10), QtCore.QPointF(c.x(), c.y()))
 
 
 # ---------------------------------------------------------------------------
@@ -485,21 +507,21 @@ class RoomPlan(QtWidgets.QWidget):
                 p.drawLine(QtCore.QPointF(rect.left(), y), QtCore.QPointF(rect.right(), y))
                 y += step
         elif floor in ("wood", "rug"):
-            p.setPen(QtGui.QPen(C(AMBER, 16), 1))
+            p.setPen(QtGui.QPen(C(SIGNAL, 16), 1))
             y = rect.top()
             while y < rect.bottom():
                 p.drawLine(QtCore.QPointF(rect.left(), y), QtCore.QPointF(rect.right(), y))
                 y += 0.18 * sc
         elif floor == "carpet":
-            p.fillRect(rect, C(TEAL, 18))
+            p.fillRect(rect, C(SIGNAL_2, 18))
         p.restore()
 
         lis = layout.listener if layout is not None else None
         if floor == "rug" and lis is not None:
             c = self._to_screen(lis[0] + 0.6, W / 2)
             rug = QtCore.QRectF(c.x() - 1.3 * sc, c.y() - 1.0 * sc, 2.6 * sc, 2.0 * sc)
-            p.setPen(QtGui.QPen(C(TEAL, 60), 1))
-            p.setBrush(C(TEAL, 22))
+            p.setPen(QtGui.QPen(C(SIGNAL_2, 60), 1))
+            p.setBrush(C(SIGNAL_2, 22))
             p.drawRoundedRect(rug, 8, 8)
 
         # Mobilier
@@ -525,11 +547,11 @@ class RoomPlan(QtWidgets.QWidget):
             half = 1.2 * max(0.4, min(1.0, ceiling_t * 2))
             a = self._to_screen(sp[0] - 0.1, W / 2 + half)
             b = self._to_screen(lis[0] - 0.2, W / 2 - half)
-            pen = QtGui.QPen(C(TEAL, int(60 + 120 * ceiling_t)), 1.2, Qt.PenStyle.DashLine)
+            pen = QtGui.QPen(C(SIGNAL_2, int(60 + 120 * ceiling_t)), 1.2, Qt.PenStyle.DashLine)
             p.setPen(pen)
-            p.setBrush(C(TEAL, int(8 + 30 * ceiling_t)))
+            p.setBrush(C(SIGNAL_2, int(8 + 30 * ceiling_t)))
             p.drawRoundedRect(QtCore.QRectF(a, b).normalized(), 10, 10)
-            p.setPen(C(TEAL, 170))
+            p.setPen(C(SIGNAL_2, 170))
             p.setFont(QtGui.QFont(MONO, 8))
             p.drawText(QtCore.QRectF(a, b).normalized().adjusted(6, 4, 0, 0),
                        Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, tr("nuage"))
@@ -543,7 +565,7 @@ class RoomPlan(QtWidgets.QWidget):
         # Panneaux absorbants répartis sur chaque mur
         wt = room.wall_treatment()
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(C(TEAL, 220))
+        p.setBrush(C(SIGNAL_2, 220))
         walls = [(rect.topLeft(), rect.topRight(), W, wt["front"]),
                  (rect.bottomLeft(), rect.bottomRight(), W, wt["rear"]),
                  (rect.topLeft(), rect.bottomLeft(), L, wt["left"]),
@@ -566,7 +588,7 @@ class RoomPlan(QtWidgets.QWidget):
         # Pièges à basses d'angle
         if room.bass_traps > 0:
             size = (0.25 + 0.25 * room.bass_traps) * sc
-            p.setBrush(C(TEAL, 150))
+            p.setBrush(C(SIGNAL_2, 150))
             p.setPen(Qt.PenStyle.NoPen)
             for corner, dx, dy in ((rect.topLeft(), 1, 1), (rect.topRight(), -1, 1),
                                    (rect.bottomLeft(), 1, -1), (rect.bottomRight(), -1, -1)):
@@ -586,7 +608,7 @@ class RoomPlan(QtWidgets.QWidget):
                 xb = x0 + span * (i + 1) / teeth
                 path.lineTo(xa, y - 7 - 5 * ((i * 7) % 3))
                 path.lineTo(xb, y)
-            p.setPen(QtGui.QPen(C(AMBER, 200), 1.4))
+            p.setPen(QtGui.QPen(C(SIGNAL, 200), 1.4))
             p.drawPath(path)
 
         if layout is None:
@@ -627,17 +649,17 @@ class RoomPlan(QtWidgets.QWidget):
                     wy = 0.0 if surf == "right" else W
                     k = (wy - ly) / (iy - ly) if iy != ly else 0
                     hit = (lx + k * (ix - lx), wy)
-                pen = QtGui.QPen(C(AMBER, int(30 + 170 * gain ** 2)), 1.2, Qt.PenStyle.DashLine)
+                pen = QtGui.QPen(C(SIGNAL, int(30 + 170 * gain ** 2)), 1.2, Qt.PenStyle.DashLine)
                 p.setPen(pen)
                 p.setBrush(Qt.BrushStyle.NoBrush)
                 path = QtGui.QPainterPath(self._to_screen(src[0], src[1]))
                 path.lineTo(self._to_screen(*hit))
                 path.lineTo(self._to_screen(lx, ly))
                 p.drawPath(path)
-                p.setBrush(C(AMBER, int(60 + 160 * gain)))
+                p.setBrush(C(SIGNAL, int(60 + 160 * gain)))
                 p.setPen(Qt.PenStyle.NoPen)
                 p.drawEllipse(self._to_screen(*hit), 3, 3)
-        p.setPen(QtGui.QPen(C(AMBER), 2))
+        p.setPen(QtGui.QPen(C(SIGNAL), 2))
         for side in ("L", "R"):
             p.drawLine(self._to_screen(*layout.speakers[side][:2]), self._to_screen(*lis[:2]))
 
@@ -652,13 +674,13 @@ class RoomPlan(QtWidgets.QWidget):
             p.rotate(angle)
             box = QtCore.QRectF(-0.13 * sc, -0.12 * sc, 0.26 * sc, 0.24 * sc)
             hot = self._drag == side
-            p.setBrush(C(AMBER) if not hot else C("#f0b25a"))
+            p.setBrush(C(SIGNAL) if not hot else C("#a9d0ff"))
             p.setPen(QtGui.QPen(C(BG), 1.5))
             p.drawRoundedRect(box, 4, 4)
             p.setBrush(C(BG))
             p.drawEllipse(QtCore.QPointF(0, 0.035 * sc), 0.07 * sc, 0.07 * sc)
             p.restore()
-            p.setPen(C(AMBER))
+            p.setPen(C(SIGNAL))
             p.setFont(QtGui.QFont(MONO, 9, QtGui.QFont.Weight.Bold))
             off = -0.32 * sc if side == "L" else 0.32 * sc
             p.drawText(QtCore.QRectF(c.x() + off - 12, c.y() - 8, 24, 16),
@@ -669,12 +691,12 @@ class RoomPlan(QtWidgets.QWidget):
         r = 0.16 * sc
         if self._drag == "listener":
             glow = QtGui.QRadialGradient(hc, r * 2.4)
-            glow.setColorAt(0, C(TEAL, 80))
-            glow.setColorAt(1, C(TEAL, 0))
+            glow.setColorAt(0, C(SIGNAL_2, 80))
+            glow.setColorAt(1, C(SIGNAL_2, 0))
             p.setBrush(glow)
             p.setPen(Qt.PenStyle.NoPen)
             p.drawEllipse(hc, r * 2.4, r * 2.4)
-        p.setBrush(C(TEAL))
+        p.setBrush(C(SIGNAL_2))
         p.setPen(Qt.PenStyle.NoPen)
         p.drawPolygon(QtGui.QPolygonF([hc + QtCore.QPointF(-r * 0.35, -r * 0.85),
                                        hc + QtCore.QPointF(r * 0.35, -r * 0.85),
@@ -682,7 +704,7 @@ class RoomPlan(QtWidgets.QWidget):
         p.drawEllipse(hc + QtCore.QPointF(-r, 0), r * 0.25, r * 0.4)
         p.drawEllipse(hc + QtCore.QPointF(r, 0), r * 0.25, r * 0.4)
         p.setBrush(C(BG))
-        p.setPen(QtGui.QPen(C(TEAL), 2))
+        p.setPen(QtGui.QPen(C(SIGNAL_2), 2))
         p.drawEllipse(hc, r, r)
 
         # Cote du triangle stéréo
@@ -782,7 +804,7 @@ class RoomPlan(QtWidgets.QWidget):
 # Courbes : réponse en fréquence et RT60 par octave
 # ---------------------------------------------------------------------------
 class ResponsePlot(QtWidgets.QWidget):
-    COLORS = (AMBER, TEAL, TEXT)
+    COLORS = (SIGNAL, MUTED, TEXT)
     NAMES = ("enceinte", "casque", "oreille")
 
     def __init__(self, parent=None):
@@ -798,6 +820,9 @@ class ResponsePlot(QtWidgets.QWidget):
     def paintEvent(self, _e):
         p = QtGui.QPainter(self)
         p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(C(BG))
+        p.drawRoundedRect(QtCore.QRectF(self.rect()), 6, 6)
         r = QtCore.QRectF(self.rect()).adjusted(36, 22, -8, -20)
         p.setFont(QtGui.QFont(MONO, 8))
         if self.freqs is None or not self.curves:
@@ -846,7 +871,7 @@ class ResponsePlot(QtWidgets.QWidget):
 
 
 class RtMeter(QtWidgets.QWidget):
-    """RT60 par bande d'octave, façon vu-mètre ; zone conseillée en sarcelle."""
+    """RT60 par bande d'octave, façon vu-mètre ; zone conseillée en bande claire."""
 
     BANDS = ("125", "250", "500", "1k", "2k", "4k", "8k")
 
@@ -862,6 +887,9 @@ class RtMeter(QtWidgets.QWidget):
     def paintEvent(self, _e):
         p = QtGui.QPainter(self)
         p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(C(BG))
+        p.drawRoundedRect(QtCore.QRectF(self.rect()), 6, 6)
         r = QtCore.QRectF(self.rect()).adjusted(8, 18, -8, -20)
         top = max(1.0, float(np.max(self.values)) * 1.15)
 
@@ -869,8 +897,8 @@ class RtMeter(QtWidgets.QWidget):
             return r.bottom() - r.height() * min(t, top) / top
 
         # Zone conseillée pour l'écoute critique (0,2–0,4 s)
-        p.fillRect(QtCore.QRectF(r.left(), y_of(0.4), r.width(), y_of(0.2) - y_of(0.4)), C(TEAL, 26))
-        p.setPen(QtGui.QPen(C(TEAL, 90), 1, Qt.PenStyle.DashLine))
+        p.fillRect(QtCore.QRectF(r.left(), y_of(0.4), r.width(), y_of(0.2) - y_of(0.4)), C(SIGNAL_2, 26))
+        p.setPen(QtGui.QPen(C(SIGNAL_2, 90), 1, Qt.PenStyle.DashLine))
         p.drawLine(QtCore.QPointF(r.left(), y_of(0.4)), QtCore.QPointF(r.right(), y_of(0.4)))
         n = len(self.values)
         slot = r.width() / n
@@ -885,7 +913,7 @@ class RtMeter(QtWidgets.QWidget):
                 y = r.bottom() - (k + 1) * seg_h + 1.5
                 level = (k + 1) / segs * top
                 if k < lit:
-                    color = C(TEAL) if level <= 0.45 else C(AMBER) if level <= 0.8 else C(RED)
+                    color = C(SIGNAL_2) if level <= 0.45 else C(SIGNAL) if level <= 0.8 else C(RED)
                 else:
                     color = C(BORDER)
                 p.fillRect(QtCore.QRectF(x, y, w, seg_h - 3), color)
@@ -1001,7 +1029,7 @@ class HeadphonePanel(QtWidgets.QWidget):
     def _apply_filter(self):
         self.proxy.set_query(self.search.text())
         self.count.setText(trf("{shown} / {total} mesures", shown=self.proxy.rowCount(),
-                               total=self.model.rowCount()).upper())
+                               total=self.model.rowCount()))
 
     def _on_clicked(self, index):
         entry = self.proxy.data(index, Qt.ItemDataRole.UserRole)
@@ -1024,7 +1052,7 @@ class HeadphonePanel(QtWidgets.QWidget):
             self.current_sub.setText(tr("SANS CORRECTION"))
         else:
             self.current.setText(entry.name)
-            self.current_sub.setText(f"{entry.source} · {entry.rig}".upper())
+            self.current_sub.setText(f"{entry.source} · {entry.rig}")
 
 
 class SpeakerPanel(QtWidgets.QWidget):
@@ -1103,7 +1131,7 @@ class SpeakerPanel(QtWidgets.QWidget):
         cat = "studio" if spk.get("category") == "studio" else "hi-fi"
         score = spk.get("pref_score")
         self.current_sub.setText(f"{cat} · score {score if score is not None else '—'} · "
-                                 f"lfx {spk.get('lfx_hz')} hz".upper())
+                                 f"LFX {spk.get('lfx_hz')} Hz")
 
     def select_id(self, speaker_id: str):
         self.show_current(speaker_id)
@@ -1524,7 +1552,7 @@ class RoomPanel(QtWidgets.QWidget):
             self.hp_sub.setText(tr("SANS CORRECTION"))
         else:
             self.hp_name.setText(entry.name)
-            self.hp_sub.setText(f"{entry.source} · {entry.rig}".upper())
+            self.hp_sub.setText(f"{entry.source} · {entry.rig}")
         self.hp_eq.setText(summary)
         self.hp_eq.setVisible(bool(summary))
         raw_import = entry is not None and entry.is_import and bool(entry.target)
@@ -1654,7 +1682,7 @@ class MainWindow(QtWidgets.QMainWindow):
         tl = QtWidgets.QHBoxLayout(top)
         tl.setContentsMargins(18, 6, 14, 6)
         tl.setSpacing(14)
-        mark = label("<span style='color:%s'>●</span> speaker-sim" % TEAL, name="wordmark")
+        mark = label("speaker-sim", name="wordmark")
         tl.addWidget(mark)
         self.chain = label(name="chain")
         self.chain.setTextFormat(Qt.TextFormat.RichText)
@@ -1766,7 +1794,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rt = RtMeter()
         self.rt.setMinimumHeight(90)
         rb.addWidget(self.rt, 1)
-        rb.addWidget(caption("zone sarcelle : 0,2–0,4 s, écoute critique"))
+        rb.addWidget(caption("bande claire : 0,2–0,4 s, écoute critique"))
         self.analysis.addWidget(rt_box)
         an.addWidget(self.analysis, 1)
         self.analysis_tabs.changed.connect(self._analysis_tab)
@@ -1902,10 +1930,10 @@ class MainWindow(QtWidgets.QMainWindow):
         treat = (tr("traitement par paroi") if room.per_wall
                  else trf("traitement {p} %", p=f"{room.treatment * 100:.0f}"))
         self.hud.setText(f"RT60 {fr_num(room.rt60, 2)} s  ·  Dc {fr_num(room.critical_distance(), 2)} m"
-                         f"  ·  {treat}".upper())
+                         f"  ·  {treat}")
         hp = self.app.headphone
         spk = self.app.speaker()
-        sep = f" <span style='color:{AMBER}'>→</span> "
+        sep = f" <span style='color:{ACCENT}'>→</span> "
         parts = [hp.name if hp else tr("sans casque"), f"{spk['brand']} {spk['model']}", preset]
         self.chain.setText(sep.join(parts))
         self.chain.setToolTip(" → ".join(parts))
@@ -1927,10 +1955,10 @@ class MainWindow(QtWidgets.QMainWindow):
         slots = self.app.systemd.active_slots() if running else []
         if running:
             self.status_pill.setText(f"● LIVE · {'/'.join(slots).upper() or 'V1'}")
-            self.status_pill.setStyleSheet(f"background: rgba(73,185,174,30); color: {TEAL};")
+            self.status_pill.setStyleSheet(f"background: {ACCENT_WASH}; color: {ACCENT_DEEP};")
         else:
             self.status_pill.setText(tr("○ VEILLE"))
-            self.status_pill.setStyleSheet(f"background: {PANEL2}; color: {MUTED};")
+            self.status_pill.setStyleSheet(f"background: {PAPER2}; color: {INK_MUTED};")
         self.apply_btn.setText(tr("Appliquer •" if self.dirty else "Appliquer"))
         for b in (self.power, self.apply_btn, self.export_btn):
             b.setEnabled(not self.busy)
@@ -1962,7 +1990,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Une tâche silencieuse sans message (résumé…) ne touche ni à l'état ni à la progression.
         silent = quiet and not message
         if not silent:
-            self.status.setText(tr_message(message).upper())
+            self.status.setText(tr_message(message))
             self.progress.setValue(0)
         signals = WorkerSignals(self)
         worker = Worker(fn, with_progress=with_progress, signals=signals)
@@ -2003,7 +2031,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _on_progress(self, fraction: float, message: str):
         self.progress.setValue(int(fraction * 1000))
-        self.status.setText(tr_message(message).upper())
+        self.status.setText(tr_message(message))
 
     def _update_headphone_tab(self):
         """Onglet Casque : autres mesures du modèle, cible d'un import, résumé de l'EQ
@@ -2199,7 +2227,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._reload_headphones()
         self.hp_panel.show_current(entry)
         self.hp_panel.reveal(entry)
-        self.status.setText(trf("CASQUE IMPORTÉ : {x}", x=entry.label).upper())
+        self.status.setText(trf("CASQUE IMPORTÉ : {x}", x=entry.label))
         self.mark_dirty()
 
     def on_remove_import(self, entry):

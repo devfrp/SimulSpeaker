@@ -85,7 +85,7 @@ EN: dict[str, str] = {
     "Réponse simulée": "Simulated response",
     "Réverbération": "Reverberation",
     "« Appliquer » pour calculer la réponse simulée": "“Apply” to compute the simulated response",
-    "zone sarcelle : 0,2–0,4 s, écoute critique": "teal zone: 0.2–0.4 s, critical listening",
+    "bande claire : 0,2–0,4 s, écoute critique": "light band: 0.2–0.4 s, critical listening",
     "enceinte": "speaker",
     "casque": "headphones",
     "oreille": "ear",

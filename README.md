@@ -147,12 +147,12 @@ speaker-sim            # or: python3 speaker-sim/main.py
    or **Importer…** your own measurement.
 2. **02 Enceintes** (speakers): filter *Studio* / *Hi-Fi*. The tooltip shows the
    Olive score, the LFX and the measurement origin.
-3. **Plan**: drag yourself (the teal head) to move closer or further, or drag a speaker
+3. **Plan**: drag yourself (the white circle) to move closer or further, or drag a speaker
    to change the angle and the distance from the front wall.
 4. **Settings tabs** (under the plan): in *Room*, pick a preset or set the dimensions and
    materials; *Treatment*, *Reflections*, *Reverberation*, *Placement* and *Listening* refine the
    rest, and each switch turns its part off.
-   The RT60 meters update live; the teal zone (0.2–0.4 s) is the usual target for
+   The RT60 meters update live; the light band (0.2–0.4 s) is the usual target for
    critical listening.
 5. Press the **power button**. With **Auto** on, later changes apply by themselves,
    without dropouts.

@@ -150,12 +150,12 @@ speaker-sim            # ou : python3 speaker-sim/main.py
    ou **Importer…** votre propre mesure.
 2. **02 Enceintes** : filtre *Studio* / *Hi-Fi*. L'infobulle indique le score Olive, la
    LFX et l'origine de la mesure.
-3. **Plan** : faites glisser votre tête (sarcelle) pour vous rapprocher ou reculer, ou une
+3. **Plan** : faites glisser votre tête (le rond blanc) pour vous rapprocher ou reculer, ou une
    enceinte pour changer l'angle et la distance au mur avant.
 4. **Onglets de réglages** (sous le plan) : dans *Salle*, choisissez un préréglage ou
    réglez dimensions et matériaux ; *Traitement*, *Réflexions*, *Réverbération*,
    *Placement* et *Écoute* affinent le reste, et chaque interrupteur coupe sa partie.
-   Les vu-mètres RT60 se mettent à jour en direct ; la zone sarcelle (0,2–0,4 s) est la
+   Les vu-mètres RT60 se mettent à jour en direct ; la bande claire (0,2–0,4 s) est la
    cible habituelle de l'écoute critique.
 5. Appuyez sur le **bouton d'alimentation**. Avec **Auto** activé, les changements suivants
    s'appliquent d'eux-mêmes, sans coupure.
