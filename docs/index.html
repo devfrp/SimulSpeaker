@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>try{var m=localStorage.getItem("mode");if(m==="dark"||m==="light")document.documentElement.dataset.mode=m}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,9 +27,15 @@
       <a class="channel" href="#download" data-en="Download" data-fr="Télécharger">Download</a>
       <a class="channel" href="#faq">FAQ</a>
     </nav>
-    <div class="lang-toggle" role="group" aria-label="Language switcher">
+    <div class="toggles">
+    <div class="lang-toggle mode-toggle" role="group" aria-label="Appearance" hidden>
+      <button class="mode-opt" data-mode-set="light" type="button" data-en="Light" data-fr="Clair">Light</button>
+      <button class="mode-opt" data-mode-set="dark" type="button" data-en="Dark" data-fr="Sombre">Dark</button>
+    </div>
+      <div class="lang-toggle" role="group" aria-label="Language switcher">
       <button class="lang-opt active" data-lang="en" type="button">EN</button>
       <button class="lang-opt" data-lang="fr" type="button">FR</button>
+      </div>
     </div>
   </div>
 </header>
@@ -56,7 +63,8 @@
       </div>
     </div>
     <figure class="shot container">
-    <img src="assets/screenshot.png" width="1440" height="900" fetchpriority="high" alt="Speaker Sim main window: headphone and speaker strips, interactive top-down room plan, response and RT60 meters, room settings">
+    <img class="only-light" src="assets/screenshot.png" width="1440" height="900" fetchpriority="high" alt="Speaker Sim main window: headphone and speaker strips, interactive top-down room plan, response and RT60 meters, room settings">
+    <img class="only-dark" src="assets/screenshot-dark.png" width="1440" height="900" loading="lazy" alt="Speaker Sim main window: headphone and speaker strips, interactive top-down room plan, response and RT60 meters, room settings">
   </figure>
   <p class="container shot-cap" data-en="A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live." data-fr="Le plan de votre pièce virtuelle : déplacez-vous ou déplacez les enceintes, réglez traitement acoustique et matériaux, et voyez réflexions et RT60 changer en direct.">A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live.</p>
   </section>
@@ -235,6 +243,26 @@
 </footer>
 
 <script>
+(function(){
+  var root = document.documentElement, dark = matchMedia('(prefers-color-scheme: dark)');
+  var opts = document.querySelectorAll('[data-mode-set]');
+  function current(){ return root.dataset.mode || (dark.matches ? 'dark' : 'light'); }
+  function sync(){
+    var mode = current();
+    opts.forEach(function(b){
+      b.classList.toggle('active', b.dataset.modeSet === mode);
+      b.setAttribute('aria-pressed', String(b.dataset.modeSet === mode));
+    });
+  }
+  opts.forEach(function(b){ b.addEventListener('click', function(){
+    root.dataset.mode = b.dataset.modeSet;
+    try { localStorage.setItem('mode', b.dataset.modeSet); } catch (e) {}
+    sync();
+  }); });
+  document.querySelectorAll('.mode-toggle').forEach(function(g){ g.hidden = false; });
+  dark.addEventListener('change', sync);
+  sync();
+})();
 (function(){
   var buttons = document.querySelectorAll('.lang-opt');
   function apply(lang){

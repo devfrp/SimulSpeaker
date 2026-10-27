@@ -35,19 +35,59 @@ Qt = QtCore.Qt
 FONT_DIR = APP_DIR / "packaging" / "fonts"
 DISPLAY, BODY, MONO = "Familjen Grotesk", "IBM Plex Sans", "JetBrains Mono"
 
-# Palette : le thème Cobalt du site (devfrp.github.io/SimulSpeaker).
-# Habillage clair : papier, encre, filets, un seul signal cobalt.
-PAPER, PAPER2, PAPER3 = "#f8fbfe", "#eff3f8", "#e3e8ef"
-INK, INK2, INK_MUTED, INK_FAINT = "#111825", "#363e49", "#5d646e", "#9aa1ab"
-RULE, RULE2 = "#dadee4", "#c2c8cf"
-ACCENT, ACCENT_DEEP, ACCENT_EDGE = "#0462d3", "#0040bb", "#003d98"
-ACCENT_WASH, ACCENT_INK = "#e3f0ff", "#f8fbfe"
-KEY_FACE, KEY_EDGE = "#fcfdff", "#b7bec8"
-# Vues de mesure (plan, courbes, RT60) sur graphite, comme le code sur le site.
-BG, PANEL, PANEL2 = "#121823", "#1e2532", "#262f3e"
-BORDER, BORDER_STRONG = "#2d3645", "#3a4b66"
-TEXT, MUTED = "#e3e8ee", "#939ca9"
-SIGNAL, SIGNAL_2, RED = "#75b4ff", "#e3e8ee", "#f2555a"
+# Palettes : le thème Cobalt du site (devfrp.github.io/SimulSpeaker), en clair et en
+# sombre (re-dérivé, jamais inversé). Habillage : papier, encre, filets, un seul signal
+# cobalt ; vues de mesure (plan, courbes, RT60) sur graphite, comme le code sur le site.
+PALETTES: dict[str, dict[str, str]] = {
+    "light": {
+        "PAPER": "#f8fbfe", "PAPER2": "#eff3f8", "PAPER3": "#e3e8ef",
+        "INK": "#111825", "INK2": "#363e49", "INK_MUTED": "#5d646e", "INK_FAINT": "#9aa1ab",
+        "RULE": "#dadee4", "RULE2": "#c2c8cf",
+        "ACCENT": "#0462d3", "ACCENT_DEEP": "#0040bb", "ACCENT_EDGE": "#003d98",
+        "ACCENT_WASH": "#e3f0ff", "ACCENT_INK": "#f8fbfe",
+        "KEY_FACE": "#fcfdff", "KEY_EDGE": "#b7bec8",
+        "BG": "#121823", "PANEL": "#1e2532", "PANEL2": "#262f3e",
+        "BORDER": "#2d3645", "BORDER_STRONG": "#3a4b66",
+        "TEXT": "#e3e8ee", "MUTED": "#939ca9",
+        "SIGNAL": "#75b4ff", "SIGNAL_2": "#e3e8ee", "RED": "#f2555a",
+    },
+    "dark": {
+        "PAPER": "#171e29", "PAPER2": "#10161f", "PAPER3": "#212935",
+        "INK": "#e6ecf2", "INK2": "#bec5cd", "INK_MUTED": "#9199a4", "INK_FAINT": "#626a75",
+        "RULE": "#29313d", "RULE2": "#3a4350",
+        "ACCENT": "#498beb", "ACCENT_DEEP": "#85bbfd", "ACCENT_EDGE": "#1f53aa",
+        "ACCENT_WASH": "#172a45", "ACCENT_INK": "#070b12",
+        "KEY_FACE": "#1d2531", "KEY_EDGE": "#0a0e14",
+        "BG": "#0a0e15", "PANEL": "#121823", "PANEL2": "#1a2130",
+        "BORDER": "#232b39", "BORDER_STRONG": "#314058",
+        "TEXT": "#e3e8ee", "MUTED": "#939ca9",
+        "SIGNAL": "#75b4ff", "SIGNAL_2": "#e3e8ee", "RED": "#f2555a",
+    },
+}
+MODE = "light"
+PAPER = PAPER2 = PAPER3 = INK = INK2 = INK_MUTED = INK_FAINT = RULE = RULE2 = ""
+ACCENT = ACCENT_DEEP = ACCENT_EDGE = ACCENT_WASH = ACCENT_INK = KEY_FACE = KEY_EDGE = ""
+BG = PANEL = PANEL2 = BORDER = BORDER_STRONG = TEXT = MUTED = SIGNAL = SIGNAL_2 = RED = ""
+
+
+def system_mode() -> str:
+    """Clair ou sombre, selon le réglage du système (Qt 6.5+), clair en cas de doute."""
+    try:
+        hints = QtGui.QGuiApplication.styleHints()
+        if hints.colorScheme() == Qt.ColorScheme.Dark:
+            return "dark"
+    except AttributeError:
+        pass
+    return "light"
+
+
+def set_palette(mode: str) -> str:
+    """Active la palette « light », « dark » ou « auto » ; renvoie le mode effectif."""
+    global MODE, STYLE
+    MODE = system_mode() if mode == "auto" else mode if mode in PALETTES else "light"
+    globals().update(PALETTES[MODE])
+    STYLE = build_style()
+    return MODE
 
 
 def C(hex_color: str, alpha: int = 255) -> QtGui.QColor:
@@ -56,7 +96,8 @@ def C(hex_color: str, alpha: int = 255) -> QtGui.QColor:
     return c
 
 
-STYLE = f"""
+def build_style() -> str:
+    return f"""
 * {{ font-family: "{BODY}"; font-size: 13px; color: {INK}; }}
 QMainWindow, QWidget#root, QWidget#body, QScrollArea, QScrollArea > QWidget > QWidget {{
     background: {PAPER2}; border: none; }}
@@ -140,6 +181,10 @@ QMenu {{ background: {PAPER}; border: 1px solid {RULE2}; padding: 4px; }}
 QMenu::item {{ padding: 6px 14px; border-radius: 4px; }}
 QMenu::item:selected {{ background: {ACCENT}; color: {ACCENT_INK}; }}
 """
+
+
+STYLE = ""
+set_palette("light")
 
 
 def load_fonts() -> None:
@@ -1655,6 +1700,7 @@ def scroll_wrap(widget: QtWidgets.QWidget, horizontal: bool = False) -> QtWidget
 class MainWindow(QtWidgets.QMainWindow):
     AUTO_DELAY_MS = 1500
     language_changed = Signal(str)
+    theme_changed = Signal(str)
 
     def __init__(self, app: SpeakerSimApp):
         super().__init__()
@@ -1705,6 +1751,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lang.setFixedWidth(84)
         self.lang.setToolTip("Langue de l'interface")
         tl.addWidget(self.lang)
+        self.theme_seg = Segmented([("auto", "Auto"), ("light", "Clair"), ("dark", "Sombre")])
+        self.theme_seg.setFixedWidth(170)
+        self.theme_seg.setToolTip("Apparence : comme le système, claire ou sombre")
+        tl.addWidget(self.theme_seg)
         self.settings_btn = QtWidgets.QPushButton("Réglages")
         self.settings_btn.setObjectName("chip")
         self.settings_btn.setCheckable(True)
@@ -1843,6 +1893,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.room_panel.preset_chosen.connect(self.on_preset)
         self.room_panel.ui_state.connect(self.on_ui_state)
         self.lang.changed.connect(self._language_clicked)
+        self.theme_seg.changed.connect(self._theme_clicked)
         self.ab.changed.connect(self.on_ab)
         self.settings_btn.toggled.connect(self._show_settings)
         self.plan.committed.connect(self.on_setting)
@@ -1865,6 +1916,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         from i18n import language
         self.lang.set_value(language())
+        self.theme_seg.set_value(self.app.settings.theme)
         translate_tree(self)
         self.load_settings()
         self.refresh_sinks()
@@ -2141,6 +2193,12 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.language_changed.emit(code)
 
+    def _theme_clicked(self, mode: str):
+        if self.busy:
+            self.theme_seg.set_value(self.app.settings.theme)
+            return
+        self.theme_changed.emit(mode)
+
     def shutdown(self):
         """Arrête les minuteries (avant remplacement de la fenêtre)."""
         for t in (self.timer, self._auto_timer):
@@ -2279,6 +2337,8 @@ def run(argv: list[str] | None = None) -> int:
         return 1
     setup_logging(app.paths)
     set_language(app.settings.language)
+    set_palette(app.settings.theme)
+    qapp.setStyleSheet(STYLE)
     windows: list[MainWindow] = []
 
     def release(old: MainWindow):
@@ -2293,12 +2353,24 @@ def run(argv: list[str] | None = None) -> int:
         if geometry is not None:
             win.setGeometry(geometry)
         win.language_changed.connect(lambda code, w=win: switch_language(w, code))
+        win.theme_changed.connect(lambda mode, w=win: switch_theme(w, mode))
         win.show()
         windows.append(win)
 
     def switch_language(old: MainWindow, code: str):
         app.update_settings(language=code)
         set_language(code)
+        geometry = old.geometry()
+        old.shutdown()
+        old.hide()
+        windows.remove(old)
+        open_window(geometry)
+        release(old)
+
+    def switch_theme(old: MainWindow, mode: str):
+        app.update_settings(theme=mode)
+        set_palette(mode)
+        qapp.setStyleSheet(STYLE)
         geometry = old.geometry()
         old.shutdown()
         old.hide()

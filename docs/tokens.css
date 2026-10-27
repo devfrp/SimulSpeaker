@@ -28,3 +28,33 @@
   --shadow-key-press: inset 0 1px 2px oklch(21% 0.028 262 / 0.14);
   --tracking-display: -0.028em; --display-weight: 600;
 }
+
+/* Mode sombre : re-dérivé du clair (jamais inversé), même teinte d'ancrage. */
+[data-mode="dark"] {
+  color-scheme: dark;
+  --color-paper: oklch(18% 0.018 258); --color-paper-2: oklch(21% 0.02 258); --color-paper-3: oklch(24.5% 0.022 258);
+  --color-ink: oklch(94% 0.010 250); --color-ink-2: oklch(84% 0.014 255); --color-muted: oklch(71% 0.018 256);
+  --color-rule: oklch(30% 0.02 258); --color-rule-2: oklch(38% 0.024 258);
+  --color-graphite: oklch(14% 0.018 262); --color-graphite-2: oklch(20% 0.022 262);
+  --color-accent: oklch(66% 0.16 258); --color-accent-2: oklch(78% 0.11 254); --color-accent-wash: oklch(27% 0.05 258); --color-accent-ink: oklch(15% 0.016 258); --color-focus: oklch(72% 0.15 258);
+  --color-accent-deep: oklch(80% 0.11 254); --color-accent-edge: oklch(46% 0.15 260);
+  --color-glyph-1: oklch(25% 0.03 258); --color-glyph-2: oklch(31% 0.05 258); --color-glyph-3: oklch(42% 0.09 257); --color-glyph-4: oklch(55% 0.13 257);
+  --color-key-face: oklch(25% 0.02 258); --color-key-edge: oklch(12% 0.015 260);
+  --color-error: oklch(68% 0.17 27); --color-success: oklch(72% 0.13 150);
+  --shadow-card: none; --shadow-key: 0 3px 0 0 var(--color-key-edge); --shadow-key-accent: 0 3px 0 0 var(--color-accent-edge); --shadow-key-press: inset 0 1px 2px oklch(8% 0.01 260 / 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode]) {
+    color-scheme: dark;
+    --color-paper: oklch(18% 0.018 258); --color-paper-2: oklch(21% 0.02 258); --color-paper-3: oklch(24.5% 0.022 258);
+    --color-ink: oklch(94% 0.010 250); --color-ink-2: oklch(84% 0.014 255); --color-muted: oklch(71% 0.018 256);
+    --color-rule: oklch(30% 0.02 258); --color-rule-2: oklch(38% 0.024 258);
+    --color-graphite: oklch(14% 0.018 262); --color-graphite-2: oklch(20% 0.022 262);
+    --color-accent: oklch(66% 0.16 258); --color-accent-2: oklch(78% 0.11 254); --color-accent-wash: oklch(27% 0.05 258); --color-accent-ink: oklch(15% 0.016 258); --color-focus: oklch(72% 0.15 258);
+    --color-accent-deep: oklch(80% 0.11 254); --color-accent-edge: oklch(46% 0.15 260);
+    --color-glyph-1: oklch(25% 0.03 258); --color-glyph-2: oklch(31% 0.05 258); --color-glyph-3: oklch(42% 0.09 257); --color-glyph-4: oklch(55% 0.13 257);
+    --color-key-face: oklch(25% 0.02 258); --color-key-edge: oklch(12% 0.015 260);
+    --color-error: oklch(68% 0.17 27); --color-success: oklch(72% 0.13 150);
+    --shadow-card: none; --shadow-key: 0 3px 0 0 var(--color-key-edge); --shadow-key-accent: 0 3px 0 0 var(--color-accent-edge); --shadow-key-press: inset 0 1px 2px oklch(8% 0.01 260 / 0.5);
+  }
+}

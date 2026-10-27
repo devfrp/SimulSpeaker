@@ -25,7 +25,7 @@ from typing import Any
 
 APP_ID = "devfrp-speaker-sim"
 APP_NAME = "Speaker Sim"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 # Exécutable PyInstaller : les données sont extraites dans sys._MEIPASS.
 APP_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 IS_LINUX = sys.platform.startswith("linux")
@@ -169,6 +169,7 @@ class Settings:
     placement_custom: bool = True        # placement réglé (sinon triangle stéréo standard)
     advanced_enabled: bool = True        # réglages avancés (sinon valeurs par défaut)
     language: str = ""                   # "fr", "en" ; "" = langue du système
+    theme: str = "auto"                  # "auto" (système), "light", "dark"
     room_amount: float = 1.0             # 1 = niveau physique ; sans pièce : room_enabled
     reflection_order: int = 2
     diffuse_field_eq: bool = True
@@ -231,6 +232,7 @@ CHOICES: dict[str, tuple[str, ...]] = {
     "room_furniture": ("empty", "furnished", "full"),
     "room_absorber": ("foam5", "wool10", "wool20"),
     "language": ("", "fr", "en"),
+    "theme": ("auto", "light", "dark"),
 }
 
 # Préréglages de salle : chaque entrée remplace les réglages de pièce correspondants.

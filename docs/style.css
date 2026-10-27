@@ -1,6 +1,6 @@
 /* Hallmark · shape: Stat-Led · genre: modern-minimal · theme: Cobalt (deal 3/3, seed desktop-app-simulates-measured-3133·65fc3d51·2026-10-27·r1) · redesign: full · job: try · draw: 4165a7
  * hero: Banner · nav: edge-aligned · footer: statement · imagery: screenshot 1 (the app, the user’s own) · signature: the real Speaker Sim window across the twelve columns right under the hero, the Linux session beside the head on graphite
- * axes: light/grotesk-sans/cool · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+ * axes: light/grotesk-sans/cool · posture: restrained · contrast: pass · fold: pass · modes: light+dark · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 · weakest: P, the claim is the tagline; the five-stage chain and the formula on graphite are the proof a listener could check */
 /* Hallmark · dropped the terminal window bar (traffic dots and "linux · bash" title) · 47a bans a drawn OS window; the session sits on a graphite panel with a plain caption */
 /* Hallmark · dropped the meter bars in the nav, the LEDs before the platform names and the dots in the footer · 63 names decorative dots; the "Read the script first" button becomes a text link (one primary per page) */
@@ -34,6 +34,15 @@ a:hover { text-decoration-color: var(--color-accent); }
 .lang-opt { min-width: 44px; min-height: 44px; border: 0; border-radius: var(--radius-input); background: transparent; color: var(--color-muted); font: 500 var(--text-sm)/1 var(--font-display); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
 .lang-opt:hover { color: var(--color-ink); }
 .lang-opt.active { background: var(--color-key-face); color: var(--color-ink); box-shadow: var(--shadow-key-press); }
+.mode-opt { min-width: 44px; min-height: 44px; padding: 0 var(--space-sm); border: 0; border-radius: var(--radius-input); background: transparent; color: var(--color-muted); font: 500 var(--text-sm)/1 var(--font-display); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.mode-opt:hover { color: var(--color-ink); }
+.mode-opt:active { background: var(--color-paper-2); }
+.mode-opt.active { background: var(--color-key-face); color: var(--color-ink); box-shadow: var(--shadow-key-press); }
+.toggles { display: flex; align-items: center; gap: var(--space-sm); }
+/* the app capture follows the page's mode */
+.only-dark { display: none !important; }
+[data-mode="dark"] .only-dark { display: block !important; } [data-mode="dark"] .only-light { display: none !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode]) .only-dark { display: block !important; } :root:not([data-mode]) .only-light { display: none !important; } }
 
 /* keys */
 .key { display: inline-flex; align-items: center; min-height: 48px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-rule-2); border-radius: var(--radius-input); background: var(--color-key-face); color: var(--color-ink); font: 500 var(--text-md)/1 var(--font-display); text-decoration: none; white-space: nowrap; box-shadow: var(--shadow-key); cursor: pointer; transition: transform var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
@@ -144,7 +153,8 @@ a:hover { text-decoration-color: var(--color-accent); }
 
 @media (max-width: 60rem) {
   .channels { display: none; }
-  .lang-toggle { margin-left: auto; }
+  .toggles { margin-left: auto; gap: var(--space-xs); }
+  .mode-opt { padding: 0 var(--space-xs); }
   .hero-grid, .head, .stats, .faq-wrap, .dl-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
   .chain { grid-template-columns: minmax(0, 1fr); }
   .connect-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

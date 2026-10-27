@@ -32,6 +32,8 @@ EN: dict[str, str] = {
     "Arrêter la simulation": "Stop the simulation",
     "Démarrer la simulation": "Start the simulation",
     "Langue de l'interface": "Interface language",
+    "Apparence : comme le système, claire ou sombre": "Appearance: like the system, light or dark",
+    "Clair": "Light", "Sombre": "Dark",
     "○ VEILLE": "○ STANDBY",
     "PRÊT": "READY",
     "ERREUR": "ERROR",
