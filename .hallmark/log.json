@@ -1,0 +1,32 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "page",
+  "shape": "Stat-Led",
+  "theme": "cobalt",
+  "axes": "light/grotesk-sans/cool",
+  "hero": "Banner",
+  "nav": "edge-aligned",
+  "footer": "statement",
+  "imagery": "screenshots 1",
+  "photos": [],
+  "entry": "none",
+  "sections": [
+   "hero",
+   "showcase",
+   "rows",
+   "steps",
+   "grid",
+   "table",
+   "faq",
+   "grid"
+  ],
+  "signature": "the real Speaker Sim window under the hero, the Linux session on graphite",
+  "waived": [
+   "79"
+  ],
+  "prompt": "Speaker Sim site",
+  "date": "2026-10-27"
+ }
+]

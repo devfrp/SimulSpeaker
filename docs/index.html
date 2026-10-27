@@ -3,408 +3,235 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Speaker Sim — devfrp</title>
-<meta name="description" content="Speaker Sim — hear real, measured loudspeakers in a real room, on your headphones. HRTF (KEMAR), CEA-2034 measurements, AutoEq correction, PipeWire.">
+<title>Speaker Sim, by devfrp</title>
+<meta name="description" content="Speaker Sim: hear real, measured loudspeakers in a real room, on your headphones. HRTF (KEMAR), CEA-2034 measurements, AutoEq correction, PipeWire.">
 <link rel="canonical" href="https://devfrp.github.io/SimulSpeaker/">
-<meta name="author" content="devfrp">
-<meta name="keywords" content="devfrp, speaker simulation, headphones, HRTF, KEMAR, AutoEq, CEA-2034, spinorama, PipeWire, Equalizer APO, binaural, crossfeed">
-<meta property="og:title" content="Speaker Sim — devfrp">
+<meta property="og:title" content="Speaker Sim, by devfrp">
 <meta property="og:description" content="Real speakers. In a real room. On your headphones.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://devfrp.github.io/SimulSpeaker/">
 <meta property="og:image" content="https://devfrp.github.io/SimulSpeaker/assets/screenshot.png">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#14151a; --panel:#1b1d24; --panel-2:#21232b;
-    --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.16);
-    --text:#ededef; --text-muted:#8b8d98;
-    --amber:#e8a33d; --amber-dim:rgba(232,163,61,.15);
-    --teal:#49b9ae; --teal-dim:rgba(73,185,174,.14); --red:#e5484d;
-    --font-display:'Space Grotesk',sans-serif;
-    --font-body:'Inter',sans-serif;
-    --font-mono:'JetBrains Mono',monospace;
-    --maxw:1120px;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
-  @media (prefers-reduced-motion: reduce){
-    html{scroll-behavior:auto;}
-    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
-  }
-  body{
-    background:var(--bg); color:var(--text); font-family:var(--font-body); line-height:1.5;
-    -webkit-font-smoothing:antialiased; overflow-x:hidden;
-    background-image:
-      radial-gradient(circle at 15% 0%, rgba(232,163,61,.06), transparent 40%),
-      radial-gradient(circle at 85% 15%, rgba(73,185,174,.06), transparent 45%);
-    background-attachment:fixed;
-  }
-  a{color:inherit; text-decoration:none;}
-  ::selection{background:var(--amber); color:#14151a;}
-  a:focus-visible, button:focus-visible{outline:2px solid var(--teal); outline-offset:3px; border-radius:2px;}
-  code{font-family:var(--font-mono); font-size:.92em; color:var(--amber); background:var(--panel-2); border:1px solid var(--border); padding:1px 6px; border-radius:5px;}
-
-  .strip{position:sticky; top:0; z-index:50; background:rgba(20,21,26,.85); backdrop-filter:blur(10px); border-bottom:1px solid var(--border);}
-  .strip-inner{max-width:var(--maxw); margin:0 auto; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; gap:24px;}
-  .strip-right{display:flex; align-items:center; gap:16px;}
-  .wordmark{font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:.02em; display:flex; align-items:center; gap:10px;}
-  .wordmark::before{content:"●"; color:var(--teal); font-size:10px;}
-  .wordmark .by{color:var(--text-muted); font-weight:400; font-size:12px;}
-  .channels{display:flex; gap:4px;}
-  .channel{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; color:var(--text-muted); padding:8px 12px; border-radius:6px; transition:color .15s ease, background .15s ease;}
-  .channel:hover{color:var(--text); background:var(--panel-2);}
-  .meter{display:flex; align-items:flex-end; gap:2px; height:12px;}
-  .meter span{width:2px; background:var(--amber); border-radius:1px; animation:meter-bounce 1.4s ease-in-out infinite; opacity:.85;}
-  .meter span:nth-child(1){height:40%;}
-  .meter span:nth-child(2){height:90%; animation-delay:.18s;}
-  .meter span:nth-child(3){height:60%; animation-delay:.36s;}
-  @keyframes meter-bounce{0%,100%{transform:scaleY(.4);} 50%{transform:scaleY(1);}}
-
-  .lang-toggle{display:flex; align-items:center; border:1px solid var(--border-strong); border-radius:20px; padding:3px; gap:2px; background:var(--panel);}
-  .lang-opt{font-family:var(--font-mono); font-size:11px; letter-spacing:.04em; padding:5px 10px; border-radius:16px; cursor:pointer; color:var(--text-muted); border:none; background:transparent; transition:background .15s ease, color .15s ease;}
-  .lang-opt.active{background:var(--amber); color:#14151a; font-weight:700;}
-
-  main{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
-  .section{padding:96px 0; border-top:1px solid var(--border);}
-  .section-title{font-family:var(--font-display); font-weight:600; font-size:clamp(24px,3.4vw,32px); display:flex; align-items:baseline; gap:14px; margin-bottom:12px;}
-  .tag{font-family:var(--font-mono); font-size:13px; color:var(--amber); border:1px solid var(--border-strong); padding:2px 8px; border-radius:20px;}
-  .section-lede{color:var(--text-muted); max-width:66ch; margin-bottom:48px; font-size:15px;}
-
-  /* hero */
-  .hero{padding:110px 0 72px; display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:56px; align-items:center;}
-  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.1em; color:var(--teal); margin-bottom:24px;}
-  .hero h1{font-family:var(--font-display); font-weight:700; font-size:clamp(38px,5.6vw,64px); line-height:1.05; letter-spacing:-.01em;}
-  .hero h1 .accent{color:var(--amber); display:block;}
-  .hero .lede{margin-top:28px; max-width:56ch; color:var(--text-muted); font-size:17px; line-height:1.65;}
-  .cta-row{display:flex; gap:12px; margin-top:36px; flex-wrap:wrap;}
-  .btn{font-family:var(--font-mono); font-size:13px; letter-spacing:.03em; padding:12px 20px; border-radius:8px; border:1px solid var(--border-strong); transition:background .15s ease, border-color .15s ease, transform .15s ease; display:inline-flex; align-items:center; gap:8px; cursor:pointer;}
-  .btn:hover{transform:translateY(-1px);}
-  .btn-primary{background:var(--amber); color:#14151a; border-color:var(--amber); font-weight:700;}
-  .btn-primary:hover{background:#f0b25a;}
-  .btn-ghost{color:var(--text); background:var(--panel);}
-  .btn-ghost:hover{border-color:var(--teal); background:var(--panel-2);}
-
-  .term{background:var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:0 20px 60px -20px rgba(0,0,0,.6);}
-  .term-bar{display:flex; align-items:center; gap:6px; padding:10px 14px; background:var(--panel-2); border-bottom:1px solid var(--border);}
-  .term-dot{width:9px; height:9px; border-radius:50%;}
-  .term-dot:nth-child(1){background:#e5484d;}
-  .term-dot:nth-child(2){background:#e8a33d;}
-  .term-dot:nth-child(3){background:#49b9ae;}
-  .term-title{margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--text-muted);}
-  .term-body{font-family:var(--font-mono); font-size:13px; line-height:1.8; padding:16px 18px; color:#c9cad1; overflow-x:auto;}
-  .term-body .prompt{color:var(--teal);}
-  .term-body .out{color:var(--text-muted);}
-  .term-body .ok{color:var(--teal);}
-  .term-body .hl{color:var(--amber);}
-  .copy-line{display:flex; align-items:center; gap:10px; justify-content:space-between;}
-  .copy-line > span, .copy-line > code{min-width:0; overflow-x:auto; white-space:nowrap; scrollbar-width:thin;}
-  .copy-line code{background:none; border:none; padding:0; color:#ededef; white-space:nowrap;}
-  .copy-btn{flex-shrink:0; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.06em; color:var(--text-muted); background:var(--panel-2); border:1px solid var(--border-strong); border-radius:6px; padding:4px 9px; cursor:pointer; transition:color .15s ease, border-color .15s ease;}
-  .copy-btn:hover{color:var(--text); border-color:var(--teal);}
-  .copy-btn.done{color:var(--teal); border-color:var(--teal);}
-
-  .shot{margin:0 0 96px; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--panel); box-shadow:0 40px 90px -40px rgba(0,0,0,.8);}
-  .shot img{display:block; width:100%; height:auto;}
-  .shot figcaption{font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted); padding:12px 18px; border-top:1px solid var(--border);}
-
-  /* stats */
-  .stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
-  .stat-card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:28px 20px; text-align:center;}
-  .stat-num{display:block; font-family:var(--font-display); font-weight:700; font-size:clamp(30px,4.4vw,42px); color:var(--amber); line-height:1;}
-  .stat-label{display:block; margin-top:10px; font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; color:var(--text-muted); text-transform:uppercase;}
-
-  /* chain */
-  .chain{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; counter-reset:step;}
-  .node{position:relative; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px 18px;}
-  .node::before{counter-increment:step; content:"0" counter(step); font-family:var(--font-mono); font-size:11px; color:var(--teal); display:block; margin-bottom:10px;}
-  .node:not(:last-child)::after{content:"→"; position:absolute; right:-12px; top:50%; transform:translate(50%,-50%); font-family:var(--font-mono); color:var(--amber); font-size:14px; z-index:2;}
-  .node h3{font-family:var(--font-display); font-size:17px; font-weight:600; margin-bottom:8px;}
-  .node p{font-size:13.5px; color:var(--text-muted); line-height:1.6;}
-  .node .chip{margin-top:12px; display:inline-block;}
-  .chip{font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted); border:1px solid var(--border); padding:3px 8px; border-radius:5px;}
-  .formula{margin-top:28px; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 22px; font-family:var(--font-mono); font-size:13px; color:#c9cad1; overflow-x:auto; white-space:nowrap;}
-  .formula .hl{color:var(--amber);} .formula .tl{color:var(--teal);}
-
-  /* downloads */
-  .dl-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
-  .dl{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:28px; display:flex; flex-direction:column; transition:border-color .15s ease;}
-  .dl:hover{border-color:var(--border-strong);}
-  .dl-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px;}
-  .dl h3{font-family:var(--font-display); font-size:23px; font-weight:600; display:flex; align-items:center; gap:10px;}
-  .led{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
-  .led.amber{background:var(--amber); box-shadow:0 0 8px var(--amber);}
-  .led.teal{background:var(--teal); box-shadow:0 0 8px var(--teal);}
-  .status{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; color:var(--text-muted); text-transform:uppercase; border:1px solid var(--border); padding:4px 10px; border-radius:20px; white-space:nowrap;}
-  .status.live{color:var(--teal); border-color:rgba(73,185,174,.4);}
-  .dl p.desc{color:var(--text-muted); font-size:14.5px; line-height:1.65; margin-bottom:18px;}
-  .highlights{list-style:none; margin-bottom:22px;}
-  .highlights li{position:relative; padding-left:20px; margin-bottom:9px; font-size:14px; line-height:1.5;}
-  .highlights li::before{content:"→"; position:absolute; left:0; color:var(--teal); font-family:var(--font-mono); font-size:13px;}
-  .dl .actions{margin-top:auto; display:flex; flex-direction:column; gap:10px;}
-  .dl .actions .btn{justify-content:center;}
-  .mini-term{background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-family:var(--font-mono); font-size:11.5px; overflow-x:auto;}
-  .mini-term code{background:none; border:none; padding:0; color:#ededef;}
-  .note{margin-top:22px; font-size:13px; color:var(--text-muted); max-width:90ch;}
-
-  /* matrix */
-  .matrix{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden; font-size:14px;}
-  .matrix th,.matrix td{padding:13px 16px; text-align:left; border-bottom:1px solid var(--border);}
-  .matrix th{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; color:var(--text-muted); text-transform:uppercase; font-weight:500; background:var(--panel-2);}
-  .matrix tr:last-child td{border-bottom:none;}
-  .matrix .y{color:var(--teal); font-family:var(--font-mono);}
-  .matrix .n{color:var(--text-muted); font-family:var(--font-mono);}
-  .table-wrap{overflow-x:auto;}
-
-  /* faq */
-  .faq{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
-  details{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 20px; transition:border-color .15s ease;}
-  details[open]{border-color:var(--border-strong);}
-  summary{cursor:pointer; font-family:var(--font-display); font-weight:600; font-size:16px; list-style:none; display:flex; justify-content:space-between; gap:12px;}
-  summary::-webkit-details-marker{display:none;}
-  summary::after{content:"+"; font-family:var(--font-mono); color:var(--amber);}
-  details[open] summary::after{content:"−";}
-  details p{margin-top:12px; color:var(--text-muted); font-size:14px; line-height:1.7;}
-
-  .connect-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;}
-  .connect-card{display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px 20px; transition:border-color .15s ease, background .15s ease;}
-  .connect-card:hover{border-color:var(--teal); background:var(--panel-2);}
-  .connect-card .label{font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; color:var(--text-muted); display:block; margin-bottom:4px;}
-  .connect-card .name{font-family:var(--font-display); font-weight:600; font-size:16px;}
-  .connect-card .arrow{color:var(--amber); font-family:var(--font-mono);}
-
-  footer{border-top:1px solid var(--border); padding:32px 24px; max-width:var(--maxw); margin:0 auto;}
-  footer p{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); text-align:center;}
-  footer .dot-teal{color:var(--teal);}
-
-  @media (max-width:980px){
-    .hero{grid-template-columns:1fr; gap:40px; padding-top:80px;}
-    .chain{grid-template-columns:1fr 1fr;}
-    .node:not(:last-child)::after{display:none;}
-    .dl-grid{grid-template-columns:1fr;}
-    .stats-grid{grid-template-columns:1fr 1fr;}
-  }
-  @media (max-width:640px){
-    main{padding:0 16px;}
-    .strip-inner{padding:12px 16px;}
-    .channels{display:none;}
-    .wordmark .by{display:none;}
-    .section{padding:64px 0;}
-    .chain,.faq{grid-template-columns:1fr;}
-    .dl{padding:22px;}
-    .shot{margin-bottom:64px;}
-  }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+<a class="skip" href="#top">Skip to content</a>
 <header class="strip">
-  <div class="strip-inner">
-    <a href="#top" class="wordmark">speaker-sim <span class="by">by devfrp</span></a>
-    <div class="strip-right">
-      <nav class="channels" aria-label="Section navigation">
-        <a class="channel" href="#how"><span class="meter"><span></span><span></span><span></span></span><span data-en="HOW IT WORKS" data-fr="FONCTIONNEMENT">HOW IT WORKS</span></a>
-        <a class="channel" href="#download"><span class="meter"><span></span><span></span><span></span></span><span data-en="DOWNLOAD" data-fr="T&Eacute;L&Eacute;CHARGER">DOWNLOAD</span></a>
-        <a class="channel" href="#faq"><span class="meter"><span></span><span></span><span></span></span><span>FAQ</span></a>
-      </nav>
-      <div class="lang-toggle" role="group" aria-label="Language switcher">
-        <button class="lang-opt active" data-lang="en" type="button">EN</button>
-        <button class="lang-opt" data-lang="fr" type="button">FR</button>
-      </div>
+  <div class="container strip-inner">
+    <a href="#top" class="wordmark" aria-label="speaker-sim by devfrp, top of the page">speaker-sim <span class="by">by devfrp</span></a>
+    <nav class="channels" aria-label="Section navigation">
+      <a class="channel" href="#how" data-en="How it works" data-fr="Fonctionnement">How it works</a>
+      <a class="channel" href="#download" data-en="Download" data-fr="Télécharger">Download</a>
+      <a class="channel" href="#faq">FAQ</a>
+    </nav>
+    <div class="lang-toggle" role="group" aria-label="Language switcher">
+      <button class="lang-opt active" data-lang="en" type="button">EN</button>
+      <button class="lang-opt" data-lang="fr" type="button">FR</button>
     </div>
   </div>
 </header>
 
 <main id="top">
-
   <section class="hero">
-    <div>
-      <p class="eyebrow" data-en="// HEADPHONES → ROOM → SPEAKERS" data-fr="// CASQUE → PI&Egrave;CE → ENCEINTES">// HEADPHONES → ROOM → SPEAKERS</p>
-      <h1>
-        <span data-en="Real speakers. In a real room." data-fr="De vraies enceintes. Dans une vraie pi&egrave;ce.">Real speakers. In a real room.</span>
-        <span class="accent" data-en="On your headphones." data-fr="Dans votre casque.">On your headphones.</span>
-      </h1>
-      <p class="lede" data-en="Speaker Sim turns a pair of measured loudspeakers into a virtual audio output: their CEA-2034 response, the reflections of a room, a KEMAR head, and an AutoEq correction for your exact headphone model. Native on Linux through PipeWire, exportable everywhere else." data-fr="Speaker Sim transforme une paire d'enceintes mesur&eacute;es en sortie audio virtuelle : leur r&eacute;ponse CEA-2034, les r&eacute;flexions d'une pi&egrave;ce, une t&ecirc;te KEMAR et la correction AutoEq de votre mod&egrave;le de casque. Natif sous Linux via PipeWire, exportable partout ailleurs.">Speaker Sim turns a pair of measured loudspeakers into a virtual audio output: their CEA-2034 response, the reflections of a room, a KEMAR head, and an AutoEq correction for your exact headphone model. Native on Linux through PipeWire, exportable everywhere else.</p>
-      <div class="cta-row">
-        <a href="#download" class="btn btn-primary" data-en="Download ↓" data-fr="T&eacute;l&eacute;charger ↓">Download ↓</a>
-        <a href="https://github.com/devfrp/SimulSpeaker" class="btn btn-ghost" target="_blank" rel="noopener">GitHub ↗</a>
+    <div class="container hero-grid">
+      <div class="hero-text">
+        <h1 data-en="Real speakers. In a real room. On your headphones." data-fr="De vraies enceintes. Dans une vraie pièce. Dans votre casque.">Real speakers. In a real room. On your headphones.</h1>
+        <p class="lead" data-en="Speaker Sim turns a pair of measured loudspeakers into a virtual audio output." data-fr="Speaker Sim transforme une paire d’enceintes mesurées en sortie audio virtuelle.">Speaker Sim turns a pair of measured loudspeakers into a virtual audio output.</p>
+        <div class="cta-row">
+          <a href="#download" class="key key--primary" data-en="Download" data-fr="Télécharger">Download</a>
+          <a href="https://github.com/devfrp/SimulSpeaker" class="key" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+      <div class="graphite session" aria-label="Linux session">
+        <p class="session-head">linux, bash</p>
+        <div class="copy-line"><span class="cmd-line"><span class="prompt">$</span> <code id="curl-cmd">curl -fsSL https://devfrp.github.io/SimulSpeaker/install.sh | bash</code></span><button class="copy-btn" type="button" data-copy="curl-cmd" data-en="copy" data-fr="copier">copy</button></div>
+        <p class="ok" data-en="Installed: no root, nothing outside your home" data-fr="Installé : sans root, rien hors de votre dossier perso">Installed: no root, nothing outside your home</p>
+        <p><span class="prompt">$</span> speaker-sim --set-speaker "Genelec 8030C" --start</p>
+        <p class="out">[ 50 %] Haut-parleur L : sons directs et réflexions</p>
+        <p class="out">[100 %] Filtres prêts</p>
+        <p><span class="prompt">$</span> wpctl status | grep Speaker</p>
+        <p class="out">&nbsp;*  <span class="hl">Speaker Sim (Genelec 8030C)</span> [Audio/Sink]</p>
       </div>
     </div>
-    <div class="term">
-      <div class="term-bar"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="term-title">linux · bash</span></div>
-      <div class="term-body">
-        <div class="copy-line"><span><span class="prompt">$</span> <code id="curl-cmd">curl -fsSL https://devfrp.github.io/SimulSpeaker/install.sh | bash</code></span><button class="copy-btn" type="button" data-copy="curl-cmd" data-en="COPY" data-fr="COPIER">COPY</button></div>
-        <div class="ok">● <span data-en="Installed — no root, nothing outside your home" data-fr="Install&eacute; — sans root, rien hors de votre dossier perso">Installed — no root, nothing outside your home</span></div>
-        <div><span class="prompt">$</span> speaker-sim --set-speaker "Genelec 8030C" --start</div>
-        <div class="out">[ 50 %] Haut-parleur L : sons directs et réflexions</div>
-        <div class="out">[100 %] Filtres prêts</div>
-        <div><span class="prompt">$</span> wpctl status | grep Speaker</div>
-        <div class="out">&nbsp;*  <span class="hl">Speaker Sim (Genelec 8030C)</span> [Audio/Sink]</div>
-      </div>
-    </div>
-  </section>
-
-  <figure class="shot">
-    <img src="assets/screenshot.png" width="1440" height="900" loading="lazy" alt="Speaker Sim main window: headphone and speaker strips, interactive top-down room plan, response and RT60 meters, room settings">
-    <figcaption data-en="A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live." data-fr="Le plan de votre pi&egrave;ce virtuelle : d&eacute;placez-vous ou d&eacute;placez les enceintes, r&eacute;glez traitement acoustique et mat&eacute;riaux, et voyez r&eacute;flexions et RT60 changer en direct.">A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live.</figcaption>
+    <figure class="shot container">
+    <img src="assets/screenshot.png" width="1440" height="900" fetchpriority="high" alt="Speaker Sim main window: headphone and speaker strips, interactive top-down room plan, response and RT60 meters, room settings">
   </figure>
+  <p class="container shot-cap" data-en="A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live." data-fr="Le plan de votre pièce virtuelle : déplacez-vous ou déplacez les enceintes, réglez traitement acoustique et matériaux, et voyez réflexions et RT60 changer en direct.">A top-down plan of your virtual room: drag yourself or the speakers, dial in acoustic treatment and materials, and watch the reflections and RT60 change live.</p>
+  </section>
 
   <section id="stats" class="section">
-    <h2 class="section-title"><span class="tag">01</span><span data-en="In numbers" data-fr="En chiffres">In numbers</span></h2>
-    <p class="section-lede" data-en="Every curve comes from published measurements, pinned to a fixed Git commit and downloaded once." data-fr="Chaque courbe vient de mesures publi&eacute;es, fig&eacute;es sur un commit Git et t&eacute;l&eacute;charg&eacute;es une seule fois.">Every curve comes from published measurements, pinned to a fixed Git commit and downloaded once.</p>
-    <div class="stats-grid">
-      <div class="stat-card"><span class="stat-num">8 850</span><span class="stat-label" data-en="headphone EQs" data-fr="EQ de casques">headphone EQs</span></div>
-      <div class="stat-card"><span class="stat-num">130</span><span class="stat-label" data-en="measured speakers · 69 studio" data-fr="enceintes · dont 69 studio">measured speakers · 69 studio</span></div>
-      <div class="stat-card"><span class="stat-num">25</span><span class="stat-label" data-en="image sources / speaker" data-fr="sources-images / enceinte">image sources / speaker</span></div>
-      <div class="stat-card"><span class="stat-num">0</span><span class="stat-label" data-en="root privileges" data-fr="droits root">root privileges</span></div>
+    <div class="container stats">
+      <div class="head head--side">
+        <h2 data-en="In numbers" data-fr="En chiffres">In numbers</h2>
+        <p class="lead" data-en="Every curve comes from published measurements, pinned to a fixed Git commit and downloaded once." data-fr="Chaque courbe vient de mesures publiées, figées sur un commit Git et téléchargées une seule fois.">Every curve comes from published measurements, pinned to a fixed Git commit and downloaded once.</p>
+      </div>
+      <dl class="counts">
+        <div><dt class="stat-num">8 850</dt><dd data-en="headphone EQs" data-fr="EQ de casques">headphone EQs</dd></div>
+        <div><dt class="stat-num">130</dt><dd data-en="measured speakers, 69 of them studio monitors" data-fr="enceintes mesurées, dont 69 de studio">measured speakers, 69 of them studio monitors</dd></div>
+        <div><dt class="stat-num">25</dt><dd data-en="image sources per speaker" data-fr="sources-images par enceinte">image sources per speaker</dd></div>
+        <div><dt class="stat-num">0</dt><dd data-en="root privileges" data-fr="droits root">root privileges</dd></div>
+      </dl>
     </div>
   </section>
 
-  <section id="how" class="section">
-    <h2 class="section-title"><span class="tag">02</span><span data-en="How it works" data-fr="Fonctionnement">How it works</span></h2>
-    <p class="section-lede" data-en="Five stages are baked into four minimum-phase impulse responses — left/right speaker to left/right ear — then run by PipeWire's convolver in a separate, user-level process." data-fr="Cinq &eacute;tages sont pr&eacute;-calcul&eacute;s en quatre r&eacute;ponses impulsionnelles &agrave; phase minimale — enceinte gauche/droite vers oreille gauche/droite — puis ex&eacute;cut&eacute;es par le convolveur de PipeWire dans un processus utilisateur s&eacute;par&eacute;.">Five stages are baked into four minimum-phase impulse responses — left/right speaker to left/right ear — then run by PipeWire's convolver in a separate, user-level process.</p>
-    <div class="chain">
-      <div class="node">
-        <h3 data-en="Speaker" data-fr="Enceinte">Speaker</h3>
-        <p data-en="Listening Window for the direct sound, Early Reflections and Sound Power for what the room returns." data-fr="Listening Window pour le son direct, Early Reflections et Sound Power pour ce que renvoie la pi&egrave;ce.">Listening Window for the direct sound, Early Reflections and Sound Power for what the room returns.</p>
-        <span class="chip">CEA-2034 · spinorama</span>
+  <section id="how" class="section section--l">
+    <div class="container">
+      <div class="head">
+        <h2 data-en="How it works" data-fr="Fonctionnement">How it works</h2>
+        <p class="lead" data-en="Five stages are baked into four minimum-phase impulse responses (left/right speaker to left/right ear), then run by PipeWire’s convolver in a separate, user-level process." data-fr="Cinq étages sont pré-calculés en quatre réponses impulsionnelles à phase minimale (enceinte gauche/droite vers oreille gauche/droite), puis exécutées par le convolveur de PipeWire dans un processus utilisateur séparé.">Five stages are baked into four minimum-phase impulse responses (left/right speaker to left/right ear), then run by PipeWire’s convolver in a separate, user-level process.</p>
       </div>
-      <div class="node">
-        <h3 data-en="Room" data-fr="Pi&egrave;ce">Room</h3>
-        <p data-en="Real materials and acoustic treatment, absorption per octave band, RT60 per band (Eyring), and image sources filtered by every wall they hit." data-fr="Vrais mat&eacute;riaux et traitement acoustique, absorption par bande d'octave, RT60 par bande (Eyring), et sources-images filtr&eacute;es par chaque paroi touch&eacute;e.">Real materials and acoustic treatment, absorption per octave band, RT60 per band (Eyring), and image sources filtered by every wall they hit.</p>
-        <span class="chip">RT60 / octave · Eyring</span>
-      </div>
-      <div class="node">
-        <h3 data-en="Head" data-fr="T&ecirc;te">Head</h3>
-        <p data-en="Each arrival is rendered through a KEMAR HRTF from its true direction, with exact fractional delays and diffuse-field EQ." data-fr="Chaque arriv&eacute;e passe par le HRTF KEMAR de sa vraie direction, avec retards fractionnaires exacts et &eacute;galisation champ diffus.">Each arrival is rendered through a KEMAR HRTF from its true direction, with exact fractional delays and diffuse-field EQ.</p>
-        <span class="chip">libmysofa · SOFA</span>
-      </div>
-      <div class="node">
-        <h3 data-en="Headphone" data-fr="Casque">Headphone</h3>
-        <p data-en="Your model's AutoEq parametric EQ, turned into a minimum-phase impulse response." data-fr="L'EQ param&eacute;trique AutoEq de votre mod&egrave;le, convertie en r&eacute;ponse impulsionnelle &agrave; phase minimale.">Your model's AutoEq parametric EQ, turned into a minimum-phase impulse response.</p>
-        <span class="chip">AutoEq</span>
-      </div>
-      <div class="node">
-        <h3 data-en="Output" data-fr="Sortie">Output</h3>
-        <p data-en="A virtual sink becomes your default output; stopping it restores the previous one, even if systemd stops it." data-fr="Une sortie virtuelle devient la sortie par d&eacute;faut ; l'arr&ecirc;t restaure la pr&eacute;c&eacute;dente, m&ecirc;me si systemd l'arr&ecirc;te.">A virtual sink becomes your default output; stopping it restores the previous one, even if systemd stops it.</p>
-        <span class="chip">PipeWire · systemd --user</span>
-      </div>
-    </div>
-    <div class="formula">IR[s][e] = <span class="tl">HP⁻¹</span> · ( <span class="tl">DF⁻¹</span> · ( <span class="hl">LW</span> · Direct[s][e] + <span class="hl">ER</span> · Reflections[s][e] ) + <span class="hl">SP</span> · Reverb[s][e] )</div>
-  </section>
-
-  <section id="download" class="section">
-    <h2 class="section-title"><span class="tag">03</span><span data-en="Download" data-fr="T&eacute;l&eacute;charger">Download</span></h2>
-    <p class="section-lede" data-en="Live simulation needs PipeWire, so it is Linux-only. On Windows and macOS the same engine exports the filters for a system-wide convolver." data-fr="La simulation en direct repose sur PipeWire, donc sur Linux. Sous Windows et macOS, le m&ecirc;me moteur exporte les filtres pour un convolveur syst&egrave;me.">Live simulation needs PipeWire, so it is Linux-only. On Windows and macOS the same engine exports the filters for a system-wide convolver.</p>
-    <div class="dl-grid">
-      <article class="dl">
-        <div class="dl-head"><h3><span class="led teal"></span>Linux</h3><span class="status live" data-en="LIVE" data-fr="EN DIRECT">LIVE</span></div>
-        <p class="desc" data-en="One command. Installs into your home folder, adds a menu entry and the speaker-sim command." data-fr="Une commande. S'installe dans votre dossier personnel, ajoute une entr&eacute;e de menu et la commande speaker-sim.">One command. Installs into your home folder, adds a menu entry and the speaker-sim command.</p>
-        <ul class="highlights">
-          <li data-en="Virtual PipeWire output, auto-start at login" data-fr="Sortie PipeWire virtuelle, auto-d&eacute;marrage &agrave; la connexion">Virtual PipeWire output, auto-start at login</li>
-          <li data-en="Restores your previous output on stop" data-fr="Restaure la sortie pr&eacute;c&eacute;dente &agrave; l'arr&ecirc;t">Restores your previous output on stop</li>
-          <li data-en="Never touches PipeWire / WirePlumber config" data-fr="Ne modifie jamais la config PipeWire / WirePlumber">Never touches PipeWire / WirePlumber config</li>
-        </ul>
-        <div class="actions">
-          <div class="mini-term copy-line"><code id="curl-cmd-2">curl -fsSL https://devfrp.github.io/SimulSpeaker/install.sh | bash</code><button class="copy-btn" type="button" data-copy="curl-cmd-2" data-en="COPY" data-fr="COPIER">COPY</button></div>
-          <a class="btn btn-ghost" href="install.sh" data-en="Read the script first ↗" data-fr="Lire le script d'abord ↗">Read the script first ↗</a>
-        </div>
-      </article>
-      <article class="dl">
-        <div class="dl-head"><h3><span class="led amber"></span>Windows</h3><span class="status" data-en="EXPORT" data-fr="EXPORT">EXPORT</span></div>
-        <p class="desc" data-en="A single .exe. Builds the filters and writes a ready-to-include Equalizer APO configuration." data-fr="Un seul .exe. G&eacute;n&egrave;re les filtres et &eacute;crit une configuration Equalizer APO pr&ecirc;te &agrave; inclure.">A single .exe. Builds the filters and writes a ready-to-include Equalizer APO configuration.</p>
-        <ul class="highlights">
-          <li data-en="Equalizer APO ≥ 1.2 (virtual channels)" data-fr="Equalizer APO ≥ 1.2 (canaux virtuels)">Equalizer APO ≥ 1.2 (virtual channels)</li>
-          <li data-en="4 mono WAVs + a 4-channel true-stereo WAV" data-fr="4 WAV mono + un WAV true stereo 4 canaux">4 mono WAVs + a 4-channel true-stereo WAV</li>
-          <li data-en="Unsigned: SmartScreen → More info → Run anyway" data-fr="Non sign&eacute; : SmartScreen → Informations → Ex&eacute;cuter quand m&ecirc;me">Unsigned: SmartScreen → More info → Run anyway</li>
-        </ul>
-        <div class="actions">
-          <a class="btn btn-primary" href="https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-Windows-x64.exe" data-en="SpeakerSim.exe — x64" data-fr="SpeakerSim.exe — x64">SpeakerSim.exe — x64</a>
-        </div>
-      </article>
-      <article class="dl">
-        <div class="dl-head"><h3><span class="led amber"></span>macOS</h3><span class="status" data-en="EXPORT" data-fr="EXPORT">EXPORT</span></div>
-        <p class="desc" data-en="A native .app in a .dmg. Exports true-stereo impulse responses for any convolution plug-in or host." data-fr="Une .app native dans un .dmg. Exporte des r&eacute;ponses true stereo pour tout plug-in ou h&ocirc;te de convolution.">A native .app in a .dmg. Exports true-stereo impulse responses for any convolution plug-in or host.</p>
-        <ul class="highlights">
-          <li data-en="Apple Silicon and Intel builds" data-fr="Versions Apple Silicon et Intel">Apple Silicon and Intel builds</li>
-          <li data-en="Same engine, pure-Python SOFA reader" data-fr="M&ecirc;me moteur, lecteur SOFA en Python">Same engine, pure-Python SOFA reader</li>
-          <li data-en="Unsigned: right-click → Open the first time" data-fr="Non sign&eacute;e : clic droit → Ouvrir la premi&egrave;re fois">Unsigned: right-click → Open the first time</li>
-        </ul>
-        <div class="actions">
-          <a class="btn btn-primary" href="https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-macOS-AppleSilicon.dmg">Apple Silicon (.dmg)</a>
-          <a class="btn btn-ghost" href="https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-macOS-Intel.dmg">Intel (.dmg)</a>
-        </div>
-      </article>
-    </div>
-    <p class="note" data-en="Builds are produced by GitHub Actions from the tagged source; each binary is smoke-tested by actually exporting filters before release. SHA-256 checksums are attached to every release." data-fr="Les binaires sont construits par GitHub Actions depuis le code tagu&eacute; ; chacun est test&eacute; en exportant r&eacute;ellement des filtres avant publication. Les sommes SHA-256 sont jointes &agrave; chaque release.">Builds are produced by GitHub Actions from the tagged source; each binary is smoke-tested by actually exporting filters before release. SHA-256 checksums are attached to every release.</p>
-
-    <div class="table-wrap" style="margin-top:40px">
-      <table class="matrix">
-        <thead><tr><th></th><th>Linux</th><th>Windows</th><th>macOS</th></tr></thead>
-        <tbody>
-          <tr><td data-en="Live virtual output" data-fr="Sortie virtuelle en direct">Live virtual output</td><td class="y">✓ PipeWire</td><td class="n" data-en="via Equalizer APO" data-fr="via Equalizer APO">via Equalizer APO</td><td class="n" data-en="via a convolver" data-fr="via un convolveur">via a convolver</td></tr>
-          <tr><td data-en="Headphone + speaker selection" data-fr="Choix casque + enceinte">Headphone + speaker selection</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
-          <tr><td data-en="Room simulation & curves" data-fr="Simulation de pi&egrave;ce & courbes">Room simulation &amp; curves</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
-          <tr><td data-en="Auto-start, output restore" data-fr="Auto-d&eacute;marrage, restauration">Auto-start, output restore</td><td class="y">✓ systemd</td><td class="n">—</td><td class="n">—</td></tr>
-          <tr><td data-en="Export WAV / Equalizer APO" data-fr="Export WAV / Equalizer APO">Export WAV / Equalizer APO</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
-        </tbody>
-      </table>
+      <ol class="chain">
+        <li class="cut">
+          <h3 data-en="Speaker" data-fr="Enceinte">Speaker</h3>
+          <p data-en="Listening Window for the direct sound, Early Reflections and Sound Power for what the room returns." data-fr="Listening Window pour le son direct, Early Reflections et Sound Power pour ce que renvoie la pièce.">Listening Window for the direct sound, Early Reflections and Sound Power for what the room returns.</p>
+          <code class="src">CEA-2034, spinorama</code>
+        </li>
+        <li class="cut">
+          <h3 data-en="Room" data-fr="Pièce">Room</h3>
+          <p data-en="Real materials and acoustic treatment, absorption per octave band, RT60 per band (Eyring), and image sources filtered by every wall they hit." data-fr="Vrais matériaux et traitement acoustique, absorption par bande d’octave, RT60 par bande (Eyring), et sources-images filtrées par chaque paroi touchée.">Real materials and acoustic treatment, absorption per octave band, RT60 per band (Eyring), and image sources filtered by every wall they hit.</p>
+          <code class="src">RT60 / octave, Eyring</code>
+        </li>
+        <li class="cut">
+          <h3 data-en="Head" data-fr="Tête">Head</h3>
+          <p data-en="Each arrival is rendered through a KEMAR HRTF from its true direction, with exact fractional delays and diffuse-field EQ." data-fr="Chaque arrivée passe par le HRTF KEMAR de sa vraie direction, avec retards fractionnaires exacts et égalisation champ diffus.">Each arrival is rendered through a KEMAR HRTF from its true direction, with exact fractional delays and diffuse-field EQ.</p>
+          <code class="src">libmysofa, SOFA</code>
+        </li>
+        <li class="cut">
+          <h3 data-en="Headphone" data-fr="Casque">Headphone</h3>
+          <p data-en="Your model’s AutoEq parametric EQ, turned into a minimum-phase impulse response." data-fr="L’EQ paramétrique AutoEq de votre modèle, convertie en réponse impulsionnelle à phase minimale.">Your model’s AutoEq parametric EQ, turned into a minimum-phase impulse response.</p>
+          <code class="src">AutoEq</code>
+        </li>
+        <li class="cut">
+          <h3 data-en="Output" data-fr="Sortie">Output</h3>
+          <p data-en="A virtual sink becomes your default output; stopping it restores the previous one, even if systemd stops it." data-fr="Une sortie virtuelle devient la sortie par défaut ; l’arrêt restaure la précédente, même si systemd l’arrête.">A virtual sink becomes your default output; stopping it restores the previous one, even if systemd stops it.</p>
+          <code class="src">PipeWire, systemd --user</code>
+        </li>
+      </ol>
+      <div class="graphite formula"><code>IR[s][e] = <span class="tl">HP⁻¹</span> × ( <span class="tl">DF⁻¹</span> × ( <span class="hl">LW</span> × Direct[s][e] + <span class="hl">ER</span> × Reflections[s][e] ) + <span class="hl">SP</span> × Reverb[s][e] )</code></div>
     </div>
   </section>
 
-  <section id="faq" class="section">
-    <h2 class="section-title"><span class="tag">04</span><span>FAQ</span></h2>
-    <p class="section-lede" data-en="Short answers. The README has the long ones." data-fr="R&eacute;ponses courtes. Le README a les longues.">Short answers. The README has the long ones.</p>
-    <div class="faq">
-      <details>
-        <summary data-en="What does it write on my system?" data-fr="Qu'&eacute;crit-il sur mon syst&egrave;me ?">What does it write on my system?</summary>
-        <p data-en="Settings and filters in ~/.local/state/devfrp-speaker-sim, measurements in ~/.cache/devfrp-speaker-sim. Enabling auto-start asks systemd to link the unit, which creates symlinks under ~/.config/systemd/user; disabling removes them." data-fr="R&eacute;glages et filtres dans ~/.local/state/devfrp-speaker-sim, mesures dans ~/.cache/devfrp-speaker-sim. Activer l'auto-d&eacute;marrage demande &agrave; systemd de lier l'unit&eacute;, ce qui cr&eacute;e des liens symboliques dans ~/.config/systemd/user ; d&eacute;sactiver les supprime.">Settings and filters in ~/.local/state/devfrp-speaker-sim, measurements in ~/.cache/devfrp-speaker-sim. Enabling auto-start asks systemd to link the unit, which creates symlinks under ~/.config/systemd/user; disabling removes them.</p>
-      </details>
-      <details>
-        <summary data-en="What does the acoustic treatment rate change?" data-fr="Que change le taux de traitement acoustique ?">What does the acoustic treatment rate change?</summary>
-        <p data-en="It is the share of the walls covered with absorbing panels. Panels soak up the mids and highs much more than the bass, so the RT60 meters drop above 250 Hz first; add bass traps to tame the low end. Six presets go from a bare room to a very dead control room." data-fr="C'est la part des murs couverte de panneaux absorbants. Les panneaux absorbent bien plus les m&eacute;diums et les aigus que le grave : les vu-m&egrave;tres RT60 baissent d'abord au-dessus de 250 Hz ; ajoutez des pi&egrave;ges &agrave; basses pour le grave. Six pr&eacute;r&eacute;glages vont de la pi&egrave;ce nue &agrave; la r&eacute;gie tr&egrave;s mate.">It is the share of the walls covered with absorbing panels. Panels soak up the mids and highs much more than the bass, so the RT60 meters drop above 250 Hz first; add bass traps to tame the low end. Six presets go from a bare room to a very dead control room.</p>
-      </details>
-      <details>
-        <summary data-en="Why is it quieter than direct playback?" data-fr="Pourquoi est-ce moins fort qu'en direct ?">Why is it quieter than direct playback?</summary>
-        <p data-en="Filters are normalised for the worst case — the same signal on both speakers — so nothing ever clips. Raise the preamp if your material leaves headroom." data-fr="Les filtres sont normalis&eacute;s pour le pire cas — le m&ecirc;me signal sur les deux enceintes — afin de ne jamais &eacute;cr&ecirc;ter. Montez le pr&eacute;ampli si vos morceaux laissent de la marge.">Filters are normalised for the worst case — the same signal on both speakers — so nothing ever clips. Raise the preamp if your material leaves headroom.</p>
-      </details>
-      <details>
-        <summary data-en="Does it work offline?" data-fr="Fonctionne-t-il hors ligne ?">Does it work offline?</summary>
-        <p data-en="Yes, for anything already in the cache. Sources are pinned to a Git commit, so a cached file never changes and is never downloaded twice." data-fr="Oui, pour tout ce qui est d&eacute;j&agrave; en cache. Les sources sont fig&eacute;es sur un commit Git : un fichier en cache ne change jamais et n'est jamais ret&eacute;l&eacute;charg&eacute;.">Yes, for anything already in the cache. Sources are pinned to a Git commit, so a cached file never changes and is never downloaded twice.</p>
-      </details>
-      <details>
-        <summary data-en="Why a generic KEMAR head?" data-fr="Pourquoi une t&ecirc;te KEMAR g&eacute;n&eacute;rique ?">Why a generic KEMAR head?</summary>
-        <p data-en="It is the reference most measurements are built around. Any SOFA file can be set as sofa_file in the configuration if you have your own HRTF." data-fr="C'est la r&eacute;f&eacute;rence autour de laquelle sont construites la plupart des mesures. Tout fichier SOFA peut &ecirc;tre indiqu&eacute; dans sofa_file si vous avez votre propre HRTF.">It is the reference most measurements are built around. Any SOFA file can be set as sofa_file in the configuration if you have your own HRTF.</p>
-      </details>
-      <details>
-        <summary data-en="How do I update or uninstall on Linux?" data-fr="Comment mettre &agrave; jour ou d&eacute;sinstaller sous Linux ?">How do I update or uninstall on Linux?</summary>
-        <p data-en="Re-run the curl command to update. Append “bash -s -- --uninstall” to remove the app (settings kept) or “--purge” to remove settings too." data-fr="Relancez la commande curl pour mettre &agrave; jour. Ajoutez « bash -s -- --uninstall » pour supprimer l'application (r&eacute;glages conserv&eacute;s) ou « --purge » pour tout effacer.">Re-run the curl command to update. Append “bash -s -- --uninstall” to remove the app (settings kept) or “--purge” to remove settings too.</p>
-      </details>
-      <details>
-        <summary data-en="Where does the data come from?" data-fr="D'o&ugrave; viennent les donn&eacute;es ?">Where does the data come from?</summary>
-        <p data-en="AutoEq by Jaakko Pasanen (MIT), Spinorama by Pierre Aubert (GPL-3.0) with ASR Klippel NFS measurements, and the MIT Media Lab KEMAR set. Data is fetched on demand, not redistributed." data-fr="AutoEq de Jaakko Pasanen (MIT), Spinorama de Pierre Aubert (GPL-3.0) avec les mesures Klippel NFS d'ASR, et le jeu KEMAR du MIT Media Lab. Les donn&eacute;es sont t&eacute;l&eacute;charg&eacute;es &agrave; la demande, pas redistribu&eacute;es.">AutoEq by Jaakko Pasanen (MIT), Spinorama by Pierre Aubert (GPL-3.0) with ASR Klippel NFS measurements, and the MIT Media Lab KEMAR set. Data is fetched on demand, not redistributed.</p>
-      </details>
+  <section id="download" class="section section--l">
+    <div class="container">
+      <div class="head">
+        <h2 data-en="Download" data-fr="Télécharger">Download</h2>
+        <p class="lead" data-en="Live simulation needs PipeWire, so it is Linux-only. On Windows and macOS the same engine exports the filters for a system-wide convolver." data-fr="La simulation en direct repose sur PipeWire, donc sur Linux. Sous Windows et macOS, le même moteur exporte les filtres pour un convolveur système.">Live simulation needs PipeWire, so it is Linux-only. On Windows and macOS the same engine exports the filters for a system-wide convolver.</p>
+      </div>
+      <div class="dl-grid">
+        <article class="dl cut dl--live">
+          <div class="dl-head"><h3>Linux</h3><span class="status" data-en="live" data-fr="en direct">live</span></div>
+          <p class="desc" data-en="One command. Installs into your home folder, adds a menu entry and the speaker-sim command." data-fr="Une commande. S’installe dans votre dossier personnel, ajoute une entrée de menu et la commande speaker-sim.">One command. Installs into your home folder, adds a menu entry and the speaker-sim command.</p>
+          <ul class="highlights">
+            <li data-en="Virtual PipeWire output, auto-start at login" data-fr="Sortie PipeWire virtuelle, auto-démarrage à la connexion">Virtual PipeWire output, auto-start at login</li>
+            <li data-en="Restores your previous output on stop" data-fr="Restaure la sortie précédente à l’arrêt">Restores your previous output on stop</li>
+            <li data-en="Never touches PipeWire / WirePlumber config" data-fr="Ne modifie jamais la config PipeWire / WirePlumber">Never touches PipeWire / WirePlumber config</li>
+          </ul>
+          <div class="actions">
+            <div class="mini-term copy-line"><code id="curl-cmd-2">curl -fsSL https://devfrp.github.io/SimulSpeaker/install.sh | bash</code><button class="copy-btn" type="button" data-copy="curl-cmd-2" data-en="copy" data-fr="copier">copy</button></div>
+            <a class="text-link" href="install.sh" data-en="Read the script first" data-fr="Lire le script d’abord">Read the script first</a>
+          </div>
+        </article>
+        <article class="dl cut">
+          <div class="dl-head"><h3>Windows</h3><span class="status">export</span></div>
+          <p class="desc" data-en="A single .exe. Builds the filters and writes a ready-to-include Equalizer APO configuration." data-fr="Un seul .exe. Génère les filtres et écrit une configuration Equalizer APO prête à inclure.">A single .exe. Builds the filters and writes a ready-to-include Equalizer APO configuration.</p>
+          <ul class="highlights">
+            <li data-en="Equalizer APO ≥ 1.2 (virtual channels)" data-fr="Equalizer APO ≥ 1.2 (canaux virtuels)">Equalizer APO ≥ 1.2 (virtual channels)</li>
+            <li data-en="4 mono WAVs + a 4-channel true-stereo WAV" data-fr="4 WAV mono + un WAV true stereo 4 canaux">4 mono WAVs + a 4-channel true-stereo WAV</li>
+            <li data-en="Unsigned: SmartScreen, then More info, then Run anyway" data-fr="Non signé : SmartScreen, puis Informations, puis Exécuter quand même">Unsigned: SmartScreen, then More info, then Run anyway</li>
+          </ul>
+          <div class="actions">
+            <a class="key" href="https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-Windows-x64.exe">SpeakerSim.exe, x64</a>
+          </div>
+        </article>
+        <article class="dl cut">
+          <div class="dl-head"><h3>macOS</h3><span class="status">export</span></div>
+          <p class="desc" data-en="A native .app in a .dmg. Exports true-stereo impulse responses for any convolution plug-in or host." data-fr="Une .app native dans un .dmg. Exporte des réponses true stereo pour tout plug-in ou hôte de convolution.">A native .app in a .dmg. Exports true-stereo impulse responses for any convolution plug-in or host.</p>
+          <ul class="highlights">
+            <li data-en="Apple Silicon and Intel builds" data-fr="Versions Apple Silicon et Intel">Apple Silicon and Intel builds</li>
+            <li data-en="Same engine, pure-Python SOFA reader" data-fr="Même moteur, lecteur SOFA en Python">Same engine, pure-Python SOFA reader</li>
+            <li data-en="Unsigned: right-click, then Open the first time" data-fr="Non signée : clic droit, puis Ouvrir la première fois">Unsigned: right-click, then Open the first time</li>
+          </ul>
+          <div class="actions">
+            <a class="key" href="https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-macOS-AppleSilicon.dmg">Apple Silicon (.dmg)</a>
+            <a class="key" href="https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-macOS-Intel.dmg">Intel (.dmg)</a>
+          </div>
+        </article>
+      </div>
+      <p class="note" data-en="Builds are produced by GitHub Actions from the tagged source; each binary is smoke-tested by actually exporting filters before release. SHA-256 checksums are attached to every release." data-fr="Les binaires sont construits par GitHub Actions depuis le code tagué ; chacun est testé en exportant réellement des filtres avant publication. Les sommes SHA-256 sont jointes à chaque release.">Builds are produced by GitHub Actions from the tagged source; each binary is smoke-tested by actually exporting filters before release. SHA-256 checksums are attached to every release.</p>
+      <div class="table-wrap">
+        <table class="matrix">
+          <thead><tr><th><span class="visually-hidden" data-en="Feature" data-fr="Fonction">Feature</span></th><th>Linux</th><th>Windows</th><th>macOS</th></tr></thead>
+          <tbody>
+            <tr class="wash"><td data-en="Live virtual output" data-fr="Sortie virtuelle en direct">Live virtual output</td><td class="y">✓ PipeWire</td><td class="n" data-en="via Equalizer APO" data-fr="via Equalizer APO">via Equalizer APO</td><td class="n" data-en="via a convolver" data-fr="via un convolveur">via a convolver</td></tr>
+            <tr><td data-en="Headphone + speaker selection" data-fr="Choix casque + enceinte">Headphone + speaker selection</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+            <tr><td data-en="Room simulation &amp;amp; curves" data-fr="Simulation de pièce &amp;amp; courbes">Room simulation &amp; curves</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+            <tr><td data-en="Auto-start, output restore" data-fr="Auto-démarrage, restauration">Auto-start, output restore</td><td class="y">✓ systemd</td><td class="n" data-en="no" data-fr="non">no</td><td class="n" data-en="no" data-fr="non">no</td></tr>
+            <tr><td data-en="Export WAV / Equalizer APO" data-fr="Export WAV / Equalizer APO">Export WAV / Equalizer APO</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
-  <section id="connect" class="section">
-    <h2 class="section-title"><span class="tag">05</span><span data-en="Links" data-fr="Liens">Links</span></h2>
-    <div class="connect-grid" style="margin-top:32px">
-      <a class="connect-card" href="https://github.com/devfrp/SimulSpeaker" target="_blank" rel="noopener"><span><span class="label">SOURCE</span><span class="name">devfrp/SimulSpeaker</span></span><span class="arrow">↗</span></a>
-      <a class="connect-card" href="https://github.com/devfrp/SimulSpeaker/releases" target="_blank" rel="noopener"><span><span class="label">RELEASES</span><span class="name" data-en="All versions" data-fr="Toutes les versions">All versions</span></span><span class="arrow">↗</span></a>
-      <a class="connect-card" href="https://github.com/devfrp/SimulSpeaker/issues" target="_blank" rel="noopener"><span><span class="label">ISSUES</span><span class="name" data-en="Report a bug" data-fr="Signaler un bug">Report a bug</span></span><span class="arrow">↗</span></a>
-      <a class="connect-card" href="https://devfrp.github.io/" target="_blank" rel="noopener"><span><span class="label">DEVFRP</span><span class="name" data-en="Other projects" data-fr="Autres projets">Other projects</span></span><span class="arrow">↗</span></a>
+  <section id="faq" class="section section--l">
+    <div class="container faq-wrap">
+      <div class="head head--side">
+        <h2>FAQ</h2>
+        <p class="lead" data-en="Short answers. The README has the long ones." data-fr="Réponses courtes. Le README a les longues.">Short answers. The README has the long ones.</p>
+      </div>
+      <div class="faq">
+        <details>
+          <summary data-en="What does it write on my system?" data-fr="Qu’écrit-il sur mon système ?">What does it write on my system?</summary>
+          <p data-en="Settings and filters in <code>~/.local/state/devfrp-speaker-sim</code>, measurements in <code>~/.cache/devfrp-speaker-sim</code>. Enabling auto-start asks systemd to link the unit, which creates symlinks under <code>~/.config/systemd/user</code>; disabling removes them." data-fr="Réglages et filtres dans <code>~/.local/state/devfrp-speaker-sim</code>, mesures dans <code>~/.cache/devfrp-speaker-sim</code>. Activer l’auto-démarrage demande à systemd de lier l’unité, ce qui crée des liens symboliques dans <code>~/.config/systemd/user</code> ; désactiver les supprime.">Settings and filters in <code>~/.local/state/devfrp-speaker-sim</code>, measurements in <code>~/.cache/devfrp-speaker-sim</code>. Enabling auto-start asks systemd to link the unit, which creates symlinks under <code>~/.config/systemd/user</code>; disabling removes them.</p>
+        </details>
+        <details>
+          <summary data-en="What does the acoustic treatment rate change?" data-fr="Que change le taux de traitement acoustique ?">What does the acoustic treatment rate change?</summary>
+          <p data-en="It is the share of the walls covered with absorbing panels. Panels soak up the mids and highs much more than the bass, so the RT60 meters drop above 250 Hz first; add bass traps to tame the low end. Six presets go from a bare room to a very dead control room." data-fr="C’est la part des murs couverte de panneaux absorbants. Les panneaux absorbent bien plus les médiums et les aigus que le grave : les vu-mètres RT60 baissent d’abord au-dessus de 250 Hz ; ajoutez des pièges à basses pour le grave. Six préréglages vont de la pièce nue à la régie très mate.">It is the share of the walls covered with absorbing panels. Panels soak up the mids and highs much more than the bass, so the RT60 meters drop above 250 Hz first; add bass traps to tame the low end. Six presets go from a bare room to a very dead control room.</p>
+        </details>
+        <details>
+          <summary data-en="Why is it quieter than direct playback?" data-fr="Pourquoi est-ce moins fort qu’en direct ?">Why is it quieter than direct playback?</summary>
+          <p data-en="Filters are normalised for the worst case (the same signal on both speakers), so nothing ever clips. Raise the preamp if your material leaves headroom." data-fr="Les filtres sont normalisés pour le pire cas (le même signal sur les deux enceintes), afin de ne jamais écrêter. Montez le préampli si vos morceaux laissent de la marge.">Filters are normalised for the worst case (the same signal on both speakers), so nothing ever clips. Raise the preamp if your material leaves headroom.</p>
+        </details>
+        <details>
+          <summary data-en="Does it work offline?" data-fr="Fonctionne-t-il hors ligne ?">Does it work offline?</summary>
+          <p data-en="Yes, for anything already in the cache. Sources are pinned to a Git commit, so a cached file never changes and is never downloaded twice." data-fr="Oui, pour tout ce qui est déjà en cache. Les sources sont figées sur un commit Git : un fichier en cache ne change jamais et n’est jamais retéléchargé.">Yes, for anything already in the cache. Sources are pinned to a Git commit, so a cached file never changes and is never downloaded twice.</p>
+        </details>
+        <details>
+          <summary data-en="Why a generic KEMAR head?" data-fr="Pourquoi une tête KEMAR générique ?">Why a generic KEMAR head?</summary>
+          <p data-en="It is the reference most measurements are built around. Any SOFA file can be set as <code>sofa_file</code> in the configuration if you have your own HRTF." data-fr="C’est la référence autour de laquelle sont construites la plupart des mesures. Tout fichier SOFA peut être indiqué dans <code>sofa_file</code> si vous avez votre propre HRTF.">It is the reference most measurements are built around. Any SOFA file can be set as <code>sofa_file</code> in the configuration if you have your own HRTF.</p>
+        </details>
+        <details>
+          <summary data-en="How do I update or uninstall on Linux?" data-fr="Comment mettre à jour ou désinstaller sous Linux ?">How do I update or uninstall on Linux?</summary>
+          <p data-en="Re-run the curl command to update. Append “bash -s -- --uninstall” to remove the app (settings kept) or “--purge” to remove settings too." data-fr="Relancez la commande curl pour mettre à jour. Ajoutez « bash -s -- --uninstall » pour supprimer l’application (réglages conservés) ou « --purge » pour tout effacer.">Re-run the curl command to update. Append “bash -s -- --uninstall” to remove the app (settings kept) or “--purge” to remove settings too.</p>
+        </details>
+        <details>
+          <summary data-en="Where does the data come from?" data-fr="D’où viennent les données ?">Where does the data come from?</summary>
+          <p data-en="AutoEq by Jaakko Pasanen (MIT), Spinorama by Pierre Aubert (GPL-3.0) with ASR Klippel NFS measurements, and the MIT Media Lab KEMAR set. Data is fetched on demand, not redistributed." data-fr="AutoEq de Jaakko Pasanen (MIT), Spinorama de Pierre Aubert (GPL-3.0) avec les mesures Klippel NFS d’ASR, et le jeu KEMAR du MIT Media Lab. Les données sont téléchargées à la demande, pas redistribuées.">AutoEq by Jaakko Pasanen (MIT), Spinorama by Pierre Aubert (GPL-3.0) with ASR Klippel NFS measurements, and the MIT Media Lab KEMAR set. Data is fetched on demand, not redistributed.</p>
+        </details>
+      </div>
     </div>
   </section>
 
+  <section id="connect" class="section section--l">
+    <div class="container">
+      <h2 data-en="Links" data-fr="Liens">Links</h2>
+      <div class="connect-grid">
+        <a class="connect-card" href="https://github.com/devfrp/SimulSpeaker" target="_blank" rel="noopener"><span class="label" data-en="source" data-fr="source">source</span><span class="name">devfrp/SimulSpeaker</span></a>
+        <a class="connect-card" href="https://github.com/devfrp/SimulSpeaker/releases" target="_blank" rel="noopener"><span class="label">releases</span><span class="name" data-en="All versions" data-fr="Toutes les versions">All versions</span></a>
+        <a class="connect-card" href="https://github.com/devfrp/SimulSpeaker/issues" target="_blank" rel="noopener"><span class="label">issues</span><span class="name" data-en="Report a bug" data-fr="Signaler un bug">Report a bug</span></a>
+        <a class="connect-card" href="https://devfrp.github.io/" target="_blank" rel="noopener"><span class="label">devfrp</span><span class="name" data-en="Other projects" data-fr="Autres projets">Other projects</span></a>
+      </div>
+    </div>
+  </section>
 </main>
 
-<footer>
-  <p>© 2026 devfrp <span class="dot-teal">●</span> <span data-en="MIT licensed" data-fr="Licence MIT">MIT licensed</span> <span class="dot-teal">●</span> <span data-en="made in France" data-fr="fait en France">made in France</span></p>
+<footer class="foot">
+  <div class="container">
+    <p class="foot-line" data-en="Real speakers. In a real room. On your headphones." data-fr="De vraies enceintes. Dans une vraie pièce. Dans votre casque.">Real speakers. In a real room. On your headphones.</p>
+    <p class="foot-meta">© 2026 devfrp, <span data-en="MIT licensed" data-fr="Licence MIT">MIT licensed</span>, <span data-en="made in France" data-fr="fait en France">made in France</span></p>
+  </div>
 </footer>
 
 <script>
@@ -429,9 +256,9 @@
       var text = document.getElementById(btn.dataset.copy).textContent;
       var done = function(){
         var lang = document.documentElement.lang;
-        btn.textContent = lang === 'fr' ? 'COPIÉ' : 'COPIED';
+        btn.textContent = lang === 'fr' ? 'copié' : 'copied';
         btn.classList.add('done');
-        setTimeout(function(){ btn.textContent = btn.getAttribute('data-' + lang) || 'COPY'; btn.classList.remove('done'); }, 1600);
+        setTimeout(function(){ btn.textContent = btn.getAttribute('data-' + lang) || 'copy'; btn.classList.remove('done'); }, 1600);
       };
       if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done, function(){}); }
     });
