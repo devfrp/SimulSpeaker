@@ -1,0 +1,63 @@
+[package]
+name = "speaker-sim"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Simulation de haut-parleurs au casque (PipeWire)"
+authors = ["devfrp"]
+license = "MIT"
+repository = "https://github.com/devfrp/SimulSpeaker"
+
+[workspace]
+members = [".", "tools"]
+
+[lib]
+name = "speaker_sim"
+path = "src/lib.rs"
+
+[features]
+default = ["gui"]
+# Interface graphique (egui). Sans elle : moteur, ligne de commande et hooks systemd.
+gui = ["dep:eframe", "dep:rfd"]
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "4", features = ["derive"] }
+hound = "3.5"
+log = "0.4"
+percent-encoding = "2"
+realfft = "3.5"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.10"
+sofar = { version = "0.4", default-features = false, features = ["resample"] }
+sys-locale = "0.3"
+tempfile = "3"
+ureq = "3"
+
+eframe = { version = "0.37", optional = true, default-features = false, features = [
+    "accesskit",
+    "clipboard",
+    "default_fonts",
+    "glow",
+    "links",
+    "wayland",
+    "x11",
+] }
+rfd = { version = "0.17", optional = true }
+
+[build-dependencies]
+winresource = "0.1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true
+
+# Le DSP est lent sans optimisation : les tests et `cargo run` restent utilisables.
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.dev]
+opt-level = 1
