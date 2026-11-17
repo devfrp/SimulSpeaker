@@ -4,5 +4,6 @@
 //! (`system` : PipeWire + systemd), orchestration (`app`) et interface (`ui`, option `gui`).
 
 pub mod config;
+pub mod dsp;
 pub mod i18n;
 pub mod logging;
