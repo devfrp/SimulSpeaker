@@ -3,6 +3,7 @@
 //! Moteur (`audio_engine`, `dsp`), données (`config`, `download`), intégration Linux
 //! (`system` : PipeWire + systemd), orchestration (`app`) et interface (`ui`, option `gui`).
 
+pub mod audio_engine;
 pub mod config;
 pub mod dsp;
 pub mod i18n;
