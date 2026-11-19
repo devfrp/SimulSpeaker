@@ -5,6 +5,8 @@
 
 pub mod audio_engine;
 pub mod config;
+pub mod download;
 pub mod dsp;
 pub mod i18n;
 pub mod logging;
+pub mod system;
