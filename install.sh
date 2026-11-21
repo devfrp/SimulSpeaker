@@ -10,14 +10,19 @@
 #   --no-desktop         ne pas créer d'entrée de menu
 #
 # Tout s'installe pour l'utilisateur courant, sans root :
-#   ~/.local/share/devfrp-speaker-sim/{app,venv}   ~/.local/bin/speaker-sim
+#   ~/.local/share/devfrp-speaker-sim/speaker-sim   ~/.local/bin/speaker-sim (lien)
 #   ~/.local/share/applications/devfrp-speaker-sim.desktop
+#
+# Binaire précompilé (x86_64) depuis la release ; sinon compilation depuis les sources
+# avec cargo (branche, autre architecture).
 set -euo pipefail
 
 REPO="devfrp/SimulSpeaker"
 APP_ID="devfrp-speaker-sim"
+ASSET="SpeakerSim-Linux-x64"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 APP_HOME="$DATA_HOME/$APP_ID"
+APP_BIN="$APP_HOME/speaker-sim"
 BIN_DIR="$HOME/.local/bin"
 LAUNCHER="$BIN_DIR/speaker-sim"
 DESKTOP_FILE="$DATA_HOME/applications/$APP_ID.desktop"
@@ -42,7 +47,7 @@ while [ $# -gt 0 ]; do
     --uninstall) MODE="uninstall"; shift ;;
     --purge) MODE="purge"; shift ;;
     --no-desktop) DESKTOP=0; shift ;;
-    -h|--help) sed -n '2,16p' "$0" 2>/dev/null || true; exit 0 ;;
+    -h|--help) sed -n '2,18p' "$0" 2>/dev/null || true; exit 0 ;;
     *) die "Option inconnue : $1" ;;
   esac
 done
@@ -50,21 +55,22 @@ done
 [ "$(uname -s)" = "Linux" ] || die "Ce script est pour Linux. Windows/macOS : https://devfrp.github.io/SimulSpeaker/#download"
 [ "$(id -u)" -ne 0 ] || die "N'exécutez pas ce script en root : tout s'installe dans votre dossier personnel."
 
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/$APP_ID"
+
 uninstall() {
   if [ -x "$LAUNCHER" ]; then
     "$LAUNCHER" --stop >/dev/null 2>&1 || true
     "$LAUNCHER" --autostart off >/dev/null 2>&1 || true
   fi
-  # Uniquement ce que l'installateur a créé, jamais le dossier entier.
-  rm -rf "$APP_HOME/app" "$APP_HOME/app.new" "$APP_HOME/app.old" "$APP_HOME/venv" "$APP_HOME/VERSION"
+  # Uniquement ce que l'installateur a créé (y compris l'ancienne version Python).
+  rm -rf "$APP_BIN" "$APP_BIN.new" "$APP_HOME/app" "$APP_HOME/app.new" "$APP_HOME/app.old" \
+         "$APP_HOME/venv" "$APP_HOME/VERSION"
   rmdir "$APP_HOME" 2>/dev/null || true
   rm -f "$LAUNCHER" "$DESKTOP_FILE" "$ICON_FILE"
   if [ "$1" = "purge" ]; then
-    rm -rf "${XDG_STATE_HOME:-$HOME/.local/state}/$APP_ID/config.json" \
-           "${XDG_STATE_HOME:-$HOME/.local/state}/$APP_ID/runtime.json" \
-           "${XDG_STATE_HOME:-$HOME/.local/state}/$APP_ID/filters" \
-           "${XDG_STATE_HOME:-$HOME/.local/state}/$APP_ID/$APP_ID-py.service" \
-           "${XDG_STATE_HOME:-$HOME/.local/state}/$APP_ID/speaker-sim.log"*
+    rm -rf "$STATE_DIR/config.json" "$STATE_DIR/runtime.json" "$STATE_DIR/filters" "$STATE_DIR/imports" \
+           "$STATE_DIR/$APP_ID-py.service" "$STATE_DIR/$APP_ID-py-a.service" "$STATE_DIR/$APP_ID-py-b.service" \
+           "$STATE_DIR/speaker-sim.log"*
     say "Réglages supprimés (le cache partagé ~/.cache/$APP_ID est conservé)."
   fi
   say "Speaker Sim désinstallé."
@@ -78,105 +84,94 @@ fi
 # --- Dépendances --------------------------------------------------------------
 pkg_hint() {
   if command -v pacman >/dev/null; then
-    echo "sudo pacman -S --needed python pipewire wireplumber libmysofa python-numpy python-scipy python-requests python-pyqt6"
+    echo "sudo pacman -S --needed pipewire wireplumber"
   elif command -v apt-get >/dev/null; then
-    echo "sudo apt install python3 python3-venv pipewire wireplumber libmysofa1 python3-numpy python3-scipy python3-requests python3-pyqt6"
+    echo "sudo apt install pipewire wireplumber pipewire-bin"
   elif command -v dnf >/dev/null; then
-    echo "sudo dnf install python3 pipewire wireplumber libmysofa python3-numpy python3-scipy python3-requests python3-pyqt6"
+    echo "sudo dnf install pipewire wireplumber pipewire-utils"
   elif command -v zypper >/dev/null; then
-    echo "sudo zypper install python3 pipewire wireplumber libmysofa1 python3-numpy python3-scipy python3-requests python3-PyQt6"
+    echo "sudo zypper install pipewire wireplumber pipewire-tools"
   else
-    echo "installez : python3 (≥ 3.10), pipewire, wireplumber, libmysofa"
+    echo "installez : pipewire, wireplumber (pw-dump, wpctl)"
   fi
 }
 
-# (pas de « grep -q » : avec pipefail, la sortie anticipée provoque un SIGPIPE)
-has_mysofa() { ldconfig -p 2>/dev/null | grep libmysofa >/dev/null; }
-
-# Python du système de préférence : il voit numpy/scipy/Qt installés par la distribution.
-PYTHON="${SPEAKER_SIM_PYTHON:-}"
-if [ -z "$PYTHON" ]; then
-  if [ -x /usr/bin/python3 ]; then PYTHON=/usr/bin/python3; else PYTHON="$(command -v python3 || true)"; fi
-fi
-[ -n "$PYTHON" ] || die "python3 introuvable. $(pkg_hint)"
-"$PYTHON" -c 'import sys; sys.exit(sys.version_info < (3, 10))' \
-  || die "Python ≥ 3.10 requis ($("$PYTHON" --version 2>&1))."
-"$PYTHON" -c 'import venv, ensurepip' 2>/dev/null \
-  || die "Module venv absent pour $PYTHON. $(pkg_hint)"
-
 missing=()
-for tool in curl tar pipewire pw-dump wpctl systemctl systemd-run; do
+for tool in curl pipewire pw-dump wpctl systemctl systemd-run; do
   command -v "$tool" >/dev/null || missing+=("$tool")
 done
 [ ${#missing[@]} -eq 0 ] || die "Outils manquants : ${missing[*]}
   → $(pkg_hint)"
 
-if ! has_mysofa; then
-  warn "libmysofa absent : repli sur le lecteur SOFA Python (h5py) et téléchargement du HRTF KEMAR."
-  warn "Recommandé : $(pkg_hint)"
-fi
-
-# --- Téléchargement -----------------------------------------------------------
+# --- Version ------------------------------------------------------------------
 if [ -z "$REF" ]; then
   REF="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
          | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n1 || true)"
   [ -n "$REF" ] || REF="master"
 fi
-say "Téléchargement de Speaker Sim ($REF)…"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-if [ -n "${SPEAKER_SIM_TARBALL:-}" ]; then   # tests : archive locale
-  cp "$SPEAKER_SIM_TARBALL" "$TMP/src.tar.gz"
-else
-  curl -fsSL "https://codeload.github.com/$REPO/tar.gz/$REF" -o "$TMP/src.tar.gz" \
-    || die "Téléchargement impossible (https://github.com/$REPO, réf. $REF)."
-fi
-mkdir -p "$TMP/src"
-tar -xzf "$TMP/src.tar.gz" -C "$TMP/src" --strip-components=1
-[ -f "$TMP/src/speaker-sim/main.py" ] || die "Archive inattendue : speaker-sim/main.py absent."
-
 mkdir -p "$APP_HOME"
-rm -rf "$APP_HOME/app.new"
-cp -r "$TMP/src/speaker-sim" "$APP_HOME/app.new"
-rm -rf "$APP_HOME/app.old"
-[ -d "$APP_HOME/app" ] && mv "$APP_HOME/app" "$APP_HOME/app.old"
-mv "$APP_HOME/app.new" "$APP_HOME/app"
-rm -rf "$APP_HOME/app.old"
+
+# --- Binaire : release précompilée, sinon compilation -------------------------
+fetch_release() {
+  [ "$(uname -m)" = "x86_64" ] || return 1
+  case "$REF" in v[0-9]*) ;; *) return 1 ;; esac
+  curl -fsSL "https://github.com/$REPO/releases/download/$REF/$ASSET" -o "$TMP/speaker-sim" 2>/dev/null
+}
+
+build_from_source() {
+  command -v cargo >/dev/null \
+    || die "Pas de binaire précompilé pour $REF ($(uname -m)) et cargo est absent.
+  → installez Rust (https://rustup.rs), puis relancez cette commande."
+  say "Compilation depuis les sources ($REF), quelques minutes…"
+  if [ -n "${SPEAKER_SIM_TARBALL:-}" ]; then   # tests : archive locale
+    cp "$SPEAKER_SIM_TARBALL" "$TMP/src.tar.gz"
+  else
+    curl -fsSL "https://codeload.github.com/$REPO/tar.gz/$REF" -o "$TMP/src.tar.gz" \
+      || die "Téléchargement impossible (https://github.com/$REPO, réf. $REF)."
+  fi
+  mkdir -p "$TMP/src"
+  tar -xzf "$TMP/src.tar.gz" -C "$TMP/src" --strip-components=1
+  [ -f "$TMP/src/speaker-sim/Cargo.toml" ] || die "Archive inattendue : speaker-sim/Cargo.toml absent."
+  (cd "$TMP/src/speaker-sim" && CARGO_TARGET_DIR="$TMP/target" cargo build --release --locked --quiet) \
+    || die "La compilation a échoué."
+  cp "$TMP/target/release/speaker-sim" "$TMP/speaker-sim"
+  cp "$TMP/src/speaker-sim/packaging/icon.png" "$TMP/icon.png"
+}
+
+if [ -z "${SPEAKER_SIM_TARBALL:-}" ] && fetch_release; then
+  say "Téléchargement de Speaker Sim $REF (binaire précompilé)…"
+else
+  build_from_source
+fi
+chmod +x "$TMP/speaker-sim"
+"$TMP/speaker-sim" --version >/dev/null || die "Le binaire téléchargé ne démarre pas."
+
+# Remplacement atomique : les unités systemd appellent ce chemin pour leurs hooks.
+cp "$TMP/speaker-sim" "$APP_BIN.new"
+mv -f "$APP_BIN.new" "$APP_BIN"
 echo "$REF" > "$APP_HOME/VERSION"
 
-# --- Environnement Python -----------------------------------------------------
-VENV="$APP_HOME/venv"
-if [ ! -x "$VENV/bin/python" ]; then
-  say "Création de l'environnement Python ($("$PYTHON" --version 2>&1))…"
-  "$PYTHON" -m venv --system-site-packages "$VENV"
-fi
-need=()
-"$VENV/bin/python" -c 'import numpy' 2>/dev/null || need+=(numpy)
-"$VENV/bin/python" -c 'import scipy' 2>/dev/null || need+=(scipy)
-"$VENV/bin/python" -c 'import requests' 2>/dev/null || need+=(requests)
-"$VENV/bin/python" -c 'import PyQt6.QtWidgets' 2>/dev/null \
-  || "$VENV/bin/python" -c 'import PySide6.QtWidgets' 2>/dev/null || need+=(PyQt6)
-if ! has_mysofa; then
-  "$VENV/bin/python" -c 'import h5py' 2>/dev/null || need+=(h5py)
-fi
-if [ ${#need[@]} -gt 0 ]; then
-  say "Installation (pip, dans l'environnement isolé) : ${need[*]}"
-  "$VENV/bin/python" -m pip install --quiet --disable-pip-version-check "${need[@]}" \
-    || die "pip a échoué. Installez plutôt les paquets système : $(pkg_hint)"
+# Ancienne version Python : environnement et sources inutiles désormais.
+MIGRATED=0
+if [ -d "$APP_HOME/venv" ] || [ -d "$APP_HOME/app" ]; then
+  rm -rf "$APP_HOME/venv" "$APP_HOME/app" "$APP_HOME/app.new" "$APP_HOME/app.old"
+  MIGRATED=1
 fi
 
 # --- Lanceur, menu, icône -----------------------------------------------------
 mkdir -p "$BIN_DIR"
-cat > "$LAUNCHER" <<EOF
-#!/bin/sh
-exec "$VENV/bin/python" "$APP_HOME/app/main.py" "\$@"
-EOF
-chmod +x "$LAUNCHER"
+ln -sfn "$APP_BIN" "$LAUNCHER"
 
 if [ "$DESKTOP" -eq 1 ]; then
   mkdir -p "$(dirname "$DESKTOP_FILE")" "$(dirname "$ICON_FILE")"
-  cp "$APP_HOME/app/packaging/icon.png" "$ICON_FILE"
+  if [ ! -f "$TMP/icon.png" ]; then
+    curl -fsSL "https://raw.githubusercontent.com/$REPO/$REF/speaker-sim/packaging/icon.png" \
+      -o "$TMP/icon.png" 2>/dev/null || true
+  fi
+  [ -s "$TMP/icon.png" ] && cp "$TMP/icon.png" "$ICON_FILE"
   cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
@@ -195,9 +190,21 @@ EOF
   fi
 fi
 
-"$LAUNCHER" --version >/dev/null || die "L'application ne démarre pas ; voir $LAUNCHER"
+# Migration depuis Python : les unités systemd appelaient l'ancien interpréteur.
+if [ "$MIGRATED" -eq 1 ]; then
+  status="$("$LAUNCHER" --status 2>/dev/null || true)"
+  case "$status" in
+    *'"autostart": true'*) "$LAUNCHER" --autostart on >/dev/null 2>&1 \
+                             || warn "Auto-démarrage à réactiver depuis l'interface." ;;
+  esac
+  case "$status" in
+    *'"running": true'*) "$LAUNCHER" --apply >/dev/null 2>&1 \
+                           || warn "Relancez la simulation depuis l'interface." ;;
+  esac
+  say "Ancienne version Python remplacée (réglages conservés)."
+fi
 
-say "Installé : ${C_DIM}$APP_HOME${C_0}"
+say "Installé : ${C_DIM}$APP_BIN${C_0} ($("$LAUNCHER" --version))"
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
   *) warn "$BIN_DIR n'est pas dans votre PATH ; ajoutez-le ou lancez $LAUNCHER" ;;

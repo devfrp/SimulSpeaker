@@ -1,8 +1,8 @@
 name: Release
 
-# Tag « vX.Y.Z » : crée une release brouillon, construit SpeakerSim.exe (Windows) et
-# Speaker Sim.app (macOS, .dmg), vérifie que chaque binaire exporte réellement des
-# filtres, envoie les fichiers directement dans la release puis la publie.
+# Tag « vX.Y.Z » : crée une release brouillon, construit le binaire Linux, SpeakerSim.exe
+# (Windows) et Speaker Sim.app (macOS, .dmg), vérifie que chaque binaire exporte réellement
+# des filtres, envoie les fichiers directement dans la release puis la publie.
 # Pas d'« artifacts » Actions : les fichiers de release ne comptent pas dans le quota.
 # Lancement manuel : construction + tests de fumée uniquement (rien n'est publié).
 on:
@@ -16,6 +16,7 @@ permissions:
 env:
   GH_TOKEN: ${{ github.token }}
   IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+  CARGO_TERM_COLOR: always
 
 jobs:
   prepare:
@@ -37,6 +38,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # glibc 2.35 : le binaire fonctionne aussi sur les distributions plus anciennes.
+          - os: ubuntu-22.04
+            asset: SpeakerSim-Linux-x64
           - os: windows-latest
             asset: SpeakerSim-Windows-x64.exe
           - os: macos-latest
@@ -50,39 +54,77 @@ jobs:
         working-directory: speaker-sim
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
         with:
-          python-version: "3.12"
-      - name: Dépendances
-        run: pip install pyinstaller pillow PyQt6 numpy scipy requests h5py
+          workspaces: speaker-sim
       - name: Version depuis le tag
         if: env.IS_TAG == 'true'
         run: |
           v="${GITHUB_REF_NAME#v}"
-          sed -i.bak "s/^APP_VERSION = .*/APP_VERSION = \"$v\"/" config.py
-          sed -i.bak "s/\"CFBundleShortVersionString\": \"[^\"]*\"/\"CFBundleShortVersionString\": \"$v\"/" packaging/speaker-sim.spec
-      - name: PyInstaller
-        run: pyinstaller --noconfirm packaging/speaker-sim.spec
+          sed -i.bak "s/^version = .*/version = \"$v\"/" Cargo.toml && rm Cargo.toml.bak
+          cargo update --workspace
+      - name: Compilation
+        run: cargo build --release --bin speaker-sim
+      - name: Version du binaire
+        if: runner.os != 'Windows'
+        run: target/release/speaker-sim --version
+
+      - name: Test de fumée (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          target/release/speaker-sim --export "$RUNNER_TEMP/export"
+          for f in ir_LL.wav speaker-sim.txt speaker-sim-true-stereo.wav; do test -f "$RUNNER_TEMP/export/$f"; done
+          mkdir -p dist && cp target/release/speaker-sim "dist/${{ matrix.asset }}"
 
       - name: Test de fumée (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $out = Join-Path $env:RUNNER_TEMP "export"
-          $p = Start-Process -FilePath dist\SpeakerSim.exe -ArgumentList "--export", "`"$out`"" -Wait -PassThru
+          $p = Start-Process -FilePath target\release\speaker-sim.exe -ArgumentList "--export", "`"$out`"" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "code de sortie $($p.ExitCode)" }
           foreach ($f in "ir_LL.wav", "speaker-sim.txt", "speaker-sim-true-stereo.wav") {
             if (-not (Test-Path (Join-Path $out $f))) { throw "$f manquant" }
           }
-          Move-Item dist\SpeakerSim.exe "dist\${{ matrix.asset }}"
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item target\release\speaker-sim.exe "dist\${{ matrix.asset }}"
 
-      - name: Test de fumée + DMG (macOS)
+      - name: Paquet .app + test de fumée + DMG (macOS)
         if: runner.os == 'macOS'
         run: |
-          "dist/Speaker Sim.app/Contents/MacOS/Speaker Sim" --export "$RUNNER_TEMP/export"
+          v="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml)"
+          app="dist/Speaker Sim.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" icon.iconset
+          cp target/release/speaker-sim "$app/Contents/MacOS/Speaker Sim"
+          for s in 16 32 128 256 512; do
+            sips -z $s $s packaging/icon.png --out "icon.iconset/icon_${s}x${s}.png" >/dev/null
+            sips -z $((s * 2)) $((s * 2)) packaging/icon.png --out "icon.iconset/icon_${s}x${s}@2x.png" >/dev/null
+          done
+          iconutil -c icns icon.iconset -o "$app/Contents/Resources/icon.icns"
+          cat > "$app/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Speaker Sim</string>
+            <key>CFBundleDisplayName</key><string>Speaker Sim</string>
+            <key>CFBundleExecutable</key><string>Speaker Sim</string>
+            <key>CFBundleIdentifier</key><string>io.github.devfrp.speakersim</string>
+            <key>CFBundleIconFile</key><string>icon</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>$v</string>
+            <key>CFBundleVersion</key><string>$v</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+            <key>NSHumanReadableCopyright</key><string>© 2026 devfrp — MIT</string>
+          </dict>
+          </plist>
+          EOF
+          "$app/Contents/MacOS/Speaker Sim" --export "$RUNNER_TEMP/export"
           for f in ir_LL.wav speaker-sim.txt speaker-sim-true-stereo.wav; do test -f "$RUNNER_TEMP/export/$f"; done
-          codesign --force --deep --sign - "dist/Speaker Sim.app"
-          mkdir dmg && cp -R "dist/Speaker Sim.app" dmg/ && ln -s /Applications dmg/Applications
+          codesign --force --deep --sign - "$app"
+          mkdir dmg && cp -R "$app" dmg/ && ln -s /Applications dmg/Applications
           hdiutil create -volname "Speaker Sim" -srcfolder dmg -ov -format UDZO "dist/${{ matrix.asset }}"
 
       - name: Envoi dans la release

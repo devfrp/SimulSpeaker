@@ -5,21 +5,31 @@ on:
     branches: [master]
   pull_request:
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   tests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: speaker-sim
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          python-version: "3.12"
-      - name: Dépendances
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -yq libmysofa1 shellcheck
-          pip install numpy scipy requests h5py
-      - name: Tests unitaires
-        working-directory: speaker-sim
-        run: python -m unittest discover -s tests -t . -v
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: speaker-sim
+      - name: KEMAR système (test du lecteur SOFA)
+        run: sudo apt-get update -q && sudo apt-get install -yq libmysofa1 shellcheck
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: "Tests (sans réseau, PipeWire ni systemd, tous simulés)"
+        run: cargo test --workspace --locked
+      - name: Sans interface graphique
+        run: cargo check --no-default-features --locked
       - name: ShellCheck (install.sh)
+        working-directory: .
         run: shellcheck install.sh
