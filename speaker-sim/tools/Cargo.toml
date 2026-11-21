@@ -3,3 +3,17 @@ name = "speaker-sim-tools"
 version = "0.0.0"
 edition = "2024"
 publish = false
+description = "Outils développeur de Speaker Sim : catalogue d'enceintes, icônes"
+
+[[bin]]
+name = "speaker-sim-tools"
+path = "src/main.rs"
+
+[dependencies]
+speaker_sim = { path = "..", package = "speaker-sim", default-features = false }
+clap = { version = "4", features = ["derive"] }
+ico = "0.6"
+resvg = { version = "0.50", default-features = false }
+serde_json = { version = "1", features = ["preserve_order"] }
+ureq = "3"
+serde = "1"
