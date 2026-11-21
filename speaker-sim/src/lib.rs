@@ -11,3 +11,5 @@ pub mod dsp;
 pub mod i18n;
 pub mod logging;
 pub mod system;
+#[cfg(feature = "gui")]
+pub mod ui;
