@@ -30,35 +30,29 @@ Applications ──► [Speaker Sim] (sortie virtuelle, devient la sortie par d�
 | **Windows** | export → Equalizer APO | [`SpeakerSim-Windows-x64.exe`](https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-Windows-x64.exe) |
 | **macOS** | export → convolveur | [Apple Silicon](https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-macOS-AppleSilicon.dmg) · [Intel](https://github.com/devfrp/SimulSpeaker/releases/latest/download/SpeakerSim-macOS-Intel.dmg) |
 
-Le script Linux n'a pas besoin de root. Il installe dans `~/.local/share/devfrp-speaker-sim`
-et ajoute la commande `speaker-sim` ainsi qu'une entrée de menu. Options (après `bash -s --`) :
-`--uninstall`, `--purge`, `--ref v1.0.0`, `--no-desktop`. Relancez la même commande pour
+Le script Linux n'a pas besoin de root. Il télécharge un binaire unique et autonome (x86_64 ;
+les autres architectures sont compilées depuis les sources avec `cargo`) dans
+`~/.local/share/devfrp-speaker-sim` et ajoute la commande `speaker-sim` ainsi qu'une entrée
+de menu. Il remplace aussi une ancienne installation Python en gardant vos réglages.
+Options (après `bash -s --`) : `--uninstall`, `--purge`, `--ref v1.0.0`, `--no-desktop`. Relancez la même commande pour
 mettre à jour. Les binaires Windows et macOS ne sont pas signés. Sous Windows : SmartScreen
 → *Informations* → *Exécuter quand même*. Sous macOS : clic droit → *Ouvrir* la première fois.
 
 <details>
 <summary>Depuis les sources</summary>
 
-Paquets système (Arch / Omarchy) :
-
-```bash
-sudo pacman -S --needed pipewire wireplumber libmysofa python-numpy python-scipy \
-    python-requests python-pyqt6
-```
-
-Debian/Ubuntu : `sudo apt install pipewire wireplumber libmysofa1 python3-numpy
-python3-scipy python3-requests python3-pyqt6`.
-
-Ou dans un environnement virtuel (libmysofa reste un paquet système) :
+Speaker Sim est écrit en Rust (≥ 1.85, [rustup](https://rustup.rs)). À l'exécution, il n'a
+besoin que de PipeWire et WirePlumber (`pw-dump`, `wpctl`) et de systemd ; tout le reste,
+lecteur SOFA compris, est intégré.
 
 ```bash
 cd speaker-sim
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-python3 main.py
+cargo run --release                          # interface graphique
+cargo run --release -- --help                # ligne de commande
+cargo build --release --no-default-features  # sans interface (moteur, ligne de commande, hooks systemd)
 ```
 
-PySide6 fonctionne à la place de PyQt6 (repli automatique, voir `qt_compat.py`).
+Le binaire est `target/release/speaker-sim`.
 </details>
 
 ## Fonctionnalités
@@ -143,7 +137,7 @@ IR[s][e] = HP⁻¹ · ( DF⁻¹ · ( LW · Direct[s][e] + ER · Réflexions[s][e
 ### Interface graphique
 
 ```bash
-speaker-sim            # ou : python3 speaker-sim/main.py
+speaker-sim            # ou : cargo run --release (dans speaker-sim/)
 ```
 
 1. **01 Casque** : tapez quelques mots (« hd 650 oratory ») et choisissez votre modèle,
@@ -182,7 +176,7 @@ speaker-sim --export ~/irs                     # filtres portables (WAV, true st
 - `speaker-sim.txt` pour **Equalizer APO ≥ 1.2** : copiez le dossier dans
   `C:\Program Files\EqualizerAPO\config\` et ajoutez `Include: speaker-sim.txt` à `config.txt`.
 
-Sur ces systèmes, un lecteur SOFA en Python (h5py) remplace libmysofa.
+Le même binaire fonctionne partout : son lecteur SOFA est intégré, aucune bibliothèque à installer.
 
 ## Fichiers
 
@@ -211,23 +205,21 @@ la connexion) ; désactiver l'option les supprime.
 ## Dépôt
 
 ```
-speaker-sim/            application Python (voir speaker-sim/README.md)
+speaker-sim/            application Rust (voir speaker-sim/README.md)
 install.sh              installation Linux (curl | bash)
 docs/                   site GitHub Pages
-.github/workflows/      CI (tests), Release (.exe / .dmg), Site (Pages)
+.github/workflows/      CI (clippy, tests), Release (Linux / .exe / .dmg), Site (Pages)
 ```
 
 Publier une version : `git tag vX.Y.Z && git push origin vX.Y.Z`. GitHub Actions construit
-l'exe Windows et les apps macOS, et teste chaque binaire en exportant de vrais filtres.
+le binaire Linux, l'exe Windows et les apps macOS, et teste chaque binaire en exportant de vrais filtres.
 Il crée ensuite la release avec les sommes SHA-256.
 
-Lancer les tests : `cd speaker-sim && python3 -m unittest discover -s tests -t .`. Ils
+Lancer les tests : `cd speaker-sim && cargo test --workspace`. Ils
 n'ont besoin ni du réseau, ni de PipeWire, ni de systemd (tous simulés).
 
 ## Dépannage
 
-- **« libmysofa introuvable »** : installez `libmysofa`, ou laissez l'application passer
-  par h5py (l'installateur l'ajoute si besoin).
 - **Le service s'arrête aussitôt** : `journalctl --user -u 'devfrp-speaker-sim-py*' -n 50`.
 - **Pas de son** : `wpctl status` doit montrer *Speaker Sim* comme sortie par défaut et
   `devfrp_speaker_sim_py_a.output` (ou `_b`) relié au casque.

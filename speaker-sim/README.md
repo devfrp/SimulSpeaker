@@ -1,4 +1,4 @@
-# speaker-sim — application package
+# speaker-sim — application crate
 
 The user documentation lives in the [repository README](../README.md)
 ([version française](../README.fr.md)). This file describes the code.
@@ -7,26 +7,39 @@ The user documentation lives in the [repository README](../README.md)
 
 | Module | Role |
 |---|---|
-| `main.py` | entry point: GUI, command line, systemd hooks (`--hook-started/--hook-stopped <slot>`) |
-| `app.py` | `SpeakerSimApp`: orchestrates everything, no Qt (A/B switching, imports, export) |
-| `audio_engine.py` | DSP: AutoEq EQs, CEA-2034 (file or computed from polar data), minimum phase, room materials and RT60 per octave, image sources, HRTF (libmysofa or h5py), rendering |
-| `ui_panel.py` | Qt 6 interface: room plan, response and RT60 meters, side panels, background workers |
-| `config.py` | XDG/OS paths, validated settings, room presets, runtime state |
-| `download.py` | pinned downloads and cache (AutoEq, Spinorama, KEMAR, AutoEq targets) |
-| `system.py` | PipeWire (`pw-dump`, `wpctl`), filter-chain config, systemd A/B units, hooks |
-| `qt_compat.py` | PyQt6, or PySide6 as a fallback |
-| `i18n.py` | interface language: French source strings, English dictionary (`tr`, `trf`, `tr_message`) |
-| `packaging/` | icon, PyInstaller spec (Windows exe, macOS app), bundled fonts |
-| `tools/` | developer scripts that regenerate `data/speakers.json` |
-| `data/` | speaker catalogue (130 entries) and default settings |
+| `src/main.rs` | entry point: GUI, command line, systemd hooks (`--hook-started/--hook-stopped <slot>`) |
+| `src/app.rs` | `SpeakerSimApp`: orchestrates everything, no GUI (A/B switching, imports, export) |
+| `src/audio_engine.rs` | AutoEq EQs, CEA-2034 (file or computed from polar data), room materials and RT60 per octave, image sources, HRTF (SOFA reader `sofar`), rendering |
+| `src/dsp.rs` | FFT, minimum phase, biquads, Butterworth (SOS), zero-phase filtering, smoothing, noise |
+| `src/ui/` | egui interface: room plan, response and RT60 meters, side panels, settings tabs, background worker |
+| `src/config.rs` | XDG/OS paths, validated settings, room presets, runtime state |
+| `src/download.rs` | pinned downloads and cache (AutoEq, Spinorama, KEMAR, AutoEq targets) |
+| `src/system.rs` | PipeWire (`pw-dump`, `wpctl`), filter-chain config, systemd A/B units, hooks |
+| `src/i18n.rs` | interface language: French source strings, English dictionary (`tr`, `trf`, `tr_message`) |
+| `src/logging.rs` | log file in the state folder |
+| `tests/` | integration tests; network, PipeWire and systemd are simulated (`tests/common`) |
+| `examples/render_offline.rs` | render the four IRs without PipeWire or GUI |
+| `tools/` | developer commands: regenerate `data/speakers.json`, render the icons |
+| `packaging/` | icon (SVG, PNG, ICO) and bundled fonts |
+| `data/` | speaker catalogue (130 entries) and default settings, embedded in the binary |
+
+The `gui` feature (default) adds the egui interface; without it the binary keeps the
+engine, the command line and the systemd hooks.
 
 ## Development
 
 ```bash
-python3 main.py                                   # GUI
-python3 -m unittest discover -s tests -t .        # tests (no network / PipeWire / systemd)
-pyinstaller --noconfirm packaging/speaker-sim.spec  # standalone binary
+cargo run --release                                  # GUI
+cargo test --workspace                               # tests (no network / PipeWire / systemd)
+cargo clippy --workspace --all-targets -- -D warnings
+cargo run --release --example render_offline -- "Genelec 8030C" "oratory1990/over-ear/Sennheiser HD 650" /tmp/irs
+cargo run -p speaker-sim-tools -- catalog [metadata.json]         # regenerate data/speakers.json
+cargo run -p speaker-sim-tools -- studio-monitors metadata.json   # add the studio monitors
+cargo run -p speaker-sim-tools -- icons                           # icon.svg → icon.png, icon.ico
 ```
 
-Interface strings are written in French and translated to English by `i18n.py`; add new
-visible texts to its `EN` dictionary. Code comments and docstrings are in French.
+Releases are built by `.github/workflows/release.yml` (`cargo build --release`, then a
+`.app`/`.dmg` on macOS).
+
+Interface strings are written in French and translated to English by `src/i18n.rs`; add new
+visible texts to its `EN` dictionary. Code comments and doc comments are in French.
