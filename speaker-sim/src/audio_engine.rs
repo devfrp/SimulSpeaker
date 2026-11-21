@@ -123,7 +123,7 @@ pub fn parse_parametric_eq(text: &str) -> HeadphoneEq {
         let Some(kind) = BiquadKind::from_apo(&c["kind"]) else { continue };
         let Some(fc) = parse_float(&c["fc"]) else { continue };
         let gain = c.name("gain").and_then(|m| parse_float(m.as_str())).unwrap_or(0.0);
-        #[allow(clippy::approx_constant)] // même valeur par défaut que la version Python
+        #[allow(clippy::approx_constant)] // Q par défaut des fichiers Equalizer APO (0.7071, et non 1/√2 exact)
         let q = c.name("q").and_then(|m| parse_float(m.as_str())).unwrap_or(0.7071);
         eq.filters.push(Biquad::new(kind, fc, gain, q));
     }
