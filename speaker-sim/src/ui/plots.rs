@@ -5,15 +5,17 @@ use eframe::egui::{self, Align2, Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use super::style::{alpha, mono, pal};
 use crate::i18n::{num, tr};
 
-/// Enceinte en signal cobalt, casque grisé, oreille en blanc.
-fn colors() -> [Color32; 3] {
+/// Enceinte en signal cobalt, casque grisé.
+fn colors() -> [Color32; 2] {
     let p = pal();
-    [p.signal, p.muted, p.text]
+    [p.signal, p.muted]
 }
-const NAMES: [&str; 3] = ["enceinte", "casque", "oreille"];
+const NAMES: [&str; 2] = ["enceinte", "casque"];
 
-/// Réponse simulée : enceinte, correction du casque, oreille (recalées sur 200 Hz – 2 kHz).
+/// Réponse simulée : enceinte et correction du casque (recalées sur 200 Hz – 2 kHz).
+/// La courbe « oreille » du rendu n'est pas affichée.
 pub fn response_plot(ui: &mut Ui, freqs: Option<&[f64]>, curves: &[(String, Vec<f64>)]) {
+    let curves = &curves[..curves.len().min(NAMES.len())];
     let size = Vec2::new(ui.available_width(), ui.available_height().max(90.0));
     let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
     let p = ui.painter_at(rect);
@@ -42,12 +44,12 @@ pub fn response_plot(ui: &mut Ui, freqs: Option<&[f64]>, curves: &[(String, Vec<
             freqs.iter().zip(values).filter(|(f, _)| (200.0..=2000.0).contains(*f)).map(|(_, v)| *v).collect();
         let offset = if band.is_empty() { 0.0 } else { band.iter().sum::<f64>() / band.len() as f64 };
         let pts: Vec<Pos2> = freqs.iter().zip(values).map(|(f, v)| Pos2::new(x_of(*f), y_of(v - offset))).collect();
-        p.add(egui::Shape::line(pts, Stroke::new(1.8, alpha(colors()[i % 3], 230))));
+        p.add(egui::Shape::line(pts, Stroke::new(1.8, alpha(colors()[i % 2], 230))));
     }
     let mut x = r.left();
     for (i, (name, _)) in curves.iter().enumerate() {
         let short = if i < NAMES.len() { tr(NAMES[i]) } else { name.clone() };
-        p.rect_filled(Rect::from_min_size(Pos2::new(x, rect.top() + 8.0), Vec2::new(12.0, 2.0)), 0.0, colors()[i % 3]);
+        p.rect_filled(Rect::from_min_size(Pos2::new(x, rect.top() + 8.0), Vec2::new(12.0, 2.0)), 0.0, colors()[i % 2]);
         let g = p.layout_no_wrap(short, mono(10.0), alpha(pal().text, 210));
         let w = g.size().x;
         p.galley(Pos2::new(x + 16.0, rect.top() + 2.0), g, pal().text);
