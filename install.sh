@@ -104,7 +104,9 @@ done
   → $(pkg_hint)"
 
 # --- Version ------------------------------------------------------------------
+REF_AUTO=0
 if [ -z "$REF" ]; then
+  REF_AUTO=1
   REF="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
          | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n1 || true)"
   [ -n "$REF" ] || REF="master"
@@ -144,6 +146,11 @@ build_from_source() {
 if [ -z "${SPEAKER_SIM_TARBALL:-}" ] && fetch_release; then
   say "Téléchargement de Speaker Sim $REF (binaire précompilé)…"
 else
+  # Dernière release sans binaire Linux (versions Python ≤ 1.2) : sources de master.
+  if [ "$REF_AUTO" -eq 1 ] && [ "$REF" != "master" ]; then
+    warn "La release $REF n'a pas de binaire Linux : compilation de master."
+    REF="master"
+  fi
   build_from_source
 fi
 chmod +x "$TMP/speaker-sim"
