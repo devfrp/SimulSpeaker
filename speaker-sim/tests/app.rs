@@ -299,6 +299,10 @@ fn ab_switch_keeps_both_configurations() {
     assert_eq!((s.bass_db, s.room_preset.as_str()), (-4.0, "studio"));
     assert_eq!(make_app(&paths).ab_slot(), "B");
     assert!(app.ab_switch("C").is_err());
+    // L'apparence n'est pas comparée : elle ne change pas avec la configuration.
+    app.update_settings(&changes(json!({"theme": "dark"}))).unwrap();
+    app.ab_switch("A").unwrap();
+    assert_eq!(app.settings().theme, "dark");
 }
 
 // --- Imports -----------------------------------------------------------------------------

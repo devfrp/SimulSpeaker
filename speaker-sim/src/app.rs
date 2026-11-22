@@ -52,7 +52,7 @@ pub type HrtfFactory =
 
 /// Réglages qui ne font pas partie du son comparé (A/B) : matériel, système, interface.
 pub const AB_EXCLUDED: &[&str] =
-    &["headphone", "output_sink", "sample_rate", "autostart", "language", "sofa_file", "ir_length_ms", "extra"];
+    &["headphone", "output_sink", "sample_rate", "autostart", "language", "theme", "sofa_file", "ir_length_ms", "extra"];
 
 /// Résumé de la correction du casque courant.
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -241,6 +241,8 @@ pub struct Settings {
     pub advanced_enabled: bool,
     /// "fr", "en" ; "" = langue du système.
     pub language: String,
+    /// "auto" (système), "light", "dark".
+    pub theme: String,
     pub room_amount: f64,
     pub reflection_order: i64,
     pub diffuse_field_eq: bool,
@@ -295,6 +297,7 @@ impl Default for Settings {
             placement_custom: true,
             advanced_enabled: true,
             language: String::new(),
+            theme: "auto".into(),
             room_amount: 1.0,
             reflection_order: 2,
             diffuse_field_eq: true,
@@ -375,7 +378,7 @@ settings_fields!(m;
     bool treatment_per_wall, f64 treatment_front, f64 treatment_sides, f64 treatment_rear,
     f64 treatment_ceiling, f64 balance_db, f64 bass_db, f64 treble_db, bool tone_enabled,
     bool treatment_enabled, bool late_enabled, bool placement_custom, bool advanced_enabled,
-    str language, f64 room_amount, int reflection_order, bool diffuse_field_eq,
+    str language, str theme, f64 room_amount, int reflection_order, bool diffuse_field_eq,
     bool headphone_eq_enabled, f64 preamp_db, int ir_length_ms, str sofa_file, bool autostart,
 );
 
@@ -420,6 +423,7 @@ pub const CHOICES: &[(&str, &[&str])] = &[
     ("room_furniture", &["empty", "furnished", "full"]),
     ("room_absorber", &["foam5", "wool10", "wool20"]),
     ("language", &["", "fr", "en"]),
+    ("theme", &["auto", "light", "dark"]),
 ];
 
 impl Settings {
@@ -463,6 +467,7 @@ impl Settings {
             "room_furniture" => &mut self.room_furniture,
             "room_absorber" => &mut self.room_absorber,
             "language" => &mut self.language,
+            "theme" => &mut self.theme,
             _ => unreachable!("choix inconnu : {name}"),
         }
     }

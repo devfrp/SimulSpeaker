@@ -135,10 +135,11 @@ pub struct GuiApp {
 
 impl GuiApp {
     fn new(cc: &eframe::CreationContext<'_>, app: SpeakerSimApp) -> Self {
+        let s = app.settings();
         style::install_fonts(&cc.egui_ctx);
+        style::set_dark(style::resolve_mode(&s.theme, system_dark(&cc.egui_ctx)));
         style::install_style(&cc.egui_ctx);
         let (tx, rx) = channel();
-        let s = app.settings();
         let extra = |k: &str| s.extra.get(k).cloned();
         let analysis_tab = extra("analysis_tab").and_then(|v| v.as_u64()).filter(|t| *t <= 1).unwrap_or(1) as usize;
         let mut gui = GuiApp {
@@ -298,7 +299,7 @@ impl GuiApp {
             self.busy = true;
         }
         if !silent {
-            self.status = tr_message(opts.message).to_uppercase();
+            self.status = tr_message(opts.message);
             self.progress = 0.0;
         }
         let id = self.next_task;
@@ -367,7 +368,7 @@ impl GuiApp {
                 TaskMsg::Progress(id, f, m) => {
                     if self.handlers.get(&id).is_some_and(|h| !h.silent) {
                         self.progress = f as f32;
-                        self.status = tr_message(&m).to_uppercase();
+                        self.status = tr_message(&m);
                     }
                 }
                 TaskMsg::Done(id, value) => {
@@ -559,6 +560,19 @@ impl GuiApp {
         self.status = trf("CONFIGURATION {slot}", &[("slot", slot)]);
     }
 
+    fn on_theme(&mut self, mode: &str) {
+        if self.try_update(changes(json!({"theme": mode}))) {
+            self.apply_theme();
+        }
+    }
+
+    /// Applique le thème réglé (« auto » : celui du système, suivi à chaque image).
+    fn apply_theme(&self) {
+        if style::set_dark(style::resolve_mode(&self.s.theme, system_dark(&self.ctx))) {
+            style::install_style(&self.ctx);
+        }
+    }
+
     fn on_language(&mut self, code: &str) {
         if self.try_update(changes(json!({"language": code}))) {
             set_language(code);
@@ -630,7 +644,7 @@ impl GuiApp {
                 self.reload_settings();
                 self.reload_headphones();
                 self.hp_reveal = true;
-                self.status = trf("CASQUE IMPORTÉ : {x}", &[("x", &entry.label())]).to_uppercase();
+                self.status = trf("CASQUE IMPORTÉ : {x}", &[("x", &entry.label())]);
                 self.mark_dirty();
             }
             Err(e) => self.error(tr_message(&e.0)),
@@ -667,7 +681,7 @@ impl GuiApp {
         else {
             return;
         };
-        let shown = folder.display().to_string().to_uppercase();
+        let shown = folder.display().to_string();
         let dest = folder.clone();
         self.run_task(
             move |app, p| app.export(&dest, Some(p)),
@@ -726,8 +740,14 @@ fn summary_text(s: HeadphoneSummary) -> String {
 impl eframe::App for GuiApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.pump();
+        self.apply_theme();
         self.draw(ui);
     }
+}
+
+/// Le système est-il en mode sombre ? (clair en cas de doute)
+fn system_dark(ctx: &egui::Context) -> bool {
+    ctx.system_theme() == Some(egui::Theme::Dark)
 }
 
 pub fn run() -> ExitCode {

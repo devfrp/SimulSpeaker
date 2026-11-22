@@ -2,15 +2,15 @@
 //! réglages en onglets (chacun avec son interrupteur), pied de page et dialogues.
 
 use eframe::egui::{
-    self, Align, Color32, CornerRadius, FontId, Frame, Id, Layout, Margin, Pos2, Rect, RichText, Sense,
+    self, Align, CornerRadius, FontId, Frame, Id, Layout, Margin, Pos2, Rect, RichText, Sense,
     Stroke, StrokeKind, TextEdit, Ui, UiBuilder, Vec2,
     text::{LayoutJob, TextFormat},
 };
 use serde_json::{Value, json};
 
 use super::style::{
-    self, AMBER, BG, BORDER, BORDER_STRONG, DIM, MUTED, PANEL, PANEL2, TEAL, TEXT, alpha, body, caption, chip,
-    mono, muted, muted_wrap, section_title, segmented, segmented_width, switch, tag, toggle,
+    self, body, caption, chip, label_font, mono, muted, muted_wrap, pal, section_title, segmented, segmented_width,
+    switch, tag, toggle,
 };
 use super::{Dialog, GuiApp, plan, plots};
 use crate::app::changes;
@@ -85,7 +85,7 @@ fn balance(v: f64) -> String {
 
 /// Peint une carte dans `rect` et renvoie l'interface intérieure.
 fn card_in(ui: &mut Ui, rect: Rect, margin: Margin) -> Ui {
-    ui.painter().rect(rect, CornerRadius::same(14), PANEL, Stroke::new(1.0, BORDER), StrokeKind::Inside);
+    ui.painter().rect(rect, CornerRadius::same(8), pal().paper, Stroke::new(1.0, pal().rule), StrokeKind::Inside);
     let inner = Rect::from_min_max(
         rect.min + Vec2::new(f32::from(margin.left), f32::from(margin.top)),
         rect.max - Vec2::new(f32::from(margin.right), f32::from(margin.bottom)),
@@ -115,7 +115,7 @@ fn groups(ui: &mut Ui, specs: &[(&str, f32, f32)], mut content: impl FnMut(usize
 }
 
 fn hint(text: String) -> RichText {
-    RichText::new(text).color(MUTED)
+    RichText::new(text).color(pal().ink_faint)
 }
 
 fn search_field(ui: &mut Ui, query: &mut String, placeholder: String, enabled: bool) -> bool {
@@ -135,15 +135,16 @@ fn search_field(ui: &mut Ui, query: &mut String, placeholder: String, enabled: b
     changed
 }
 
-/// Ligne de liste sélectionnable (survol, sélection ambre).
+/// Ligne de liste sélectionnable (survol, sélection en lavis cobalt).
 fn list_row(ui: &mut Ui, text: &str, selected: bool) -> egui::Response {
+    let p = pal();
     let (rect, resp) = ui.allocate_exact_size(Vec2::new(ui.available_width(), 28.0), Sense::click());
     if selected {
-        ui.painter().rect_filled(rect, CornerRadius::same(6), alpha(AMBER, 40));
+        ui.painter().rect_filled(rect, CornerRadius::same(4), p.accent_wash);
     } else if resp.hovered() {
-        ui.painter().rect_filled(rect, CornerRadius::same(6), PANEL2);
+        ui.painter().rect_filled(rect, CornerRadius::same(4), p.paper2);
     }
-    let color = if selected { AMBER } else { TEXT };
+    let color = if selected { p.accent_deep } else { p.ink };
     let galley = ui.painter().layout(text.to_string(), body(13.0), color, rect.width() - 16.0);
     let galley = if galley.rows.len() > 1 {
         let mut job = LayoutJob::simple_singleline(text.to_string(), body(13.0), color);
@@ -163,7 +164,7 @@ impl GuiApp {
         let live = self.app.supports_live;
         egui::Panel::top("topbar")
             .frame(
-                Frame::new().fill(Color32::from_rgba_unmultiplied(20, 21, 26, 235)).inner_margin(Margin {
+                Frame::new().fill(pal().paper).inner_margin(Margin {
                     left: 18,
                     right: 14,
                     top: 6,
@@ -171,23 +172,23 @@ impl GuiApp {
                 }),
             )
             .show(root, |ui| self.topbar(ui, live));
-        egui::Panel::top("progress").exact_size(2.0).frame(Frame::new().fill(BG)).show_separator_line(false).show(root, |ui| {
+        egui::Panel::top("progress").exact_size(2.0).frame(Frame::new().fill(pal().paper2)).show_separator_line(false).show(root, |ui| {
             let r = ui.max_rect();
             if self.progress > 0.0 {
                 let w = r.width() * self.progress.clamp(0.0, 1.0);
-                ui.painter().rect_filled(Rect::from_min_size(r.min, Vec2::new(w, 2.0)), 0.0, AMBER);
+                ui.painter().rect_filled(Rect::from_min_size(r.min, Vec2::new(w, 2.0)), 0.0, pal().accent);
             }
         });
         egui::Panel::bottom("footer")
-            .frame(Frame::new().fill(BG).inner_margin(Margin { left: 18, right: 18, top: 3, bottom: 3 }))
+            .frame(Frame::new().fill(pal().paper).inner_margin(Margin { left: 18, right: 18, top: 3, bottom: 3 }))
             .show(root, |ui| self.footer(ui));
         egui::Panel::bottom("settings")
-            .frame(Frame::new().fill(BG).inner_margin(Margin { left: 14, right: 14, top: 0, bottom: 8 }))
+            .frame(Frame::new().fill(pal().paper2).inner_margin(Margin { left: 14, right: 14, top: 0, bottom: 8 }))
             .show_separator_line(false)
             .resizable(false)
             .show(root, |ui| self.settings_band(ui, live));
         egui::CentralPanel::default()
-            .frame(Frame::new().fill(BG).inner_margin(Margin { left: 14, right: 14, top: 10, bottom: 8 }))
+            .frame(Frame::new().fill(pal().paper2).inner_margin(Margin { left: 14, right: 14, top: 10, bottom: 8 }))
             .show(root, |ui| self.upper(ui));
         self.dialogs(root.ctx());
     }
@@ -196,10 +197,7 @@ impl GuiApp {
     fn topbar(&mut self, ui: &mut Ui, live: bool) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 14.0;
-            let mut job = LayoutJob::default();
-            job.append("● ", 0.0, TextFormat::simple(FontId::new(15.0, style::mono_bold()), TEAL));
-            job.append("speaker-sim", 0.0, TextFormat::simple(FontId::new(15.0, style::mono_bold()), TEXT));
-            ui.label(job);
+            ui.label(RichText::new("speaker-sim").font(FontId::new(17.0, style::display())).color(pal().ink));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 14.0;
                 if live {
@@ -222,7 +220,7 @@ impl GuiApp {
                     }
                 });
                 let label = tr("Réglages");
-                let w = ui.painter().layout_no_wrap(label.clone(), mono(11.0), TEXT).size().x + 24.0;
+                let w = ui.painter().layout_no_wrap(label.clone(), label_font(12.0), pal().ink).size().x + 28.0;
                 let resp = chip(ui, &label, self.show_settings, w)
                     .on_hover_text(tr("Déplier / replier les réglages (les onglets restent visibles)"));
                 if resp.clicked() {
@@ -239,6 +237,15 @@ impl GuiApp {
                 })
                 .response
                 .on_hover_text(tr("Langue de l'interface"));
+                let themes: Vec<(String, String)> =
+                    [("auto", "Auto"), ("light", "Clair"), ("dark", "Sombre")].iter().map(|(k, t)| ((*k).to_string(), tr(t))).collect();
+                ui.allocate_ui(Vec2::new(170.0, 30.0), |ui| {
+                    if let Some(mode) = segmented_width(ui, &themes, Some(&self.s.theme), 170.0) {
+                        self.on_theme(&mode);
+                    }
+                })
+                .response
+                .on_hover_text(tr("Apparence : comme le système, claire ou sombre"));
                 let ab = vec![("A".to_string(), "A".to_string()), ("B".to_string(), "B".to_string())];
                 ui.allocate_ui(Vec2::new(64.0, 28.0), |ui| {
                     if let Some(slot) = segmented_width(ui, &ab, Some(&self.app.ab_slot()), 64.0) {
@@ -281,9 +288,9 @@ impl GuiApp {
         let mut job = LayoutJob::default();
         for (i, part) in parts.iter().enumerate() {
             if i > 0 {
-                job.append(" → ", 0.0, TextFormat::simple(mono(12.0), AMBER));
+                job.append(" → ", 0.0, TextFormat::simple(mono(12.0), pal().accent));
             }
-            job.append(part, 0.0, TextFormat::simple(mono(12.0), MUTED));
+            job.append(part, 0.0, TextFormat::simple(mono(12.0), pal().ink_muted));
         }
         job.wrap.max_rows = 1;
         job.wrap.break_anywhere = true;
@@ -296,11 +303,11 @@ impl GuiApp {
 
     fn footer(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
-            ui.label(RichText::new(&self.status).font(mono(11.0)).color(MUTED));
+            ui.label(RichText::new(&self.status).font(mono(11.0)).color(pal().ink_muted));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 if let Some(r) = &self.result {
                     let notes: Vec<String> = r.notes.iter().map(|n| crate::i18n::tr_message(n)).collect();
-                    ui.label(RichText::new(format!("GAIN {:+.1} DB · {} HZ", r.gain_db, r.fs)).font(mono(11.0)).color(MUTED))
+                    ui.label(RichText::new(format!("GAIN {:+.1} DB · {} HZ", r.gain_db, r.fs)).font(mono(11.0)).color(pal().ink_muted))
                         .on_hover_text(notes.join("\n"));
                 }
             });
@@ -352,7 +359,7 @@ impl GuiApp {
             let view = self.view_settings();
             let rt = self.app.room_spec(Some(&view)).rt60_bands();
             plots::rt_meter(&mut an, &rt);
-            caption(&mut an, "zone sarcelle : 0,2–0,4 s, écoute critique");
+            caption(&mut an, "bande claire : 0,2–0,4 s, écoute critique");
         }
     }
 
@@ -377,7 +384,7 @@ impl GuiApp {
                 area = area.vertical_scroll_offset((pos as f32 * (row_h + ui.spacing().item_spacing.y) - list_h / 2.0).max(0.0));
             }
         }
-        Frame::new().fill(BG).stroke(Stroke::new(1.0, BORDER)).corner_radius(CornerRadius::same(10)).inner_margin(Margin::same(4)).show(ui, |ui| {
+        Frame::new().fill(pal().paper).stroke(Stroke::new(1.0, pal().rule)).corner_radius(CornerRadius::same(6)).inner_margin(Margin::same(4)).show(ui, |ui| {
             ui.set_height(list_h);
             area.show_rows(ui, row_h, self.hp_filtered.len(), |ui, range| {
                 for &i in &self.hp_filtered[range] {
@@ -400,14 +407,13 @@ impl GuiApp {
         });
         let count = match (&self.hp_error, self.hp_loaded) {
             (Some(msg), _) => trf("INDEX INDISPONIBLE : {msg}", &[("msg", msg)]),
-            (None, false) => tr("chargement de l'index autoeq…").to_uppercase(),
+            (None, false) => style::sentence(&tr("chargement de l'index autoeq…")),
             (None, true) => trf(
                 "{shown} / {total} mesures",
                 &[("shown", &self.hp_filtered.len().to_string()), ("total", &self.hp_entries.len().to_string())],
-            )
-            .to_uppercase(),
+            ),
         };
-        ui.add(egui::Label::new(RichText::new(count).font(mono(11.0)).color(MUTED)).truncate());
+        ui.add(egui::Label::new(RichText::new(count).font(mono(11.0)).color(pal().ink_muted)).truncate());
         ui.horizontal(|ui| {
             let mut on = self.s.headphone_eq_enabled;
             if toggle(ui, &mut on, "Correction").on_hover_text(tr("Appliquer la correction du casque (AutoEq ou import)")).changed() {
@@ -450,7 +456,7 @@ impl GuiApp {
         let current = self.s.speaker_id.clone();
         let mut chosen = None;
         let reveal = std::mem::take(&mut self.spk_reveal);
-        Frame::new().fill(BG).stroke(Stroke::new(1.0, BORDER)).corner_radius(CornerRadius::same(10)).inner_margin(Margin::same(4)).show(ui, |ui| {
+        Frame::new().fill(pal().paper).stroke(Stroke::new(1.0, pal().rule)).corner_radius(CornerRadius::same(6)).inner_margin(Margin::same(4)).show(ui, |ui| {
             let h = ui.available_height().max(90.0);
             ui.set_height(h);
             egui::ScrollArea::vertical().id_salt("spk_list").auto_shrink([false, false]).show(ui, |ui| {
@@ -509,7 +515,7 @@ impl GuiApp {
                     trf("traitement {p} %", &[("p", &format!("{:.0}", room.treatment * 100.0))])
                 };
                 let hud = format!("RT60 {} s  ·  Dc {} m  ·  {treat}", num(room.rt60(), 2), num(room.critical_distance(), 2));
-                ui.add(egui::Label::new(RichText::new(hud.to_uppercase()).font(mono(11.0)).color(MUTED)).truncate());
+                ui.add(egui::Label::new(RichText::new(hud).font(mono(11.0)).color(pal().ink_muted)).truncate());
             });
         });
         if let Some(change) = plan::room_plan(ui, &mut self.plan, &eff, &room) {
@@ -588,21 +594,22 @@ impl GuiApp {
                 let inert = ROOM_DEPENDENT.contains(key) && !self.s.room_enabled;
                 let current = self.settings_tab == *key;
                 let (rect, _) = ui.allocate_exact_size(Vec2::new(w, 32.0), Sense::hover());
-                let (fill, stroke) = if current { (PANEL2, AMBER) } else { (PANEL, BORDER) };
-                ui.painter().rect(rect, CornerRadius::same(9), fill, Stroke::new(1.0, stroke), StrokeKind::Inside);
+                let p = pal();
+                let (fill, stroke) = if current { (p.accent_wash, p.accent) } else { (p.paper, p.rule) };
+                ui.painter().rect(rect, CornerRadius::same(6), fill, Stroke::new(1.0, stroke), StrokeKind::Inside);
                 let sw_rect = Rect::from_center_size(Pos2::new(rect.right() - 8.0 - 12.0, rect.center().y), Vec2::new(24.0, 13.0));
                 let label_rect = Rect::from_min_max(rect.min, Pos2::new(sw_rect.left() - 4.0, rect.max.y));
                 let label = ui.interact(label_rect, Id::unique(("tab", *key)), Sense::click());
                 let color = if label.hovered() {
-                    AMBER
+                    p.accent_deep
                 } else if inert {
-                    DIM
+                    p.ink_faint
                 } else if !on {
-                    MUTED
+                    p.ink_muted
                 } else {
-                    TEXT
+                    p.ink
                 };
-                let mut job = LayoutJob::simple_singleline(tr(title), body(12.0), color);
+                let mut job = LayoutJob::simple_singleline(tr(title), body(13.0), color);
                 job.wrap.max_width = label_rect.width() - 12.0;
                 job.wrap.max_rows = 1;
                 job.wrap.break_anywhere = true;
@@ -846,11 +853,11 @@ impl GuiApp {
                     }
                     Some(e) => {
                         style::big_name(ui, &e.name);
-                        style::caption_raw(ui, &format!("{} · {}", e.source, e.rig).to_uppercase());
+                        style::caption_raw(ui, &format!("{} · {}", e.source, e.rig));
                     }
                 }
                 if !summary.is_empty() {
-                    ui.label(RichText::new(&summary).font(mono(11.0)).color(MUTED));
+                    ui.label(RichText::new(&summary).font(mono(11.0)).color(pal().ink_muted));
                 }
             }
             1 => {
@@ -988,7 +995,7 @@ impl GuiApp {
     // -- dialogues ------------------------------------------------------------------
     fn dialogs(&mut self, ctx: &egui::Context) {
         let Some(dialog) = self.dialog.take() else { return };
-        let frame = Frame::new().fill(PANEL2).stroke(Stroke::new(1.0, BORDER_STRONG)).corner_radius(CornerRadius::same(12)).inner_margin(Margin::same(18));
+        let frame = Frame::new().fill(pal().paper).stroke(Stroke::new(1.0, pal().rule2)).corner_radius(CornerRadius::same(8)).inner_margin(Margin::same(18));
         match dialog {
             Dialog::Error(msg) => {
                 let mut close = false;

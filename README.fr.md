@@ -34,7 +34,7 @@ Le script Linux n'a pas besoin de root. Il télécharge un binaire unique et aut
 les autres architectures sont compilées depuis les sources avec `cargo`) dans
 `~/.local/share/devfrp-speaker-sim` et ajoute la commande `speaker-sim` ainsi qu'une entrée
 de menu. Il remplace aussi une ancienne installation Python en gardant vos réglages.
-Options (après `bash -s --`) : `--uninstall`, `--purge`, `--ref v1.0.0`, `--no-desktop`. Relancez la même commande pour
+Options (après `bash -s --`) : `--uninstall`, `--purge`, `--ref v2.0.0`, `--no-desktop`. Relancez la même commande pour
 mettre à jour. Les binaires Windows et macOS ne sont pas signés. Sous Windows : SmartScreen
 → *Informations* → *Exécuter quand même*. Sous macOS : clic droit → *Ouvrir* la première fois.
 
@@ -144,12 +144,12 @@ speaker-sim            # ou : cargo run --release (dans speaker-sim/)
    ou **Importer…** votre propre mesure.
 2. **02 Enceintes** : filtre *Studio* / *Hi-Fi*. L'infobulle indique le score Olive, la
    LFX et l'origine de la mesure.
-3. **Plan** : faites glisser votre tête (sarcelle) pour vous rapprocher ou reculer, ou une
+3. **Plan** : faites glisser votre tête (le rond blanc) pour vous rapprocher ou reculer, ou une
    enceinte pour changer l'angle et la distance au mur avant.
 4. **Onglets de réglages** (sous le plan) : dans *Salle*, choisissez un préréglage ou
    réglez dimensions et matériaux ; *Traitement*, *Réflexions*, *Réverbération*,
    *Placement* et *Écoute* affinent le reste, et chaque interrupteur coupe sa partie.
-   Les vu-mètres RT60 se mettent à jour en direct ; la zone sarcelle (0,2–0,4 s) est la
+   Les vu-mètres RT60 se mettent à jour en direct ; la bande claire (0,2–0,4 s) est la
    cible habituelle de l'écoute critique.
 5. Appuyez sur le **bouton d'alimentation**. Avec **Auto** activé, les changements suivants
    s'appliquent d'eux-mêmes, sans coupure.
@@ -232,5 +232,5 @@ n'ont besoin ni du réseau, ni de PipeWire, ni de systemd (tous simulés).
 MIT © 2026 devfrp. Données : AutoEq (MIT, Jaakko Pasanen), Spinorama (GPL-3.0,
 Pierre Aubert) avec les mesures Klippel d'ASR / Erin's Audio Corner, MIT KEMAR (Gardner &
 Martin, MIT Media Lab). Les données sont téléchargées à la demande, jamais redistribuées.
-Polices : Space Grotesk, Inter, JetBrains Mono (SIL Open Font License, voir
+Polices : Familjen Grotesk, IBM Plex Sans, JetBrains Mono (SIL Open Font License, voir
 `speaker-sim/packaging/fonts`).

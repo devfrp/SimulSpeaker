@@ -35,7 +35,7 @@ The Linux script needs no root. It downloads a single self-contained binary (x86
 architectures are built from source with `cargo`) into `~/.local/share/devfrp-speaker-sim`
 and adds the `speaker-sim` command plus a menu entry. It also replaces an older Python
 install, keeping your settings. Options (after `bash -s --`):
-`--uninstall`, `--purge`, `--ref v1.0.0`, `--no-desktop`. Re-run the same command to update.
+`--uninstall`, `--purge`, `--ref v2.0.0`, `--no-desktop`. Re-run the same command to update.
 The Windows and macOS binaries are unsigned. On Windows: SmartScreen → *More info* →
 *Run anyway*. On macOS: right-click → *Open* the first time.
 
@@ -141,12 +141,12 @@ speaker-sim            # or: cargo run --release (in speaker-sim/)
    or **Importer…** your own measurement.
 2. **02 Enceintes** (speakers): filter *Studio* / *Hi-Fi*. The tooltip shows the
    Olive score, the LFX and the measurement origin.
-3. **Plan**: drag yourself (the teal head) to move closer or further, or drag a speaker
+3. **Plan**: drag yourself (the white circle) to move closer or further, or drag a speaker
    to change the angle and the distance from the front wall.
 4. **Settings tabs** (under the plan): in *Room*, pick a preset or set the dimensions and
    materials; *Treatment*, *Reflections*, *Reverberation*, *Placement* and *Listening* refine the
    rest, and each switch turns its part off.
-   The RT60 meters update live; the teal zone (0.2–0.4 s) is the usual target for
+   The RT60 meters update live; the light band (0.2–0.4 s) is the usual target for
    critical listening.
 5. Press the **power button**. With **Auto** on, later changes apply by themselves,
    without dropouts.
@@ -226,5 +226,5 @@ They need no network, PipeWire or systemd (all are mocked).
 
 MIT © 2026 devfrp. Data: AutoEq (MIT, Jaakko Pasanen), Spinorama (GPL-3.0, Pierre Aubert)
 with ASR / Erin's Audio Corner Klippel measurements, MIT KEMAR (Gardner & Martin, MIT Media Lab).
-The data is downloaded on demand, never redistributed. Fonts: Space Grotesk, Inter,
+The data is downloaded on demand, never redistributed. Fonts: Familjen Grotesk, IBM Plex Sans,
 JetBrains Mono (SIL Open Font License, see `speaker-sim/packaging/fonts`).

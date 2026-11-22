@@ -168,3 +168,12 @@ fn speaker_catalog() {
         assert!(ids.contains(must), "{must}");
     }
 }
+
+#[test]
+fn theme_choices() {
+    assert_eq!(Settings::default().theme, "auto");
+    let s = Settings::from_json(&obj(json!({"theme": "dark"}))).validated();
+    assert_eq!(s.theme, "dark");
+    let s = Settings::from_json(&obj(json!({"theme": "fluo"}))).validated();
+    assert_eq!(s.theme, "auto");
+}

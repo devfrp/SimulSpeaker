@@ -10,7 +10,7 @@ use eframe::egui::{
 };
 use serde_json::json;
 
-use super::style::{AMBER, AMBER_HOVER, BG, BORDER_STRONG, MUTED, PANEL, PANEL2, RED, TEAL, TEXT, alpha, mono};
+use super::style::{SIGNAL_HOT, alpha, mono, pal};
 use crate::app::changes;
 use crate::audio_engine::{self as ae, Layout, RoomSpec};
 use crate::config::{Json, Settings};
@@ -106,7 +106,7 @@ pub fn room_plan(ui: &mut Ui, state: &mut PlanState, s: &Settings, room: &RoomSp
     let size = Vec2::new(ui.available_width(), ui.available_height().max(220.0));
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click_and_drag());
     let painter = ui.painter_at(rect);
-    painter.rect_filled(rect, 0.0, BG);
+    painter.rect_filled(rect, 6.0, pal().bg);
     let geo = Geometry::fit(rect, room);
     let placement = state.preview.unwrap_or_else(|| Placement::of(s));
     let (room_view, layout) = layout_for(room, &placement);
@@ -197,12 +197,12 @@ fn paint(
     let rect = Rect::from_two_pos(geo.to_screen(l, w), geo.to_screen(0.0, 0.0));
 
     // Sol
-    p.rect_filled(rect, 0.0, PANEL);
+    p.rect_filled(rect, 0.0, pal().panel);
     let floor = p.with_clip_rect(rect.intersect(area));
     match room.floor.as_str() {
         "tile" => {
             let step = 0.5 * sc;
-            let stroke = Stroke::new(1.0, alpha(TEXT, 14));
+            let stroke = Stroke::new(1.0, alpha(pal().text, 14));
             let mut x = rect.left();
             while x < rect.right() {
                 floor.line_segment([Pos2::new(x, rect.top()), Pos2::new(x, rect.bottom())], stroke);
@@ -215,7 +215,7 @@ fn paint(
             }
         }
         "wood" | "rug" => {
-            let stroke = Stroke::new(1.0, alpha(AMBER, 16));
+            let stroke = Stroke::new(1.0, alpha(pal().signal, 16));
             let mut y = rect.top();
             while y < rect.bottom() {
                 floor.line_segment([Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)], stroke);
@@ -223,7 +223,7 @@ fn paint(
             }
         }
         "carpet" => {
-            floor.rect_filled(rect, 0.0, alpha(TEAL, 18));
+            floor.rect_filled(rect, 0.0, alpha(pal().signal_2, 18));
         }
         _ => {}
     }
@@ -231,27 +231,27 @@ fn paint(
     if let (Some(lis), "rug") = (lis, room.floor.as_str()) {
         let c = geo.to_screen(lis[0] + 0.6, w / 2.0);
         let rug = Rect::from_min_size(Pos2::new(c.x - 1.3 * sc, c.y - 1.0 * sc), Vec2::new(2.6 * sc, 2.0 * sc));
-        floor.rect(rug, CornerRadius::same(8), alpha(TEAL, 22), Stroke::new(1.0, alpha(TEAL, 60)), StrokeKind::Inside);
+        floor.rect(rug, CornerRadius::same(8), alpha(pal().signal_2, 22), Stroke::new(1.0, alpha(pal().signal_2, 60)), StrokeKind::Inside);
     }
 
     // Mobilier
-    let furn_stroke = Stroke::new(1.0, BORDER_STRONG);
+    let furn_stroke = Stroke::new(1.0, pal().border_strong);
     if let Some(lis) = lis.filter(|_| matches!(room.furniture.as_str(), "furnished" | "full")) {
         let c = geo.to_screen((lis[0] - 0.55).max(0.45), w / 2.0);
         let sofa = Rect::from_min_size(Pos2::new(c.x - 1.0 * sc, c.y - 0.05 * sc), Vec2::new(2.0 * sc, 0.75 * sc));
-        floor.rect(sofa, CornerRadius::same(6), PANEL2, furn_stroke, StrokeKind::Inside);
+        floor.rect(sofa, CornerRadius::same(6), pal().panel2, furn_stroke, StrokeKind::Inside);
     }
     if room.furniture == "full" {
         let a = geo.to_screen(l * 0.55, 0.38);
         floor.rect(
             Rect::from_min_size(a, Vec2::new(0.36 * sc, (2.2f64.min(l * 0.4)) as f32 * sc)),
             CornerRadius::ZERO,
-            PANEL2,
+            pal().panel2,
             furn_stroke,
             StrokeKind::Inside,
         );
         let b = geo.to_screen(l * 0.35, w);
-        floor.rect(Rect::from_min_size(b, Vec2::splat(0.9 * sc)), CornerRadius::same(5), PANEL2, furn_stroke, StrokeKind::Inside);
+        floor.rect(Rect::from_min_size(b, Vec2::splat(0.9 * sc)), CornerRadius::same(5), pal().panel2, furn_stroke, StrokeKind::Inside);
     }
 
     // Nuage acoustique (au plafond, au-dessus de la zone d'écoute)
@@ -261,13 +261,13 @@ fn paint(
         let a = geo.to_screen(lay.left[0] - 0.1, w / 2.0 + half);
         let b = geo.to_screen(lay.listener[0] - 0.2, w / 2.0 - half);
         let cloud = Rect::from_two_pos(a, b);
-        floor.rect_filled(cloud, CornerRadius::same(10), alpha(TEAL, (8.0 + 30.0 * wt.ceiling) as u8));
-        dashed_rect(&floor, cloud, Stroke::new(1.2, alpha(TEAL, (60.0 + 120.0 * wt.ceiling) as u8)));
-        floor.text(cloud.min + Vec2::new(6.0, 4.0), Align2::LEFT_TOP, tr("nuage"), mono(10.0), alpha(TEAL, 170));
+        floor.rect_filled(cloud, CornerRadius::same(10), alpha(pal().signal_2, (8.0 + 30.0 * wt.ceiling) as u8));
+        dashed_rect(&floor, cloud, Stroke::new(1.2, alpha(pal().signal_2, (60.0 + 120.0 * wt.ceiling) as u8)));
+        floor.text(cloud.min + Vec2::new(6.0, 4.0), Align2::LEFT_TOP, tr("nuage"), mono(10.0), alpha(pal().signal_2, 170));
     }
 
     // Murs
-    p.rect_stroke(rect, CornerRadius::ZERO, Stroke::new(6.0, BORDER_STRONG), StrokeKind::Middle);
+    p.rect_stroke(rect, CornerRadius::ZERO, Stroke::new(6.0, pal().border_strong), StrokeKind::Middle);
 
     // Panneaux absorbants répartis sur chaque mur
     let thick: f32 = match room.absorber.as_str() {
@@ -297,7 +297,7 @@ fn paint(
             } else {
                 Rect::from_center_size(c, Vec2::new(2.0 * thick, 2.0 * half))
             };
-            p.rect_filled(r, CornerRadius::same(2), alpha(TEAL, 220));
+            p.rect_filled(r, CornerRadius::same(2), alpha(pal().signal_2, 220));
         }
     }
 
@@ -312,7 +312,7 @@ fn paint(
         ] {
             p.add(Shape::convex_polygon(
                 vec![corner, corner + Vec2::new(dx * size, 0.0), corner + Vec2::new(0.0, dy * size)],
-                alpha(TEAL, 150),
+                alpha(pal().signal_2, 150),
                 Stroke::NONE,
             ));
         }
@@ -331,11 +331,11 @@ fn paint(
             pts.push(Pos2::new(xa, y - 7.0 - 5.0 * ((i * 7) % 3) as f32));
             pts.push(Pos2::new(xb, y));
         }
-        p.add(Shape::line(pts, Stroke::new(1.4, alpha(AMBER, 200))));
+        p.add(Shape::line(pts, Stroke::new(1.4, alpha(pal().signal, 200))));
     }
 
     let Some(lay) = layout else {
-        p.text(rect.center(), Align2::CENTER_CENTER, tr("Placement impossible dans cette pièce"), mono(12.0), RED);
+        p.text(rect.center(), Align2::CENTER_CENTER, tr("Placement impossible dans cette pièce"), mono(12.0), pal().red);
         labels(p, area, rect, room);
         return;
     };
@@ -350,7 +350,7 @@ fn paint(
         } else {
             tr("réflexions désactivées (ordre : aucune)")
         };
-        p.text(Pos2::new(rect.center().x, rect.center().y + 0.9 * sc + 9.0), Align2::CENTER_CENTER, text, mono(11.0), alpha(RED, 220));
+        p.text(Pos2::new(rect.center().x, rect.center().y + 0.9 * sc + 9.0), Align2::CENTER_CENTER, text, mono(11.0), alpha(pal().red, 220));
     }
     for side in if reflections_on { &['L', 'R'][..] } else { &[][..] } {
         let src = lay.speaker(*side);
@@ -371,17 +371,17 @@ fn paint(
                 let k = if iy != ly { (wy - ly) / (iy - ly) } else { 0.0 };
                 (lx + k * (ix - lx), wy)
             };
-            let stroke = Stroke::new(1.2, alpha(AMBER, (30.0 + 170.0 * gain * gain) as u8));
+            let stroke = Stroke::new(1.2, alpha(pal().signal, (30.0 + 170.0 * gain * gain) as u8));
             let pts = [geo.to_screen(src[0], src[1]), geo.to_screen(hit.0, hit.1), geo.to_screen(lx, ly)];
             for seg in pts.windows(2) {
                 p.extend(Shape::dashed_line(seg, stroke, 5.0, 3.0));
             }
-            p.circle_filled(geo.to_screen(hit.0, hit.1), 3.0, alpha(AMBER, (60.0 + 160.0 * gain) as u8));
+            p.circle_filled(geo.to_screen(hit.0, hit.1), 3.0, alpha(pal().signal, (60.0 + 160.0 * gain) as u8));
         }
     }
     for side in ['L', 'R'] {
         let sp = lay.speaker(side);
-        p.line_segment([geo.to_screen(sp[0], sp[1]), geo.to_screen(lis[0], lis[1])], Stroke::new(2.0, AMBER));
+        p.line_segment([geo.to_screen(sp[0], sp[1]), geo.to_screen(lis[0], lis[1])], Stroke::new(2.0, pal().signal));
     }
 
     // Enceintes orientées vers l'auditeur
@@ -393,29 +393,29 @@ fn paint(
         let hot = drag == Some(target);
         let body = Rect::from_center_size(c, Vec2::new(0.26 * sc, 0.24 * sc));
         p.add(
-            RectShape::new(body, CornerRadius::same(4), if hot { AMBER_HOVER } else { AMBER }, Stroke::new(1.5, BG), StrokeKind::Middle)
+            RectShape::new(body, CornerRadius::same(4), if hot { SIGNAL_HOT } else { pal().signal }, Stroke::new(1.5, pal().bg), StrokeKind::Middle)
                 .with_angle(angle),
         );
-        p.circle_filled(c + rotate(Vec2::new(0.0, 0.035 * sc), angle), 0.07 * sc, BG);
+        p.circle_filled(c + rotate(Vec2::new(0.0, 0.035 * sc), angle), 0.07 * sc, pal().bg);
         let off = if side == 'L' { -0.32 * sc } else { 0.32 * sc };
-        p.text(Pos2::new(c.x + off, c.y), Align2::CENTER_CENTER, side, egui::FontId::new(11.0, super::style::mono_bold()), AMBER);
+        p.text(Pos2::new(c.x + off, c.y), Align2::CENTER_CENTER, side, egui::FontId::new(11.0, super::style::mono_bold()), pal().signal);
     }
 
     // Auditeur : tête, nez vers l'avant
     let r = 0.16 * sc;
     if drag == Some(Target::Listener) {
         for (k, a) in [(2.4, 14u8), (1.9, 22), (1.4, 34)] {
-            p.circle_filled(head, r * k, alpha(TEAL, a));
+            p.circle_filled(head, r * k, alpha(pal().signal_2, a));
         }
     }
     p.add(Shape::convex_polygon(
         vec![head + Vec2::new(-r * 0.35, -r * 0.85), head + Vec2::new(r * 0.35, -r * 0.85), head + Vec2::new(0.0, -r * 1.35)],
-        TEAL,
+        pal().signal_2,
         Stroke::NONE,
     ));
-    ellipse(p, head + Vec2::new(-r, 0.0), r * 0.25, r * 0.4, TEAL, Stroke::NONE);
-    ellipse(p, head + Vec2::new(r, 0.0), r * 0.25, r * 0.4, TEAL, Stroke::NONE);
-    p.circle(head, r, BG, Stroke::new(2.0, TEAL));
+    ellipse(p, head + Vec2::new(-r, 0.0), r * 0.25, r * 0.4, pal().signal_2, Stroke::NONE);
+    ellipse(p, head + Vec2::new(r, 0.0), r * 0.25, r * 0.4, pal().signal_2, Stroke::NONE);
+    p.circle(head, r, pal().bg, Stroke::new(2.0, pal().signal_2));
 
     // Cote du triangle stéréo
     let left = lay.left;
@@ -425,7 +425,7 @@ fn paint(
         Align2::RIGHT_CENTER,
         format!("{} m · {:.0}°", num(pl.speaker_distance, 2), pl.speaker_angle),
         mono(11.0),
-        alpha(TEXT, 210),
+        alpha(pal().text, 210),
     );
     labels(p, area, rect, room);
 }
@@ -442,7 +442,7 @@ fn labels(p: &egui::Painter, area: Rect, rect: Rect, room: &RoomSpec) {
         Align2::CENTER_CENTER,
         trf("mur avant · {w} m", &[("w", &num(room.width, 1))]),
         font.clone(),
-        MUTED,
+        pal().muted,
     );
     let mut dims = trf(
         "{l} m × {w} m × h {h} m  ·  {v} m³  ·  oreilles {e} m",
@@ -457,16 +457,16 @@ fn labels(p: &egui::Painter, area: Rect, rect: Rect, room: &RoomSpec) {
     if room.speaker_height > 0.0 {
         dims += &trf(" · tweeters {t} m", &[("t", &num(room.speaker_height, 2))]);
     }
-    p.text(Pos2::new(rect.center().x, rect.bottom() + 16.0), Align2::CENTER_CENTER, dims, font.clone(), MUTED);
-    let galley = p.layout_no_wrap(format!("{} m", num(room.length, 1)), font.clone(), MUTED);
+    p.text(Pos2::new(rect.center().x, rect.bottom() + 16.0), Align2::CENTER_CENTER, dims, font.clone(), pal().muted);
+    let galley = p.layout_no_wrap(format!("{} m", num(room.length, 1)), font.clone(), pal().muted);
     let (gw, gh) = (galley.size().x, galley.size().y);
     let pos = Pos2::new(rect.left() - 22.0 - gh / 2.0, rect.center().y + gw / 2.0);
-    p.add(TextShape::new(pos, galley, MUTED).with_angle(-PI / 2.0));
+    p.add(TextShape::new(pos, galley, pal().muted).with_angle(-PI / 2.0));
     p.text(
         Pos2::new(area.right() - 8.0, area.bottom() - 4.0),
         Align2::RIGHT_BOTTOM,
         tr("glissez l'auditeur ou les enceintes  ·  — direct  ┄ réflexions"),
         font,
-        alpha(MUTED, 160),
+        alpha(pal().muted, 160),
     );
 }
