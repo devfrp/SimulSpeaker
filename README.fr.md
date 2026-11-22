@@ -63,7 +63,7 @@ Le binaire est `target/release/speaker-sim`.
   appliqué tel quel, ou une mesure brute « fréquence, dB » (REW, Squiglink, CSV AutoEq)
   corrigée vers une cible AutoEq (Harman over-ear 2018, Harman in-ear 2019,
   champ diffus ISO 11904-1 ou GRAS KEMAR).
-- **Enceintes** : **130** modèles mesurés sur Klippel NFS (ASR, Erin's Audio Corner,
+- **Enceintes** : **137** modèles mesurés sur Klippel NFS (ASR, Erin's Audio Corner,
   via Spinorama au commit `acc757bb`), dont **69 moniteurs de studio** (Genelec, Neumann,
   Kali, Adam, JBL, Kii, Focal, Yamaha…). Quand Spinorama n'a que les mesures polaires, les
   courbes CEA-2034 sont calculées localement. Le calcul est identique à celui du logiciel

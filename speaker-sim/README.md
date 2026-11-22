@@ -21,7 +21,7 @@ The user documentation lives in the [repository README](../README.md)
 | `examples/render_offline.rs` | render the four IRs without PipeWire or GUI |
 | `tools/` | developer commands: regenerate `data/speakers.json`, render the icons |
 | `packaging/` | icon (SVG, PNG, ICO) and bundled fonts |
-| `data/` | speaker catalogue (130 entries) and default settings, embedded in the binary |
+| `data/` | speaker catalogue (137 entries) and default settings, embedded in the binary |
 
 The `gui` feature (default) adds the egui interface; without it the binary keeps the
 engine, the command line and the systemd hooks.

@@ -63,7 +63,7 @@ The binary is `target/release/speaker-sim`.
   **Import your own**: an AutoEq / Equalizer APO EQ (ParametricEQ, GraphicEQ) used as is,
   or a raw *frequency, dB* measurement (REW, Squiglink, AutoEq CSV) corrected toward an
   AutoEq target (Harman over-ear 2018, Harman in-ear 2019, diffuse field ISO 11904-1 or GRAS KEMAR).
-- **Speakers**: **130** models measured on a Klippel NFS (ASR, Erin's Audio Corner,
+- **Speakers**: **137** models measured on a Klippel NFS (ASR, Erin's Audio Corner,
   via Spinorama at commit `acc757bb`), including **69 studio monitors** (Genelec, Neumann,
   Kali, Adam, JBL, Kii, Focal, Yamaha…). When Spinorama only has polar data, the CEA-2034
   curves are computed locally. The computation matches Klippel's software exactly, which
