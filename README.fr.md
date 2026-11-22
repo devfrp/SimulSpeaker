@@ -231,6 +231,8 @@ n'ont besoin ni du réseau, ni de PipeWire, ni de systemd (tous simulés).
 
 MIT © 2026 devfrp. Données : AutoEq (MIT, Jaakko Pasanen), Spinorama (GPL-3.0,
 Pierre Aubert) avec les mesures Klippel d'ASR / Erin's Audio Corner, MIT KEMAR (Gardner &
-Martin, MIT Media Lab). Les données sont téléchargées à la demande, jamais redistribuées.
+Martin, MIT Media Lab). Les données sont téléchargées à la demande, jamais embarquées. Les mesures Spinorama viennent
+d'une copie publique figée (`devfrp/spinorama`, commit `acc757bb`), le dépôt d'origine les
+ayant rendues privées.
 Polices : Familjen Grotesk, IBM Plex Sans, JetBrains Mono (SIL Open Font License, voir
 `speaker-sim/packaging/fonts`).

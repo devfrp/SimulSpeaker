@@ -29,7 +29,9 @@ use crate::config::{APP_VERSION, Speaker};
 pub const AUTOEQ_COMMIT: &str = "7ae0f56d53074872b028649617a22bbb4232feb7";
 pub const AUTOEQ_RAW: &str = "https://raw.githubusercontent.com/jaakkopasanen/AutoEq";
 pub const SPINORAMA_COMMIT: &str = "acc757bb98d63327092ee537bde25d9c227811f3";
-pub const SPINORAMA_RAW: &str = "https://raw.githubusercontent.com/pierreaubert/spinorama";
+/// Copie figée de Spinorama (Pierre Aubert) : le dépôt d'origine a été transféré et ses
+/// mesures rendues privées ; ce fork public conserve le commit ci-dessus à l'identique.
+pub const SPINORAMA_RAW: &str = "https://raw.githubusercontent.com/devfrp/spinorama";
 pub const KEMAR_URL: &str = "https://sofacoustics.org/data/database/mit/mit_kemar_normal_pinna.sofa";
 
 /// Emplacements où libmysofa installe généralement le HRTF MIT KEMAR.
